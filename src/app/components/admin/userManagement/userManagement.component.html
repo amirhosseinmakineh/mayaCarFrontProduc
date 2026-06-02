@@ -1,0 +1,234 @@
+<div class="grid-wrapper">
+
+  <div class="grid-header">
+
+    <h2>
+
+      <i
+        class="fas fa-users"
+        style="margin-left:10px">
+
+      </i>
+
+      لیست کاربران
+
+    </h2>
+
+    <button
+      class="add-user-btn"
+      (click)="openCreate()">
+
+      افزودن کاربر جدید
+
+    </button>
+
+  </div>
+
+  <div style="overflow-x:auto">
+
+    <table class="data-grid">
+
+      <thead>
+
+        <tr>
+
+          <th>نام</th>
+
+          <th>نام خانوادگی</th>
+
+          <th>ایمیل</th>
+
+          <th>شماره تماس</th>
+
+          <th>عملیات</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let item of users()">
+
+          <td>{{item.name}}</td>
+
+          <td>{{item.family}}</td>
+
+          <td>{{item.email}}</td>
+
+          <td>{{item.mobileNumber}}</td>
+
+          <td class="actions">
+
+            <!-- EDIT -->
+
+            <a (click)="openEdit(item)">
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16">
+
+                <path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10z"/>
+
+              </svg>
+
+            </a>
+
+            <!-- DELETE -->
+
+            <a
+              class="delete-btn"
+              (click)="openDelete(item)">
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="currentColor"
+                viewBox="0 0 16 16">
+
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6z"/>
+
+                <path d="M8.5 5.5A.5.5 0 0 1 9 6v6a.5.5 0 0 1-1 0V6z"/>
+
+                <path d="M11.5 5.5A.5.5 0 0 1 12 6v6a.5.5 0 0 1-1 0V6z"/>
+
+                <path
+                  fill-rule="evenodd"
+                  d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3A1 1 0 0 1 6.5 1h3a1 1 0 0 1 1 .5H14.5a1 1 0 0 1 1 1z"/>
+
+              </svg>
+
+            </a>
+
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<!-- CREATE MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isCreateModal()">
+
+  <div class="modal-container md">
+
+    <div class="modal-header">
+
+      <span>افزودن کاربر جدید</span>
+
+      <button
+        class="close-btn"
+        (click)="closeCreate()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <form (ngSubmit)="createUser()">
+
+        <div class="form-group">
+
+          <label>نام</label>
+
+          <input
+            type="text"
+            [(ngModel)]="dto().name"
+            name="name">
+
+        </div>
+
+        <div class="form-group">
+
+          <label>نام خانوادگی</label>
+
+          <input
+            type="text"
+            [(ngModel)]="dto().family"
+            name="family">
+
+        </div>
+
+        <div class="form-group">
+
+          <label>ایمیل</label>
+
+          <input
+            type="email"
+            [(ngModel)]="dto().email"
+            name="email">
+
+        </div>
+
+        <div class="form-group">
+
+          <label>شماره تماس</label>
+
+          <input
+            type="text"
+            [(ngModel)]="dto().mobileNumber"
+            name="mobileNumber">
+
+        </div>
+
+        <div class="form-group">
+
+          <label>رمز عبور</label>
+
+          <input
+            type="text"
+            [(ngModel)]="dto().password"
+            name="password">
+
+        </div>
+
+        <div class="form-group">
+
+          <label>نقش</label>
+
+          <select
+            [(ngModel)]="dto().roleName"
+            name="roleName">
+
+            <option
+              *ngFor="let role of roles()"
+              [value]="role.roleName">
+
+              {{role.roleName}}
+
+            </option>
+
+          </select>
+
+        </div>
+
+        <button
+          class="save-btn"
+          type="submit">
+
+          ذخیره
+
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>

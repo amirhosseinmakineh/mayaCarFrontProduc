@@ -1,0 +1,32 @@
+
+<div class="register-container" style="margin-top: 100px;">
+    <div class="register-card">
+        <div class="brand-header">
+            <div class="logo"><span>𝓶𝓪𝔂𝓪𝓴𝓱𝓸𝓭𝓻𝓸</span></div>
+        </div>
+        <div class="form-body">
+            <div class="form-title">ورود</div>
+
+            <form>
+
+                <div class="input-group">
+                    <label>شماره موبایل</label>
+                    <input type="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹" required [(ngModel)]="dto.mobileNumber" name="mobileNumber">
+                </div>
+
+                <div class="row-2cols">
+                    <div class="input-group">
+                        <label>رمز عبور</label>
+                        <input type="password" placeholder="••••••••" required [(ngModel)]="dto.password" name="password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-gold" (click)="onLogin()"> ورود به حساب کاربری </button>
+
+                <div class="login-link">
+                  <a (click)="onGoToRegister()" style="text-decoration: none; cursor: pointer;">حساب کاربری ندارید ؟ </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,237 @@
+<div class="table-container">
+
+  <div class="table-header">
+
+    <h2>
+      مدیریت تیپ ها
+    </h2>
+
+    <button
+      class="add-btn"
+      (click)="openCreateModal()">
+
+      افزودن
+
+    </button>
+
+  </div>
+
+  <table class="custom-table">
+
+    <thead>
+
+      <tr>
+
+        <th>
+          نام
+        </th>
+
+        <th>
+          عملیات
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      <tr
+        *ngFor="
+          let tip of tips();
+          trackBy: trackByTip
+        ">
+
+        <td>
+          {{ tip.name }}
+        </td>
+
+        <td class="actions">
+
+          <button
+            class="edit-btn"
+            (click)="openEdit(tip)">
+
+            آپدیت
+
+          </button>
+
+          <button
+            class="delete-btn"
+            (click)="openDelete(tip)">
+
+            حذف
+
+          </button>
+
+        </td>
+
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</div>
+
+<!-- CREATE MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isCreateModal()">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        افزودن تیپ
+      </span>
+
+      <button
+        class="close-btn"
+        (click)="closeCreateModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+
+        <label>
+          نام تیپ
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="createDto().name">
+
+      </div>
+
+      <button
+        type="button"
+        class="save-btn"
+        (click)="create()">
+
+        ذخیره
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- EDIT MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isEditModal()">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        ویرایش تیپ
+      </span>
+
+      <button
+        class="close-btn"
+        (click)="closeEditModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+
+        <label>
+          نام تیپ
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="editDto().name">
+
+      </div>
+
+      <button
+        type="button"
+        class="save-btn"
+        (click)="update()">
+
+        ذخیره تغییرات
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isDeleteModal()">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        حذف تیپ
+      </span>
+
+      <button
+        class="close-btn"
+        (click)="closeDeleteModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <p>
+        آیا از حذف این تیپ مطمئن هستید؟
+      </p>
+
+      <div class="delete-action-modal">
+
+        <button
+          class="yes-btn"
+          (click)="deleteTip()">
+
+          بله
+
+        </button>
+
+        <button
+          class="no-btn"
+          (click)="closeDeleteModal()">
+
+          خیر
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

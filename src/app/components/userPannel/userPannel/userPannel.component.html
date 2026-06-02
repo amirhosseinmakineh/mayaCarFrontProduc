@@ -1,0 +1,104 @@
+<div class="layout">
+
+  <!-- Overlay برای بستن سایدبار در حالت موبایل با کلیک روی فضای خالی -->
+  <div class="overlay"
+       *ngIf="isMobile && isSidebarOpen"
+       (click)="toggleSidebar()">
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.open]="isSidebarOpen">
+
+    <div class="sidebar-header">
+      <div class="logo">پنل مدیریت</div>
+      <button *ngIf="isMobile" class="close-btn" (click)="toggleSidebar()">×</button>
+    </div>
+
+    <ul class="menu">
+      <li class="active" (click)="closeSidebar()">
+        <span class="icon">📋</span> فاکتورها
+      </li>
+      <!-- می‌توانید منوهای دیگر را اینجا اضافه کنید -->
+    </ul>
+
+    <!-- دکمه خروج در انتهای سایدبار -->
+    <div class="sidebar-footer">
+      <button class="logout-sidebar-btn" (click)="logout()">
+         خروج از حساب
+      </button>
+    </div>
+  </aside>
+
+  <div class="content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-wrapper">
+        <div class="right-side">
+          <button *ngIf="isMobile" class="menu-btn" (click)="toggleSidebar()">☰</button>
+          <h2>داشبورد کاربر</h2>
+        </div>
+
+        <div class="left-side">
+          <!-- دکمه خروج سریع در بالای صفحه -->
+          <button class="logout-topbar-btn" (click)="logout()">خروج</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="table-container">
+
+        <div class="table-header">
+          <h2>مدیریت فاکتور ها</h2>
+        </div>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>نام کاربری</th>
+              <th>نام ماشین</th>
+              <th> تاریخ سر رسید فاکتور</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let order of orders()">
+              <td>{{order.userName}}</td>
+              <td>{{order.carName}}</td>
+              <td>{{order.createOrderDate}}</td>
+              <td class="actions">
+                 <button
+                  class="addorder-btn" (click)="onOpenOrderItemModal(order.id)">
+                    جزئیات فاکتور
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- پیام در صورت نبود فاکتور -->
+        <div class="empty-state" *ngIf="orders().length === 0">
+           موردی برای نمایش وجود ندارد.
+        </div>
+      </div>
+
+      <!-- Modal برای جزئیات فاکتور -->
+      <div class="modal-backdrop" *ngIf="isOrderItem()">
+        <div class="modal-container lg">
+          <div class="modal-header">
+            <span>جزئیات فاکتور</span>
+            <button class="close-btn" (click)="onCloseOrderItemModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <app-orderItem
+              *ngIf="isOrderItem()"
+              [orderId]="selectedOrderId()">
+            </app-orderItem>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>

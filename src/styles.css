@@ -1,0 +1,75 @@
+@import 'ngx-toastr/toastr';
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Poppins', 'Iran Sans', Tahoma, sans-serif;
+            background-color: #ffffff;
+            color: #1e1e1e;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            --gold: #c9a03d;
+            --gold-light: #e0b354;
+            --gold-dark: #a37c2c;
+            --gray-light: #f8f9fa;
+            --gray-border: #e9ecef;
+        }
+
+        .gold-text { color: var(--gold); }
+
+        .btn-gold {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #fff;
+            font-weight: bold;
+            padding: 10px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(201,160,61,0.3);
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(201,160,61,0.4);
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+        }
+        .btn-outline-gold {
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--gold-dark);
+            box-shadow: none;
+        }
+        .btn-outline-gold:hover {
+            background: var(--gold);
+            color: white;
+        }
+        /* general */
+        section { padding: 70px 20px; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .gold-divider {
+            width: 70px;
+            height: 3px;
+            background: var(--gold);
+            margin: 0.5rem auto 2rem auto;
+        }
+        html,
+body {
+    font-family: 'Estedad', sans-serif;
+    margin: 0;
+    padding: 0;
+
+}

@@ -1,0 +1,264 @@
+<div class="table-container">
+
+  <!-- HEADER -->
+
+  <div class="table-header">
+
+    <h2>
+      مدیریت دسته بندی ها
+    </h2>
+
+    <button
+      type="button"
+      class="add-btn"
+      (click)="openCreate()">
+
+      افزودن
+
+    </button>
+
+  </div>
+
+  <!-- TABLE -->
+
+  <div class="table-wrapper">
+
+    <table class="custom-table">
+
+      <thead>
+
+        <tr>
+
+          <th>
+            نام
+          </th>
+
+          <th>
+            عملیات
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        <tr
+          *ngFor="let category of categories(); trackBy: trackByCategory">
+
+          <td class="name-column">
+
+            {{ category.name }}
+
+          </td>
+
+          <td>
+
+            <div class="actions">
+
+              <button
+                type="button"
+                class="edit-btn"
+                (click)="openEdit(category)">
+
+                آپدیت
+
+              </button>
+
+              <button
+                type="button"
+                class="delete-btn"
+                (click)="openDelete(category)">
+
+                حذف
+
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     CREATE MODAL
+========================= -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="activeModal() === 'create'">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        افزودن دسته بندی
+      </span>
+
+      <button
+        type="button"
+        class="close-btn"
+        (click)="closeModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+
+        <label>
+          نام دسته بندی
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="createDto().name">
+
+      </div>
+
+      <button
+        type="button"
+        class="save-btn"
+        (click)="create()">
+
+        ذخیره
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     EDIT MODAL
+========================= -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="activeModal() === 'edit'">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        ویرایش دسته بندی
+      </span>
+
+      <button
+        type="button"
+        class="close-btn"
+        (click)="closeModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+
+        <label>
+          نام دسته بندی
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="editDto().name">
+
+      </div>
+
+      <button
+        type="button"
+        class="save-btn"
+        (click)="update()">
+
+        ذخیره تغییرات
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     DELETE MODAL
+========================= -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="activeModal() === 'delete'">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        حذف دسته بندی
+      </span>
+
+      <button
+        type="button"
+        class="close-btn"
+        (click)="closeModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <p class="delete-text">
+
+        آیا از حذف این دسته بندی مطمئن هستید؟
+
+      </p>
+
+      <div class="delete-action-modal">
+
+        <button
+          type="button"
+          class="yes-btn"
+          (click)="deleteCategory()">
+
+          بله
+
+        </button>
+
+        <button
+          type="button"
+          class="no-btn"
+          (click)="closeModal()">
+
+          خیر
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

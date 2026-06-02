@@ -1,0 +1,62 @@
+<app-header></app-header>
+<router-outlet></router-outlet>
+<app-mobile-nav></app-mobile-nav>
+<app-footer></app-footer>
+
+<div class="support-float" [class.active]="isSupportMenuOpen">
+
+  <div class="support-actions">
+
+    <a href="https://web.bale.ai/chat?uid=1835365862"
+       target="_blank"
+       class="support-action bale"
+       aria-label="پشتیبانی در بله">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="16" rx="5"/>
+        <path d="M8 9.5h7.2c1.2 0 2.1.9 2.1 2s-.9 2-2.1 2H10.5"/>
+        <path d="M8 9.5v7M8 16.5h7.7"/>
+      </svg>
+      <span>بله</span>
+    </a>
+
+    <a href="https://t.me/YOUR_TELEGRAM_USERNAME"
+       target="_blank"
+       class="support-action telegram"
+       aria-label="پشتیبانی در تلگرام">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M17.8 7.4 15.9 17c-.1.7-.6.9-1.2.6l-3.4-2.5-1.6 1.6c-.2.2-.4.3-.7.3l.3-3.5 6.4-5.8c.3-.3-.1-.4-.4-.2l-7.9 5-3.4-1.1c-.7-.2-.7-.7.2-1l13.1-5c.6-.2 1.1.1.9 1z"/>
+      </svg>
+      <span>تلگرام</span>
+    </a>
+
+    <a href="https://wa.me/989123456789"
+       target="_blank"
+       class="support-action whatsapp"
+       aria-label="پشتیبانی در واتساپ">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M7.1 17.2 8 14.3a6 6 0 1 1 2.2 2.1l-3.1.8z"/>
+        <path d="M9.6 8.8c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.6 1.3c.1.2.1.4 0 .6l-.4.5c-.1.1-.1.3 0 .4.4.8 1.1 1.5 2 2 .1.1.3.1.4 0l.6-.7c.1-.1.3-.2.5-.1l1.4.7c.2.1.3.3.3.5-.1.8-.7 1.4-1.5 1.5-1 .1-2.4-.3-3.8-1.7-1.4-1.4-2-2.8-1.9-3.8 0-.4 0-.8.1-1.2z"/>
+      </svg>
+      <span>واتساپ</span>
+    </a>
+
+  </div>
+
+  <button class="support-main"
+          type="button"
+          (click)="toggleSupportMenu()"
+          aria-label="باز کردن پشتیبانی">
+
+    <svg viewBox="0 0 24 24" class="headset">
+      <path d="M4 13a8 8 0 0 1 16 0"/>
+      <path d="M5 13v3a2 2 0 0 0 2 2h1v-7H7a2 2 0 0 0-2 2z"/>
+      <path d="M19 13v3a2 2 0 0 1-2 2h-1v-7h1a2 2 0 0 1 2 2z"/>
+      <path d="M16 18c-.6 1.2-1.8 2-4 2"/>
+    </svg>
+
+    <span class="support-text">پشتیبانی</span>
+  </button>
+
+</div>

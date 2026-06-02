@@ -1,0 +1,446 @@
+<div class="grid-wrapper">
+
+  <div class="grid-header">
+
+    <h2>
+      <i
+        class="fas fa-car"
+        style="margin-left: 10px;">
+      </i>
+
+      لیست ماشین‌ها
+    </h2>
+
+    <button
+      class="add-user-btn"
+      (click)="openCreate()">
+
+      افزودن ماشین جدید
+
+    </button>
+
+  </div>
+
+  <div style="overflow-x: auto;">
+
+    <table class="data-grid">
+
+      <thead>
+
+        <tr>
+
+          <th>اسم ماشین</th>
+          <th>مدل</th>
+          <th>دسته بندی</th>
+          <th>تیپ</th>
+          <th>شرکت</th>
+          <th>سال تولید</th>
+          <th>قیمت</th>
+          <th>عکس</th>
+          <th>توضیحات</th>
+          <th>عملیات</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let item of cars()">
+
+          <td>{{ item.name }}</td>
+
+          <td>{{ item.carModeName }}</td>
+
+          <td>{{ item.categoryName }}</td>
+
+          <td>{{ item.tipName }}</td>
+
+          <td>{{ item.company }}</td>
+
+          <td>{{ item.startDate }}</td>
+
+          <td>
+            {{ item.price | thousandSeparator:'fa-IR' }}
+          </td>
+
+          <td>
+
+            <img
+              class="car-image"
+              [src]="imageBaseUrl + item.imageName"
+              width="130px"
+              height="130px"
+              alt="car"
+              loading="lazy">
+
+          </td>
+
+          <td>{{ item.description }}</td>
+
+          <td class="actions">
+
+            <!-- EDIT -->
+
+            <a
+              class="edit-btn"
+              (click)="openEdit(item)">
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="currentColor"
+                viewBox="0 0 16 16">
+
+                <path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2L3 10.207V11h.793L13 3.793 11.207 2zM12 3.207L13.793 5 14 4.793 12.207 3 12 3.207z"/>
+
+              </svg>
+
+            </a>
+
+            <!-- DELETE -->
+
+            <a
+              class="delete-btn"
+              (click)="openDelete(item)">
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="currentColor"
+                viewBox="0 0 16 16">
+
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6zm3-.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5z"/>
+
+                <path
+                  fill-rule="evenodd"
+                  d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h3a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3h11l-.5-1h-10l-.5 1z"/>
+
+              </svg>
+
+            </a>
+
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="
+    activeModal() === 'create' ||
+    activeModal() === 'edit'
+  ">
+
+  <div class="modal-container md">
+
+    <div class="modal-header">
+
+      <span>
+
+        {{
+          activeModal() === 'create'
+          ? 'افزودن ماشین جدید'
+          : 'ویرایش ماشین'
+        }}
+
+      </span>
+
+      <button
+        class="close-btn"
+        (click)="closeModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <form (ngSubmit)="saveCar()">
+
+        <!-- NAME -->
+
+        <div class="form-group">
+
+          <label>اسم ماشین :</label>
+
+          <input
+            type="text"
+            name="name"
+            [(ngModel)]="dto().name"
+            required>
+
+        </div>
+
+        <!-- CURRENT IMAGE -->
+
+        <div
+          class="form-group"
+          *ngIf="
+            activeModal() === 'edit' &&
+            dto().imageName
+          "
+          style="margin-bottom: 12px;">
+
+          <p style="font-size: 13px;">
+            عکس فعلی:
+          </p>
+
+          <img
+            [src]="dto().imageName"
+            width="140"
+            height="100"
+            style="object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+
+        </div>
+
+        <!-- PREVIEW -->
+
+        <div
+          *ngIf="imagePreview"
+          style="margin-bottom: 12px;">
+
+          <p style="font-size: 13px;">
+            پیش‌نمایش عکس جدید:
+          </p>
+
+          <img
+            [src]="imagePreview"
+            width="140"
+            height="100"
+            style="object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+
+        </div>
+
+        <!-- FILE -->
+
+        <div class="form-group">
+
+          <label>انتخاب عکس :</label>
+
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onFileSelected($event)">
+
+        </div>
+
+        <!-- CAR MODEL -->
+
+        <div class="form-group">
+
+          <label>انتخاب مدل :</label>
+
+          <select
+            [(ngModel)]="dto().carModelName"
+            name="carModelName">
+
+            <option
+              *ngFor="let item of carModels()"
+              [value]="item.id">
+
+              {{ item.name }}
+
+            </option>
+
+          </select>
+
+        </div>
+
+        <!-- CATEGORY -->
+
+        <div class="form-group">
+
+          <label>انتخاب دسته بندی :</label>
+
+          <select
+            [(ngModel)]="dto().categoryName"
+            name="categoryName">
+
+            <option
+              *ngFor="let item of categories()"
+              [value]="item.id">
+
+              {{ item.name }}
+
+            </option>
+
+          </select>
+
+        </div>
+
+        <!-- TIP -->
+
+        <div class="form-group">
+
+          <label>انتخاب تیپ :</label>
+
+          <select
+            [(ngModel)]="dto().tipName"
+            name="tipName">
+
+            <option
+              *ngFor="let item of tips()"
+              [value]="item.id">
+
+              {{ item.name }}
+
+            </option>
+
+          </select>
+
+        </div>
+
+        <!-- COMPANY -->
+
+        <div class="form-group">
+
+          <label>انتخاب شرکت :</label>
+
+          <select
+            [(ngModel)]="dto().companyName"
+            name="companyName">
+
+            <option
+              *ngFor="let item of companies()"
+              [value]="item.id">
+
+              {{ item.name }}
+
+            </option>
+
+          </select>
+
+        </div>
+
+        <!-- START DATE -->
+
+        <div class="form-group">
+
+          <label>سال تولید :</label>
+
+          <input
+            type="number"
+            name="startDate"
+            [(ngModel)]="dto().startDate">
+
+        </div>
+
+        <!-- PRICE -->
+
+        <div class="form-group">
+
+          <label>قیمت :</label>
+
+          <input
+            type="number"
+            name="price"
+            [(ngModel)]="dto().price">
+
+        </div>
+
+        <!-- DESCRIPTION -->
+
+        <div class="form-group">
+
+          <label>توضیحات :</label>
+
+          <textarea
+            name="description"
+            [(ngModel)]="dto().description">
+          </textarea>
+
+        </div>
+
+        <!-- SAVE -->
+
+        <button
+          type="submit"
+          class="save-btn">
+
+          {{
+            activeModal() === 'create'
+            ? 'ذخیره'
+            : 'ذخیره تغییرات'
+          }}
+
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="activeModal() === 'delete'">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>حذف ماشین</span>
+
+      <button
+        class="close-btn"
+        (click)="closeModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <p style="margin-bottom: 20px;">
+
+        آیا از حذف این ماشین مطمئن هستید؟
+
+      </p>
+
+      <div class="delete-action-modal">
+
+        <button
+          type="button"
+          class="yes-btn"
+          (click)="deleteCar()">
+
+          بله
+
+        </button>
+
+        <button
+          type="button"
+          class="no-btn"
+          (click)="closeModal()">
+
+          خیر
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

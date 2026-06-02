@@ -1,0 +1,334 @@
+<div class="table-container">
+
+  <div class="table-header">
+
+    <h2>
+      مدیریت فاکتور ها
+    </h2>
+
+    <button
+      class="add-btn"
+      (click)="openCreateOrderModal()">
+
+      افزودن
+
+    </button>
+
+  </div>
+
+  <table class="custom-table">
+
+    <thead>
+
+      <tr>
+
+        <th>نام کاربری</th>
+
+        <th>نام ماشین</th>
+
+        <th>نقش کاربر</th>
+
+        <th>تاریخ ایجاد فاکتور</th>
+
+        <th>عملیات</th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      <tr
+        *ngFor="
+          let order of orders();
+          trackBy: trackByOrder
+        ">
+
+        <td>
+          {{ order.userName }}
+        </td>
+
+        <td>
+          {{ order.carName }}
+        </td>
+
+        <td>
+          {{ order.roleName }}
+        </td>
+
+        <td>
+          {{ order.createOrderDate }}
+        </td>
+
+        <td class="actions">
+
+          <button class="delete-btn">
+            حذف
+          </button>
+
+          <button
+            class="addorder-btn"
+            (click)="openOrderItemModal(order.id)">
+
+            جزئیات فاکتور
+
+          </button>
+
+        </td>
+
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</div>
+
+<!-- CREATE ORDER MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isCreateOrderModal()">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        افزودن فاکتور جدید
+      </span>
+
+      <button
+        class="close-btn"
+        (click)="closeCreateOrderModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <!-- USER -->
+
+      <div class="form-group">
+
+        <label>
+          انتخاب کاربر :
+        </label>
+
+        <select
+          [ngModel]="selectedUserId()"
+          (ngModelChange)="selectedUserId.set($event)"
+          name="userSelect"
+          style="
+            padding: 5px;
+            font-family: Tahoma, Arial;
+            font-size: 14px;
+            width: 100%;
+          ">
+
+          <option
+            value=""
+            disabled>
+
+            یک کاربر انتخاب کنید
+
+          </option>
+
+          <option
+            *ngFor="let user of users()"
+            [value]="user.id">
+
+            {{ user.name }}
+            {{ user.family }}
+            -
+            {{ user.mobileNumber }}
+
+          </option>
+
+        </select>
+
+      </div>
+
+      <!-- CAR -->
+
+      <div class="form-group">
+
+        <label>
+          انتخاب ماشین :
+        </label>
+
+        <select
+          [ngModel]="selectedCarId()"
+          (ngModelChange)="selectedCarId.set(+$event)"
+          name="carSelect"
+          style="
+            padding: 5px;
+            font-family: Tahoma, Arial;
+            font-size: 14px;
+            width: 100%;
+          ">
+
+          <option
+            value=""
+            disabled>
+
+            یک ماشین انتخاب کنید
+
+          </option>
+
+          <option
+            *ngFor="let car of cars()"
+            [value]="car.id">
+
+            {{ car.name }}
+
+          </option>
+
+        </select>
+
+      </div>
+
+      <!-- DATE -->
+
+      <div class="form-group">
+
+        <label>
+          تاریخ شروع اقساط:
+        </label>
+
+        <ng-persian-datepicker
+          [dateInitValue]="false"
+          [dateFormat]="'YYYY/MM/DD'"
+          (dateOnSelect)="onDateSelect($event)">
+
+          <input
+            type="text"
+            readonly
+            class="gold-date-picker"
+            [value]="persianDate()"
+            placeholder="انتخاب تاریخ" />
+
+        </ng-persian-datepicker>
+
+      </div>
+
+      <!-- ORDER ITEM -->
+
+      <div *ngIf="createDto().orderItem">
+
+        <div class="form-group">
+
+          <label>
+            قیمت خودرو
+          </label>
+
+          <input
+            type="text"
+            numberFormat
+            [ngModel]="createDto().orderItem.carPrice"
+            (ngModelChange)="createDto().orderItem.carPrice = $event"
+            name="carPrice" />
+
+        </div>
+
+        <div class="form-group">
+
+          <label>
+            پیش‌پرداخت
+          </label>
+
+          <input
+            type="text"
+            numberFormat
+            [ngModel]="createDto().orderItem.prePayment"
+            (ngModelChange)="createDto().orderItem.prePayment = $event"
+            name="prePayment" />
+
+        </div>
+
+        <div class="form-group">
+
+          <label>
+            تعداد ماه اقساط
+          </label>
+
+          <input
+            type="number"
+            [ngModel]="createDto().orderItem.time"
+            (ngModelChange)="createDto().orderItem.time = $event"
+            name="installmentMonths" />
+
+        </div>
+
+        <div class="result-box">
+
+          مبلغ هر قسط :
+
+          <span class="gold">
+
+            {{ installmentPrice() }}
+
+            تومان
+
+          </span>
+
+        </div>
+
+      </div>
+
+      <!-- SAVE -->
+
+      <button
+        type="button"
+        class="save-btn"
+        style="margin: 0 270px;"
+        (click)="createOrder()">
+
+        ذخیره
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ORDER ITEM MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isOrderItemModal()">
+
+  <div class="modal-container lg">
+
+    <div class="modal-header">
+
+      <span>
+        جزئیات فاکتور
+      </span>
+
+      <button
+        class="close-btn"
+        (click)="closeOrderItemModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <app-orderItem
+        [orderId]="selectedOrderId()">
+      </app-orderItem>
+
+    </div>
+
+  </div>
+
+</div>

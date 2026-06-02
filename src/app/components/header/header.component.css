@@ -1,0 +1,245 @@
+:host {
+  --primary-color: #c8a156;
+  --text-dark: #333;
+  --bg-white: #ffffff;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  background: var(--bg-white);
+  z-index: 1000;
+  border-bottom: 1px solid #f0f0f0;
+  direction: rtl;
+}
+
+.nav-container {
+  max-width: 1300px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+}
+
+.nav-left-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-logo {
+  width: 55px;
+  height: 55px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.insta-link {
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+.insta-link:hover {
+  transform: translateY(-2px);
+}
+
+.mobile-brand {
+  display: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text-dark);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: var(--primary-color);
+}
+
+.menu-header-logo {
+  display: none;
+}
+
+.auth-wrapper {
+  list-style: none;
+}
+
+.auth-btn {
+  border: 1.5px solid var(--primary-color);
+  background: transparent;
+  padding: 7px 22px;
+  border-radius: 25px;
+  cursor: pointer;
+  color: var(--primary-color);
+  font-family: inherit;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.auth-btn:hover {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.user-name {
+  font-weight: bold;
+  color: var(--text-dark);
+}
+
+.menu-toggle {
+  display: none;
+  cursor: pointer;
+  z-index: 1100;
+}
+
+.icon-close {
+  display: none;
+}
+
+.menu-toggle.open .icon-menu {
+  display: none;
+}
+
+.menu-toggle.open .icon-close {
+  display: block;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+  .nav-container {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    padding: 8px 14px;
+    min-height: 76px;
+    position: relative;
+  }
+
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    justify-self: right;
+    grid-column: 1;
+  }
+
+  .mobile-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    grid-column: 2;
+    text-align: center;
+  }
+
+  .mobile-brand-name {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 6px;
+    white-space: nowrap;
+  }
+
+  .mobile-brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid var(--primary-color);
+  }
+
+  .nav-left-group {
+    grid-column: 3;
+    justify-self: left;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0;
+  }
+
+  .nav-left-group .nav-logo {
+    display: none;
+  }
+
+  .insta-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .insta-link svg {
+    width: 27px;
+    height: 27px;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: #ffffff;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 60px 20px;
+    gap: 25px;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -8px 0 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-links.open {
+    right: 0;
+  }
+
+  .nav-links li {
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-links a {
+    font-size: 1.1rem;
+    display: block;
+    width: 100%;
+  }
+
+  .menu-header-logo {
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  .menu-header-logo img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    object-fit: cover;
+  }
+
+  .auth-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .auth-btn {
+    display: none;
+    width: 80%;
+  }
+}

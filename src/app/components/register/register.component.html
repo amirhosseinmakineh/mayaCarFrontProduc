@@ -1,0 +1,51 @@
+
+<div class="register-container" style="margin-top: 100px;">
+    <div class="register-card">
+        <div class="brand-header">
+            <div class="logo"><span>𝓶𝓪𝔂𝓪𝓴𝓱𝓸𝓭𝓻𝓸</span></div>
+        </div>
+        <div class="form-body">
+            <div class="form-title"> ثبت‌ نام </div>
+
+            <form >
+                <div class="row-2cols">
+                    <div class="input-group">
+                        <label>نام</label>
+                        <input type="text" placeholder="مثال: رضا" required [(ngModel)]="dto.name" name="name">
+                    </div>
+                    <div class="input-group">
+                        <label>نام خانوادگی</label>
+                        <input type="text" placeholder="مثال: کریمی" required [(ngModel)]="dto.family" name="family">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>آدرس ایمیل</label>
+                    <input type="email" placeholder="example@mayakar.com" required [(ngModel)]="dto.email" name="email">
+                </div>
+
+                <div class="input-group">
+                    <label>شماره موبایل</label>
+                    <input type="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹" required [(ngModel)]="dto.mobileNumber" name="mobileNumber">
+                </div>
+
+                <div class="row-2cols">
+                    <div class="input-group">
+                        <label>رمز عبور</label>
+                        <input type="password" placeholder="••••••••" required [(ngModel)]="dto.password" name="password">
+                    </div>
+                    <div class="input-group">
+                        <label>تکرار رمز عبور</label>
+                        <input type="password" placeholder="••••••••" required [(ngModel)]="dto.rePassword" name="rePassword">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-gold" (click)="registerUser()"> ساخت حساب کاربری </button>
+
+                <div class="login-link">
+                  <a (click)="onGoToLogin()" style="cursor: pointer;"> قبلاً عضو شده‌اید؟</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

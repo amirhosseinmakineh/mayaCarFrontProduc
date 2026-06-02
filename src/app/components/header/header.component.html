@@ -1,0 +1,53 @@
+<ng-container *ngIf="showHeader">
+  <nav class="navbar">
+    <div class="nav-container">
+
+      <div class="menu-toggle" [class.open]="menuOpen" (click)="menuOpen = !menuOpen">
+        <svg class="icon-menu" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c8a156" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+
+        <svg class="icon-close" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c8a156" stroke-width="2">
+          <line x1="5" y1="5" x2="19" y2="19"></line>
+          <line x1="19" y1="5" x2="5" y2="19"></line>
+        </svg>
+      </div>
+
+      <div class="mobile-brand">
+        <div class="mobile-brand-name">𝓶𝓪𝔂𝓪𝓴𝓱𝓸𝓭𝓻𝓸</div>
+            <a href="/"> <img src="/logomain.jfif" class="mobile-brand-logo" alt="logo" /></a>
+      </div>
+
+      <div class="nav-left-group">
+        <a class="insta-link" href="https://instagram.com" target="_blank">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c8a156" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+            <path d="M16 11.37a4 4 0 1 1-7.9 1.26 4 4 0 0 1 7.9-1.26z"></path>
+            <line x1="17.5" y1="6.5" x2="17.51"></line>
+          </svg>
+        </a>
+
+        <img src="/logomain.jfif" class="nav-logo" alt="logo" />
+      </div>
+
+      <ul class="nav-links" [class.open]="menuOpen">
+        <li class="menu-header-logo">
+          <img src="/logomain.jfif" width="80" alt="logo">
+        </li>
+
+        <li><a href="#home" (click)="menuOpen=false">خانه</a></li>
+        <li><a href="#about" (click)="menuOpen=false">درباره ما</a></li>
+        <li><a routerLink="/carList" (click)="menuOpen=false">خودروها</a></li>
+        <li><a href="#footer" (click)="menuOpen=false">تماس</a></li>
+
+        @if(!isLogin){
+          <li><button class="auth-btn" routerLink="/register">ثبت نام</button></li>
+          <li><button class="auth-btn" routerLink="login">ورود</button></li>
+        }
+      </ul>
+
+    </div>
+  </nav>
+</ng-container>

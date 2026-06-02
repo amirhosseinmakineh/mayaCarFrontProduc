@@ -1,0 +1,90 @@
+<div *ngIf="isLoading" class="loader">
+  در حال دریافت اطلاعات...
+</div>
+
+<div
+  class="details-container"
+  *ngIf="!isLoading && car">
+
+  <!-- بخش اصلی -->
+  <section class="car-hero">
+
+    <div class="image-wrapper">
+      <img
+        [src]="imageBaseUrl + car.imageName"
+        [alt]="car.name">
+    </div>
+
+    <div class="hero-info">
+
+      <span class="badge">
+        {{car.categoryName}}
+      </span>
+
+      <h1>{{car.name}}</h1>
+
+      <p class="brand-name">
+        {{car.company}}
+      </p>
+
+    </div>
+
+  </section>
+
+  <!-- specs -->
+
+  <section class="specs-section">
+
+    <div class="spec-item">
+      <label>تیپ</label>
+      <span>{{car.tipName}}</span>
+    </div>
+
+    <div class="spec-item">
+      <label>مدل</label>
+      <span>{{car.carModeName}}</span>
+    </div>
+
+    <div class="spec-item">
+      <label>سال ساخت</label>
+      <span>{{car.startDate}}</span>
+    </div>
+
+  </section>
+
+  <!-- desc -->
+
+  <section class="desc-section">
+
+    <h3>درباره این خودرو</h3>
+
+    <p>{{car.description}}</p>
+
+  </section>
+
+  <!-- footer -->
+
+  <footer class="action-footer">
+
+    <div class="price-box">
+
+      <small>قیمت نهایی</small>
+
+      <div class="price-val">
+        {{ car.price | thousandSeparator:'fa-IR' }}
+        <span>تومان</span>
+      </div>
+
+    </div>
+
+    <button class="btn-gold">
+
+      <a href="https://web.bale.ai/chat?uid=1835365862">
+        تماس با کارشناسی
+      </a>
+
+    </button>
+
+  </footer>
+
+</div>

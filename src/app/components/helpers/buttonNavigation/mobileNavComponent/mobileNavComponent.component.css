@@ -1,0 +1,170 @@
+/* مخفی کردن در دسکتاپ */
+.mobile-nav-container {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-nav-container {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    direction: rtl; /* جهت‌دهی راست به چپ برای زبان فارسی */
+  }
+
+  /* بار اصلی پایین صفحه */
+  .bottom-bar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #ffffff;
+    height: 70px;
+    border-top: 1px solid rgba(200, 161, 86, 0.2);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #7a7a7a;
+    text-decoration: none;
+    font-size: 11px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .gold-icon {
+    width: 24px;
+    height: 24px;
+    fill: #c8a156; /* طلایی استاندارد */
+    margin-bottom: 5px;
+    transition: all 0.3s ease;
+  }
+
+  .nav-item span {
+    font-weight: 500;
+  }
+
+  /* حالت فعال یا کلیک شده */
+  .nav-item:active, .nav-item.active {
+    color: #c8a156;
+  }
+
+  .nav-item:active .gold-icon {
+    transform: translateY(-3px);
+  }
+
+  /* پنل کشویی پروفایل */
+  .profile-drawer {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-radius: 25px 25px 0 0;
+    padding: 25px;
+    transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+  }
+
+  .profile-drawer.active {
+    bottom: 70px; /* دقیقا بالای بار پایین قرار می‌گیرد */
+  }
+
+  /* هدر دراور */
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .welcome-text {
+    font-size: 11px;
+    color: #999;
+  }
+
+  .user-name {
+    color: #333;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .close-btn {
+    background: #f5f5f5;
+    border: none;
+    color: #666;
+    font-size: 24px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .drawer-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* دکمه شیک و براق طلایی برای داشبورد */
+  .dashboard-gold-btn {
+    background: linear-gradient(135deg, #c8a156 0%, #e0c080 100%);
+    color: white !important;
+    text-align: center;
+    padding: 15px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(200, 161, 86, 0.3);
+    border: none;
+    transition: transform 0.2s ease;
+  }
+
+  .dashboard-gold-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* دکمه خروج */
+  .logout-link-btn {
+    background: transparent;
+    border: none;
+    color: #ef5350; /* قرمز ملایم */
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .logout-link-btn svg {
+    transition: transform 0.3s ease;
+  }
+
+  .logout-link-btn:active svg {
+    transform: translateX(5px);
+  }
+}

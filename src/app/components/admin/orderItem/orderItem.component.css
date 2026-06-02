@@ -1,0 +1,348 @@
+/* ========== RESET & BASE ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #f8f5ee;
+  font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+  direction: rtl;
+  padding: 30px 20px;
+  overflow-x: hidden;
+}
+
+/* ========== TABLE WRAPPER ========== */
+.table-wrap {
+  border: 1px solid #f0e2ca;
+  border-radius: 24px;
+  padding: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.table-title {
+  font-weight: 800;
+  color: #b8860b;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+  padding: 8px 0 4px;
+}
+
+/* ========== TABLE ========== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.85rem;
+  direction: rtl;
+  min-width: 680px;
+}
+
+.table thead th {
+  background: #fffaf0;
+  color: #b8860b;
+  font-weight: 800;
+  border-bottom: 2px solid #f3e1b3;
+  padding: 16px 12px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  text-align: center;
+  width: 100px;
+}
+
+.table tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f7f0e2;
+  vertical-align: middle;
+  text-align: center;
+  color: #2e2a24;
+  font-size: 0.85rem;
+}
+
+.table tbody tr:hover td {
+  background-color: #fffcf5;
+}
+
+.th-actions {
+  width: 170px;
+}
+
+.td-actions {
+  width: 170px;
+}
+
+.td-brand {
+  font-weight: 800;
+  color: #c9a227;
+}
+
+/* ========== ACTION BUTTONS ========== */
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: none;
+  border-radius: 40px;
+  padding: 8px 20px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  min-width: 82px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+}
+
+.btn-yes {
+  background: #f0f9ef;
+  color: #2c6e2c;
+  border: 1px solid rgba(44, 110, 44, 0.3);
+}
+
+.btn-yes:hover {
+  background: #e2f5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(44, 110, 44, 0.12);
+}
+
+.btn-no {
+  background: #fff3f0;
+  color: #c72a2a;
+  border: 1px solid rgba(199, 42, 42, 0.25);
+}
+
+.btn-no:hover {
+  background: #ffe4e0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(199, 42, 42, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========== BADGES ========== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: 60px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  background: #fff7e0;
+  color: #b8860b;
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+/* ========== EMPTY STATE ========== */
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #b8a77a;
+  font-weight: 500;
+  background: #fefcf8;
+  border-radius: 20px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+/* اگر می‌خواهی خالی فقط وقتی ردیفی نیست نشان داده شود، در HTML شرط بگذار */
+.empty.hidden {
+  display: none;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  body {
+    padding: 22px 16px;
+  }
+
+  .table-wrap {
+    border-radius: 20px;
+    padding: 5px;
+  }
+
+  .table {
+    min-width: 640px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 12px 10px;
+    font-size: 0.8rem;
+  }
+
+  .btn {
+    padding: 7px 16px;
+    min-width: 74px;
+    font-size: 0.75rem;
+  }
+
+  .badge {
+    padding: 5px 13px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 800px) {
+  body {
+    padding: 16px 12px;
+  }
+
+  .table-wrap {
+    padding: 4px;
+    border-radius: 18px;
+  }
+
+  .table-title {
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+
+  .table {
+    min-width: 600px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+  }
+
+  .btn {
+    padding: 6px 14px;
+    min-width: 68px;
+    font-size: 0.7rem;
+  }
+
+  .badge {
+    padding: 4px 12px;
+    font-size: 0.65rem;
+  }
+
+  .th-actions,
+  .td-actions {
+    width: 150px;
+  }
+
+  .empty {
+    padding: 28px 14px;
+    font-size: 0.82rem;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 550px) {
+  body {
+    padding: 12px 10px;
+  }
+
+  .table-wrap {
+    border-radius: 16px;
+    padding: 4px;
+  }
+
+  .table-title {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding: 6px 4px 2px;
+  }
+
+  .table {
+    min-width: 560px;
+  }
+
+  .actions {
+    gap: 6px;
+  }
+
+  .btn {
+    padding: 5px 10px;
+    min-width: 55px;
+    font-size: 0.68rem;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    font-size: 0.62rem;
+  }
+
+  .th-actions,
+  .td-actions {
+    width: 130px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 9px 7px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 400px) {
+  body {
+    padding: 10px 8px;
+  }
+
+  .table-wrap {
+    border-radius: 14px;
+  }
+
+  .table-title {
+    font-size: 0.88rem;
+    margin-bottom: 14px;
+  }
+
+  .table {
+    min-width: 520px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 8px 6px;
+    font-size: 0.68rem;
+  }
+
+  .actions {
+    gap: 5px;
+  }
+
+  .btn {
+    padding: 5px 9px;
+    min-width: 50px;
+    font-size: 0.64rem;
+  }
+
+  .badge {
+    padding: 3px 9px;
+    font-size: 0.58rem;
+  }
+
+  .th-actions,
+  .td-actions {
+    width: 120px;
+  }
+
+  .empty {
+    padding: 22px 12px;
+    font-size: 0.76rem;
+  }
+}
+

@@ -1,0 +1,151 @@
+<div class="backdrop">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <div class="title">
+        جزئیات فاکتور
+      </div>
+
+      <button
+        type="button"
+        class="icon-btn">
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <div class="table-wrap">
+
+        <div class="table-title">
+          جزئیات آیتم سفارش
+        </div>
+
+        <table class="table">
+
+          <thead>
+
+            <tr>
+
+              <th>
+                قیمت خودرو
+              </th>
+
+              <th>
+                پیش‌پرداخت
+              </th>
+
+              <th>
+                مدت زمان
+              </th>
+
+              <th>
+                قیمت نهایی
+              </th>
+              <th>
+                تاریخ سر رسید 
+              </th>
+
+              <th>
+                وضعیت
+              </th>
+
+              <th
+                class="th-actions"
+                *ngIf="isAdmin()">
+
+                عملیات
+
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr
+              *ngFor="
+                let item of orderItems();
+                trackBy: trackByOrderItem
+              ">
+
+              <td style="width: 150px !important;">
+                {{ item.carPrice | thousandSeparator }}
+              </td>
+
+              <td>
+                {{ item.prePayment | thousandSeparator }}
+              </td>
+
+              <td>
+                {{ item.time }}
+              </td>
+
+              <td>
+                {{ item.price | thousandSeparator:'fa-IR' }}
+              </td>
+              <td>
+                {{item.createOrderItemDate}}
+              </td>
+
+              <td>
+
+                <span
+                  class="badge"
+                  [style.background-color]="
+                    item.isConfirm
+                      ? '#28a745'
+                      : '#dc3545'
+                  "
+                  [style.color]="'#fff'"
+                  [style.padding]="'6px 10px'"
+                  [style.border-radius]="'8px'">
+
+                  {{
+                    item.isConfirm
+                      ? 'تأیید شده'
+                      : 'تأیید نشده'
+                  }}
+
+                </span>
+
+              </td>
+
+              <td *ngIf="isAdmin()">
+
+                <button
+                  type="button"
+                  class="btn btn-yes"
+                  [disabled]="item.isConfirm"
+                  (click)="onConfirmOrderItem(item.orderItemId)">
+
+                  تایید
+
+                </button>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+        <div
+          class="empty"
+          *ngIf="orderItems().length === 0">
+
+          موردی برای نمایش وجود ندارد.
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

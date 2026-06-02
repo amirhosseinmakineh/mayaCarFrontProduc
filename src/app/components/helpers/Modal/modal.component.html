@@ -1,0 +1,29 @@
+<div *ngIf="modal$ | async as modal" class="modal-backdrop" (click)="close()">
+  <div class="modal-container" [ngClass]="modal.size" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <h2>{{ modal.title }}</h2>
+      <button class="close-btn" (click)="close()">&times;</button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <ng-container *ngIf="isTemplateRef(modal.content); else stringContent">
+        <ng-container *ngTemplateOutlet="modal.content"></ng-container>
+      </ng-container>
+      <ng-template #stringContent>{{ modal.content }}</ng-template>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer" *ngIf="modal.buttons?.length">
+      <button *ngFor="let btn of modal.buttons"
+              [ngClass]="btn.style || 'primary'"
+              class="action-btn"
+              (click)="btn.action()">
+        {{ btn.text }}
+      </button>
+    </div>
+
+  </div>
+</div>

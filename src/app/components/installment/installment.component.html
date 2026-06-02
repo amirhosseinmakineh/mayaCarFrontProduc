@@ -1,0 +1,31 @@
+<div class="installment-container" id="installment">
+
+  <h2 class="title">محاسبه اقساط خودرو</h2>
+
+<div class="form-group">
+  <label>قیمت خودرو</label>
+  <input type="text" numberFormat [(ngModel)]="dto.carPrice" name="carPrice">
+</div>
+
+<div class="form-group">
+  <label>پیش‌پرداخت</label>
+  <input type="text" numberFormat [(ngModel)]="dto.prePayment" name="prePayment">
+</div>
+
+<div class="form-group">
+  <label>تعداد ماه اقساط</label>
+  <input type="text" numberFormat [(ngModel)]="dto.time" name="time">
+</div>
+
+
+<button type="button" class="btn" (click)="calculate($event)">
+  محاسبه
+</button>
+
+<div class="result-box">
+    مبلغ هر قسط:
+  <span class="gold">
+    {{ finalPrice | number:'1.0-0' }} تومان
+  </span>
+</div>
+</div>

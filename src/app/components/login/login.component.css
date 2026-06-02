@@ -1,0 +1,253 @@
+
+
+        /* کانتینر اصلی فرم */
+        .register-container {
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* کارت فرم با حاشیه طلایی ظریف */
+        .register-card {
+            background: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(212, 175, 55, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(0px);
+            transition: transform 0.25s ease;
+        }
+
+        .register-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* هدر طلایی */
+        .brand-header {
+            background: linear-gradient(120deg, #fff8ed, #ffffff);
+            padding: 2rem 2rem 1.2rem;
+            text-align: center;
+            border-bottom: 2px solid #e9c46a;
+        }
+
+        .logo {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #c9a03d, #b8860b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.4rem;
+            display: inline-block;
+        }
+
+        .logo span {
+            font-size: 2rem;
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            color: #b8860b;
+        }
+
+        .brand-sub {
+            color: #7a5c2e;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-top: 1px dashed #f1dcb0;
+            display: inline-block;
+            padding-top: 0.5rem;
+        }
+
+        /* بدنه فرم */
+        .form-body {
+            padding: 2rem 2rem 2rem 2rem;
+        }
+
+        .form-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: #2c2b28;
+            text-align: center;
+        }
+
+        .form-sub {
+            text-align: center;
+            color: #8b7a5b;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #f5e5c8;
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            padding-bottom: 0.6rem;
+        }
+
+        /* فیلدهای ورودی */
+        .input-group {
+            margin-bottom: 1.4rem;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #ac8e4a;
+            letter-spacing: 0.3px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #eedcb0;
+            border-radius: 1.2rem;
+            outline: none;
+            background: #fefcf7;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+            background: #ffffff;
+        }
+
+        /* دکمه ثبت‌نام طلایی */
+        .btn-gold {
+            background: linear-gradient(95deg, #e9c46a, #d4af37);
+            border: none;
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 2.5rem;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2e241a;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.8rem;
+            box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25);
+            font-family: inherit;
+        }
+
+        .btn-gold:hover {
+            background: linear-gradient(95deg, #dbb83c, #c49b1f);
+            transform: scale(0.98);
+            box-shadow: 0 3px 8px rgba(180, 130, 30, 0.3);
+        }
+
+        /* لینک ورود */
+        .login-link {
+            text-align: center;
+            margin-top: 1.6rem;
+            font-size: 0.85rem;
+            color: #937a42;
+        }
+
+        .login-link a {
+            color: #b47c2e;
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px dashed #ecca6c;
+        }
+
+        .login-link a:hover {
+            color: #8b5e1c;
+            border-bottom-color: #b47c2e;
+        }
+
+        /* شرایط و قوانین */
+        .terms {
+            margin-top: 1.2rem;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #b29a62;
+        }
+
+        /* نمایش دو ستونه برای نام و نام خانوادگی (ریسپانسیو) */
+        .row-2cols {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .row-2cols .input-group {
+            flex: 1;
+            min-width: 130px;
+        }
+
+        /* کاملاً ریسپانسیو */
+        @media (max-width: 550px) {
+            .form-body {
+                padding: 1.5rem;
+            }
+            .brand-header {
+                padding: 1.5rem;
+            }
+            .logo {
+                font-size: 2.2rem;
+            }
+            .form-title {
+                font-size: 1.5rem;
+            }
+            .row-2cols {
+                flex-direction: column;
+                gap: 0.2rem;
+            }
+            .register-card {
+                border-radius: 1.5rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .btn-gold {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* میکرو انیمیشن زیبا بر روی فیلدها */
+        .input-group input {
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        /* استایل چک‌باکس تطابق با تم طلایی */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin: 1rem 0 0.5rem;
+            font-size: 0.8rem;
+            color: #7f6a3c;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            accent-color: #d4af37;
+            margin: 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #f3e5ce;
+            margin: 1rem 0;
+        }
+
+        /* آیکون‌های کوچک تزئینی (دایره‌های طلایی در پس‌زمینه) */
+        .register-card {
+            position: relative;
+        }
+        /* المان‌های تزئینی غیر مزاحم */
+        .decor-bg {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(212,175,55,0.05) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
