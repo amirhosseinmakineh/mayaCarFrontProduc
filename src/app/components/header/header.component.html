@@ -17,11 +17,11 @@
 
       <div class="mobile-brand">
         <div class="mobile-brand-name">𝓶𝓪𝔂𝓪𝓴𝓱𝓸𝓭𝓻𝓸</div>
-            <a href="/"> <img src="/logomain.jfif" class="mobile-brand-logo" alt="logo" /></a>
+            <a routerLink="/"> <img src="/logomain.jfif" class="mobile-brand-logo" alt="logo" /></a>
       </div>
 
       <div class="nav-left-group">
-        <a class="insta-link" href="https://instagram.com" target="_blank">
+        <a class="insta-link" href="https://instagram.com/maya.khodro" target="_blank">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c8a156" stroke-width="2">
             <rect x="2" y="2" width="20" height="20" rx="5"></rect>
             <path d="M16 11.37a4 4 0 1 1-7.9 1.26 4 4 0 0 1 7.9-1.26z"></path>
@@ -37,10 +37,10 @@
           <img src="/logomain.jfif" width="80" alt="logo">
         </li>
 
-        <li><a href="#home" (click)="menuOpen=false">خانه</a></li>
-        <li><a href="#about" (click)="menuOpen=false">درباره ما</a></li>
+        <li><a routerLink="/" (click)="menuOpen=false">خانه</a></li>
+        <li><a routerLink="/about-us" (click)="menuOpen=false">درباره ما</a></li>
         <li><a routerLink="/carList" (click)="menuOpen=false">خودروها</a></li>
-        <li><a href="#footer" (click)="menuOpen=false">تماس</a></li>
+        <li><a routerLink="/contact-us" (click)="menuOpen=false">تماس با ما</a></li>
 
         @if(!isLogin){
           <li><button class="auth-btn" routerLink="/register">ثبت نام</button></li>
