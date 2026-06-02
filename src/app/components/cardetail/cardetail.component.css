@@ -46,7 +46,7 @@
 .hero-info h1 {
   margin: 10px 0;
   font-size: 2rem;
-  color: #222;
+  color: #5f4714;
   line-height: 1.3;
 }
 
@@ -81,7 +81,7 @@
 
 .spec-item span {
   font-weight: bold;
-  color: #333;
+  color: #5f4714;
   word-break: break-word;
 }
 
