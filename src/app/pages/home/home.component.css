@@ -161,15 +161,21 @@
   box-shadow: 0 30px 60px rgba(212, 175, 55, 0.24);
 }
 
-.cars-banner .overlay {
+.cars-banner .cars-banner-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 249, 239, 0.28) 0%, rgba(212, 175, 55, 0.35) 100%);
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(30, 20, 5, 0.82) 0%, rgba(86, 58, 13, 0.58) 45%, rgba(30, 20, 5, 0.24) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.42) 100%);
   transition: background 0.3s ease;
+  pointer-events: none;
 }
 
-.cars-banner:hover .overlay {
-  background: linear-gradient(180deg, rgba(255, 249, 239, 0.18) 0%, rgba(212, 175, 55, 0.25) 100%);
+.cars-banner:hover .cars-banner-overlay {
+  background:
+    linear-gradient(90deg, rgba(30, 20, 5, 0.88) 0%, rgba(86, 58, 13, 0.64) 45%, rgba(30, 20, 5, 0.28) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.48) 100%);
 }
 
 .banner-content {
@@ -180,20 +186,39 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: #fff;
+  color: #fff !important;
   text-align: center;
-  padding: 20px;
+  padding: 28px;
+}
+
+.banner-content,
+.banner-content * {
+  color: #ffffff !important;
+}
+
+.banner-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d4af37, #b8860b);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  font-weight: 900;
+  color: #ffffff !important;
 }
 
 .banner-content h2 {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #ffffff;
-  text-shadow: 0 4px 15px rgba(212, 175, 55, 0.35);
+  color: #ffffff !important;
+  text-shadow: 0 5px 20px rgba(0, 0, 0, 0.55);
 }
 
 .banner-content h2 span {
-  color: #f7d460;
+  color: #ffffff !important;
 }
 
 .banner-content p {
@@ -201,8 +226,9 @@
   margin-bottom: 2rem;
   max-width: 600px;
   line-height: 1.6;
-  opacity: 0.95;
-  color: #fffdf7;
+  opacity: 1;
+  color: #ffffff !important;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.48);
 }
 
 .explore-btn {
@@ -211,8 +237,8 @@
   border: none;
   font-size: 1.1rem;
   font-weight: 700;
-  background: linear-gradient(45deg, #d4af37, #f7d460);
-  color: var(--gold-dark);
+  background: linear-gradient(45deg, #d4af37, #b8860b);
+  color: #ffffff !important;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
@@ -221,7 +247,7 @@
 .explore-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 25px rgba(212, 175, 55, 0.45);
-  background: #fff;
+  background: linear-gradient(45deg, #b8860b, #d4af37);
 }
 
 /* ریسپانسیو */
@@ -525,7 +551,7 @@
 
 .primary-btn {
   background: linear-gradient(135deg, var(--gold), #b8860b);
-  color: var(--gold-dark);
+  color: #ffffff !important;
   border: none;
 }
 
@@ -536,7 +562,7 @@
 }
 
 .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
-.secondary-btn:hover { background: var(--gold); color: var(--gold-dark); }
+.secondary-btn:hover { background: var(--gold); color: #ffffff !important; }
 
 /* ========== RESPONSIVE MEDIA QUERIES (موبایل و تبلت) ========== */
 
