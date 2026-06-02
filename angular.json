@@ -31,6 +31,16 @@
             },
             "ssr": {
               "entry": "src/server.ts"
+            },
+            "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": true
+              },
+              "fonts": {
+                "inline": false
+              }
             }
           },
           "configurations": {
