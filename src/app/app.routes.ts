@@ -18,10 +18,14 @@ import { InstallmentComponent } from "./components/installment/installment.compo
 import path from "path";
 import { Component } from "@angular/core";
 import { CardetailComponent } from "./components/cardetail/cardetail.component";
+import { AboutUsComponent } from "./pages/about-us/about-us.component";
+import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
 
 export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: '', component: HomeComponent },
+  { path: 'about-us', component: AboutUsComponent },
+  { path: 'contact-us', component: ContactUsComponent },
   {path : 'login',component : LoginComponent},
    {
     path: 'adminDashboard',
