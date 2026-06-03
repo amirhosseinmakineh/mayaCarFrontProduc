@@ -16,6 +16,8 @@
 
   </div>
 
+  <div class="table-wrapper">
+
   <table class="custom-table">
 
     <thead>
@@ -62,8 +64,13 @@
 
         <td class="actions">
 
-          <button class="delete-btn">
+          <button
+            class="delete-btn"
+            type="button"
+            (click)="openDeleteOrderModal(order)">
+
             حذف
+
           </button>
 
           <button
@@ -81,6 +88,73 @@
     </tbody>
 
   </table>
+
+  </div>
+
+</div>
+
+
+
+<!-- DELETE ORDER MODAL -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="isDeleteOrderModal()">
+
+  <div class="modal-container sm">
+
+    <div class="modal-header">
+
+      <span>
+        حذف فاکتور
+      </span>
+
+      <button
+        class="close-btn"
+        type="button"
+        (click)="closeDeleteOrderModal()">
+
+        ×
+
+      </button>
+
+    </div>
+
+    <div class="modal-body">
+
+      <p class="delete-text">
+        آیا از حذف فاکتور
+        <strong>{{ selectedOrder()?.userName }}</strong>
+        برای خودروی
+        <strong>{{ selectedOrder()?.carName }}</strong>
+        مطمئن هستید؟
+      </p>
+
+      <div class="delete-action-modal">
+
+        <button
+          class="yes-btn"
+          type="button"
+          (click)="deleteOrder()">
+
+          بله، حذف شود
+
+        </button>
+
+        <button
+          class="no-btn"
+          type="button"
+          (click)="closeDeleteOrderModal()">
+
+          خیر
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 
