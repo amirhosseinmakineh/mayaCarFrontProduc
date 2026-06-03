@@ -75,6 +75,7 @@ export class OrderComponent implements OnInit {
   // =========================
 
   isCreateOrderModal = signal(false);
+  isDeleteOrderModal = signal(false);
   isOrderItemModal = signal(false);
 
   // =========================
@@ -85,6 +86,7 @@ export class OrderComponent implements OnInit {
   selectedCarId = signal<number>(0);
 
   selectedOrderId = signal<number>(0);
+  selectedOrder = signal<Order | null>(null);
 
   // =========================
   // DATE
@@ -149,7 +151,6 @@ export class OrderComponent implements OnInit {
   // =========================
 
   loadOrders(): void {
-debugger;
     this.service.getOrders().subscribe({
 
       next: (res: Result<Order[]>) => {
@@ -320,6 +321,63 @@ debugger;
   closeCreateOrderModal(): void {
 
     this.isCreateOrderModal.set(false);
+
+  }
+
+  openDeleteOrderModal(order: Order): void {
+
+    this.selectedOrder.set(order);
+
+    this.isDeleteOrderModal.set(true);
+
+  }
+
+  closeDeleteOrderModal(): void {
+
+    this.isDeleteOrderModal.set(false);
+
+    this.selectedOrder.set(null);
+
+  }
+
+  deleteOrder(): void {
+
+    const order = this.selectedOrder();
+
+    if (!order) {
+      return;
+    }
+
+    this.service.deleteOrder(order.id).subscribe({
+
+      next: res => {
+
+        if (res && !res.isSuccess) {
+
+          this.toastr.error(res.message);
+
+          return;
+        }
+
+        this.toastr.success(
+          res?.message || 'فاکتور با موفقیت حذف شد'
+        );
+
+        this.closeDeleteOrderModal();
+
+        this.loadOrders();
+
+      },
+
+      error: () => {
+
+        this.toastr.error(
+          'خطا در حذف فاکتور'
+        );
+
+      }
+
+    });
 
   }
 

@@ -25,7 +25,6 @@ export class AdminDashboardComponent implements OnInit {
   constructor() {}
 
 ngOnInit(): void {
-debugger;
   const token = localStorage.getItem('token');
 
   if (!token) {
@@ -67,15 +66,13 @@ const payload = JSON.parse(atob(base64));
 
 
   toggleSidebar() {
-    debugger;
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
  goToSection(section: 'users'| 'cars'|'category' | 'company' | 'model' | 'tip' | 'order') {
 
   this.activeSection = section;
-  debugger;
-switch (section) {
+  switch (section) {
   case 'users':
     this.pageTitle = 'مدیریت کاربران';
     this.router.navigate(['/adminDashboard/userManagment']);

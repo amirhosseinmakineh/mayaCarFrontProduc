@@ -55,7 +55,6 @@ export class AdminService {
   }
 
   getCars(): Observable<Car[]> {
-    debugger;
     return this.client.get<Car[]>(`${this.baseUrl}/car`);
   }
 
@@ -143,8 +142,10 @@ deleteTip(id: number): Observable<Result<void>> {
 createOrder(dto: CreateOrder): Observable<Result<string>> {
   return this.client.post<Result<string>>(`${this.baseUrl}/Order`, dto);
 }
+deleteOrder(id: number): Observable<Result<string>> {
+  return this.client.delete<Result<string>>(`${this.baseUrl}/Order/${id}`);
+}
 getOrders() : Observable<Result<Order[]>>{
-  debugger;
   return this.client.get<Result<Order[]>>(`${this.baseUrl}/Order`);
 }
 getOrderItems(orderId: number): Observable<Result<OrderItem[]>> {
