@@ -72,26 +72,26 @@
                 trackBy: trackByOrderItem
               ">
 
-              <td style="width: 150px !important;">
+              <td data-label="قیمت خودرو">
                 {{ item.carPrice | thousandSeparator }}
               </td>
 
-              <td>
+              <td data-label="پیش‌پرداخت">
                 {{ item.prePayment | thousandSeparator }}
               </td>
 
-              <td>
+              <td data-label="مدت زمان">
                 {{ item.time }}
               </td>
 
-              <td>
+              <td data-label="قیمت نهایی">
                 {{ item.price | thousandSeparator:'fa-IR' }}
               </td>
-              <td>
+              <td data-label="تاریخ سر رسید">
                 {{item.createOrderItemDate}}
               </td>
 
-              <td>
+              <td data-label="وضعیت">
 
                 <span
                   class="badge"
@@ -114,7 +114,7 @@
 
               </td>
 
-              <td *ngIf="isAdmin()">
+              <td data-label="عملیات" *ngIf="isAdmin()">
 
                 <button
                   type="button"

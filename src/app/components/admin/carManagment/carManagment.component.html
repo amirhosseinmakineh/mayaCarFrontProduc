@@ -48,23 +48,23 @@
 
         <tr *ngFor="let item of cars()">
 
-          <td>{{ item.name }}</td>
+          <td data-label="اسم ماشین">{{ item.name }}</td>
 
-          <td>{{ item.carModeName }}</td>
+          <td data-label="مدل">{{ item.carModeName }}</td>
 
-          <td>{{ item.categoryName }}</td>
+          <td data-label="دسته بندی">{{ item.categoryName }}</td>
 
-          <td>{{ item.tipName }}</td>
+          <td data-label="تیپ">{{ item.tipName }}</td>
 
-          <td>{{ item.company }}</td>
+          <td data-label="شرکت">{{ item.company }}</td>
 
-          <td>{{ item.startDate }}</td>
+          <td data-label="سال تولید">{{ item.startDate }}</td>
 
-          <td>
+          <td data-label="قیمت">
             {{ item.price | thousandSeparator:'fa-IR' }}
           </td>
 
-          <td>
+          <td data-label="عکس">
 
             <img
               class="car-image"
@@ -76,14 +76,16 @@
 
           </td>
 
-          <td>{{ item.description }}</td>
+          <td data-label="توضیحات">{{ item.description }}</td>
 
-          <td class="actions">
+          <td class="actions" data-label="عملیات">
 
             <!-- EDIT -->
 
             <a
               class="edit-btn"
+              aria-label="ویرایش"
+              title="ویرایش"
               (click)="openEdit(item)">
 
               <svg
@@ -103,6 +105,8 @@
 
             <a
               class="delete-btn"
+              aria-label="حذف"
+              title="حذف"
               (click)="openDelete(item)">
 
               <svg

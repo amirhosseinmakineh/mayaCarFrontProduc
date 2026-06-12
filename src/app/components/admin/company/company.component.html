@@ -38,13 +38,13 @@
       <tr
         *ngFor="let company of companies(); trackBy: trackByCompany">
 
-        <td>
+        <td data-label="نام">
 
           {{ company.name }}
 
         </td>
 
-        <td class="actions">
+        <td class="actions" data-label="عملیات">
 
           <button
             class="edit-btn"

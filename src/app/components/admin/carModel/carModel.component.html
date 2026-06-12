@@ -33,11 +33,11 @@
 
       <tr *ngFor="let model of carModels()">
 
-        <td>
+        <td data-label="نام">
           {{ model.name }}
         </td>
 
-        <td class="actions">
+        <td class="actions" data-label="عملیات">
 
           <button
             class="edit-btn"

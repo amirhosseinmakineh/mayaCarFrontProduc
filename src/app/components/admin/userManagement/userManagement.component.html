@@ -50,19 +50,23 @@
 
         <tr *ngFor="let item of users()">
 
-          <td>{{item.name}}</td>
+          <td data-label="نام">{{item.name}}</td>
 
-          <td>{{item.family}}</td>
+          <td data-label="نام خانوادگی">{{item.family}}</td>
 
-          <td>{{item.email}}</td>
+          <td data-label="ایمیل">{{item.email}}</td>
 
-          <td>{{item.mobileNumber}}</td>
+          <td data-label="شماره تماس">{{item.mobileNumber}}</td>
 
-          <td class="actions">
+          <td class="actions" data-label="عملیات">
 
             <!-- EDIT -->
 
-            <a (click)="openEdit(item)">
+            <a
+              class="edit-btn"
+              aria-label="ویرایش"
+              title="ویرایش"
+              (click)="openEdit(item)">
 
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -81,6 +85,8 @@
 
             <a
               class="delete-btn"
+              aria-label="حذف"
+              title="حذف"
               (click)="openDelete(item)">
 
               <svg
