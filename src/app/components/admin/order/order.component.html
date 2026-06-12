@@ -46,23 +46,23 @@
           trackBy: trackByOrder
         ">
 
-        <td>
+        <td data-label="نام کاربری">
           {{ order.userName }}
         </td>
 
-        <td>
+        <td data-label="نام ماشین">
           {{ order.carName }}
         </td>
 
-        <td>
+        <td data-label="نقش کاربر">
           {{ order.roleName }}
         </td>
 
-        <td>
+        <td data-label="تاریخ ایجاد فاکتور">
           {{ order.createOrderDate }}
         </td>
 
-        <td class="actions">
+        <td class="actions" data-label="عملیات">
 
           <button
             class="delete-btn"

@@ -46,13 +46,13 @@
         <tr
           *ngFor="let category of categories(); trackBy: trackByCategory">
 
-          <td class="name-column">
+          <td class="name-column" data-label="نام">
 
             {{ category.name }}
 
           </td>
 
-          <td>
+          <td data-label="عملیات">
 
             <div class="actions">
 
