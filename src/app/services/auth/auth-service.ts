@@ -8,8 +8,8 @@ import { RegisterDto } from "../../models/user/registerDto";
   providedIn: 'root'
 })
 export class AuthService {
-  //private readonly baseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/api';
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/api';
+  //private readonly baseUrl = 'http://localhost:8080/api';
   private TOKEN_KEY = 'token';
   private http = inject(HttpClient);
 
