@@ -55,9 +55,8 @@ private readonly cdr =
 
   // ================= IMAGE =================
 
-  //imageBaseUrl = 'http://localhost:8080';
   imageBaseUrl =
-    'https://mayakhoddrobackend-mayacar.runflare.run/';
+    'https://api.mayakhodro.com/';
 
   // ================= INIT =================
 
