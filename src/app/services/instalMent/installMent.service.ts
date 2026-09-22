@@ -8,7 +8,6 @@ import { Observable } from 'rxjs';
 export class InstallmentService {
 
   private readonly baseUrl = 'https://api.mayakhodro.com';
-  //private readonly baseUrl = 'http://localhost:8080';
   constructor(private http: HttpClient) {}
 
   calculate(carPrice: number | null, prePayment: number | null, time: number | null): Observable<number> {
