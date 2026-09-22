@@ -14,7 +14,6 @@ export class CarService {
   private readonly http = inject(HttpClient);
 
   private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  //private readonly baseUrl = 'http://localhost:8080/api';
   constructor() { }
 
   getAllCarsWithFilter(filter: CarFilter): Observable<any> {

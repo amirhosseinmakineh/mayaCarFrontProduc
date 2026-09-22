@@ -64,8 +64,7 @@ implements OnInit {
   // CONSTANTS
   // ======================
 
-  //imageBaseUrl ='http://localhost:8080';
-   imageBaseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/';
+   imageBaseUrl = 'https://api.mayakhodro.com/';
 
   // ======================
   // SIGNALS

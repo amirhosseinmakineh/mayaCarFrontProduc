@@ -9,7 +9,6 @@ import { RegisterDto } from "../../models/user/registerDto";
 })
 export class AuthService {
   private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  //private readonly baseUrl = 'http://localhost:8080/api';
   private TOKEN_KEY = 'token';
   private http = inject(HttpClient);
 
@@ -42,7 +41,6 @@ logout(): void {
   }
 }
 }
-
 
 
 

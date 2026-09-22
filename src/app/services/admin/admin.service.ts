@@ -29,7 +29,6 @@ import { OrderItem } from "../../models/orderItem/orderItem";
 })
 export class AdminService {
   private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  //private readonly baseUrl = 'http://localhost:8080/api';
   private client = inject(HttpClient);
 
   constructor() { }

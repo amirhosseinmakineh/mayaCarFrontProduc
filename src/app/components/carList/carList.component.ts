@@ -79,10 +79,8 @@ implements OnInit {
 
   // ================= Image =================
 
-  //imageBaseUrl = 'http://localhost:8080';
-
   imageBaseUrl =
-    'https://mayakhoddrobackend-mayacar.runflare.run/';
+    'https://api.mayakhodro.com/';
 
   ngOnInit(): void {
 
