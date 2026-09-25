@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class InstallmentService {
 
-  private readonly baseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run';
+  private readonly baseUrl = 'https://api.mayakhodro.com/';
   //private readonly baseUrl = 'http://localhost:8080';
   constructor(private http: HttpClient) {}
 
