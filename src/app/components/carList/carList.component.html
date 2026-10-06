@@ -1,242 +1,109 @@
-<div class="cars-page">
-
-  <!-- ================= MOBILE FILTER SIDEBAR ================= -->
-
-  <aside class="mobile-sidebar">
-
-    <div class="sidebar-title">
-
-      فیلتر خودرو
-
+<main class="cars-page" dir="rtl">
+  <section class="cars-hero">
+    <div>
+      <span class="eyebrow">CARSHOW MARKET</span>
+      <h1>قیمت و مشخصات خودرو</h1>
+      <p>خودروی موردنظرتان را پیدا کنید و جزئیات کامل، قیمت کارخانه و بازار را ببینید.</p>
     </div>
+    <div class="hero-mark" aria-hidden="true">✦</div>
+  </section>
 
-    <div class="filter-group">
-
-      <label>
-        کمپانی
-      </label>
-
-      <select
-        [ngModel]="carFilter().company"
-        (ngModelChange)="updateCompany($event)">
-
-        <option value="">
-          همه کمپانی ها
-        </option>
-
-        <option
-          *ngFor="
-            let company of companies();
-            trackBy: trackByCompany
-          "
-          [value]="company.name">
-
-          {{ company.name }}
-
-        </option>
-
-      </select>
-
-    </div>
-
-    <div class="filter-group">
-
-      <label>
-        حداقل قیمت
-      </label>
-
-      <input
-        type="number"
-        placeholder="مثلا 500000000"
-        [ngModel]="carFilter().minPrice"
-        (ngModelChange)="updateMinPrice($event)">
-
-    </div>
-
-    <div class="filter-group">
-
-      <label>
-        حداکثر قیمت
-      </label>
-
-      <input
-        type="number"
-        placeholder="مثلا 2000000000"
-        [ngModel]="carFilter().maxPrice"
-        (ngModelChange)="updateMaxPrice($event)">
-
-    </div>
-
-    <button
-      class="apply-filter-btn"
-      type="button"
-      (click)="applyFilter()">
-
-      اعمال فیلتر
-
-    </button>
-
-  </aside>
-
-  <!-- ================= CONTENT ================= -->
-
-  <div class="cars-content">
-
-    <!-- ================= DESKTOP FILTER ================= -->
-
-    <div class="desktop-filter-box">
-
-      <div class="filter-group">
-
-        <label>
-          کمپانی
-        </label>
-
-        <select
-          [ngModel]="carFilter().company"
-          (ngModelChange)="updateCompany($event)">
-
-          <option value="">
-            همه کمپانی ها
-          </option>
-
-          <option
-            *ngFor="
-              let company of companies();
-              trackBy: trackByCompany
-            "
-            [value]="company.name">
-
-            {{ company.name }}
-
-          </option>
-
-        </select>
-
+  <section class="filter-shell" aria-label="فیلتر خودرو">
+    <div class="filter-heading">
+      <div>
+        <span class="filter-kicker">جست‌وجوی سریع</span>
+        <h2>فیلتر خودروها</h2>
       </div>
-
-      <div class="filter-group">
-
-        <label>
-          حداقل قیمت
-        </label>
-
-        <input
-          type="number"
-          placeholder="حداقل قیمت"
-          [ngModel]="carFilter().minPrice"
-          (ngModelChange)="updateMinPrice($event)">
-
-      </div>
-
-      <div class="filter-group">
-
-        <label>
-          حداکثر قیمت
-        </label>
-
-        <input
-          type="number"
-          placeholder="حداکثر قیمت"
-          [ngModel]="carFilter().maxPrice"
-          (ngModelChange)="updateMaxPrice($event)">
-
-      </div>
-
-      <button
-        class="apply-filter-btn desktop-btn"
-        type="button"
-        (click)="applyFilter()">
-
-        اعمال فیلتر
-
+      <button class="reset-btn" type="button" *ngIf="hasActiveFilter()" (click)="resetFilter()">
+        پاک کردن فیلترها
       </button>
-
     </div>
 
-    <!-- ================= LOADING ================= -->
+    <div class="filter-grid">
+      <label class="filter-field">
+        <span>برند خودرو</span>
+        <select [ngModel]="carFilter().company" (ngModelChange)="updateCompany($event)">
+          <option value="">همه برندها</option>
+          <option *ngFor="let company of companyList(); trackBy: trackByCompany" [value]="company.name">
+            {{ company.name }}
+          </option>
+        </select>
+      </label>
 
-    <div
-      class="empty-state"
-      *ngIf="isLoading()">
+      <label class="filter-field">
+        <span>حداقل قیمت بازار <small>(تومان)</small></span>
+        <input type="number" inputmode="numeric" placeholder="مثلاً ۵۰۰۰۰۰۰۰۰"
+          [ngModel]="carFilter().minPrice" (ngModelChange)="updateMinPrice($event)">
+      </label>
 
-      در حال دریافت اطلاعات...
+      <label class="filter-field">
+        <span>حداکثر قیمت بازار <small>(تومان)</small></span>
+        <input type="number" inputmode="numeric" placeholder="مثلاً ۳۰۰۰۰۰۰۰۰۰"
+          [ngModel]="carFilter().maxPrice" (ngModelChange)="updateMaxPrice($event)">
+      </label>
 
+      <button class="apply-btn" type="button" (click)="applyFilter()">
+        <span>اعمال فیلتر</span>
+        <span aria-hidden="true">←</span>
+      </button>
     </div>
+  </section>
 
-    <!-- ================= CARS ================= -->
-
-    <div
-      class="car-grid"
-      *ngIf="!isLoading() && cars().length > 0">
-
-      <div
-        class="car-card"
-        *ngFor="
-          let car of cars();
-          trackBy: trackByCar
-        ">
-
-        <div class="image-wrapper">
-
-          <img
-            class="car-image"
-            [src]="imageBaseUrl + car.imageName"
-            alt="car"
-            loading="lazy">
-
-        </div>
-
-        <div class="car-content">
-
-          <div class="car-title">
-
-            {{ car.name }}
-
-          </div>
-
-          <div class="car-company">
-
-            کمپانی:
-            {{ car.company }}
-
-          </div>
-
-          <div class="car-price">
-
-            {{ car.price | thousandSeparator:'fa-IR' }}
-            تومان
-
-          </div>
-
-          <button
-            class="details-btn"
-            type="button"
-            [routerLink]="['/carDetail', car.id]">
-
-            مشاهده جزئیات
-
-          </button>
-
-        </div>
-
-      </div>
-
+  <section class="results-head">
+    <div>
+      <span class="results-kicker">موجودی خودروها</span>
+      <h2>جدیدترین قیمت‌ها</h2>
     </div>
+    <span class="results-count" *ngIf="!isLoading()">{{ cars().length }} خودرو</span>
+  </section>
 
-    <!-- ================= EMPTY ================= -->
-
-    <div
-      class="empty-state"
-      *ngIf="
-        !isLoading() &&
-        cars().length === 0
-      ">
-
-      ماشینی با این فیلتر یافت نشد
-
-    </div>
-
+  <div class="loading-state" *ngIf="isLoading()" role="status">
+    <span class="spinner"></span>
+    در حال دریافت آخرین قیمت‌ها...
   </div>
 
-</div>
+  <section class="car-grid" *ngIf="!isLoading() && cars().length > 0">
+    <article class="car-card" *ngFor="let car of cars(); trackBy: trackByCar">
+      <a class="card-image" [routerLink]="['/carDetail', car.id]" [attr.aria-label]="'مشاهده جزئیات ' + car.name">
+        <img [src]="getImageUrl(car)" [alt]="car.name" loading="lazy">
+        <span class="brand-badge">{{ getCompany(car) }}</span>
+        <span class="detail-icon" aria-hidden="true">↗</span>
+      </a>
+
+      <div class="card-body">
+        <div class="card-title-row">
+          <div>
+            <h3>{{ car.name }}</h3>
+            <p>{{ getModel(car) }}</p>
+          </div>
+          <span class="tip-badge" *ngIf="car.tipName">{{ car.tipName }}</span>
+        </div>
+
+        <div class="price-list">
+          <div class="price-line">
+            <span>قیمت بازار</span>
+            <strong *ngIf="getMarketPrice(car) > 0">{{ getMarketPrice(car) | thousandSeparator:'fa-IR' }} <small>تومان</small></strong>
+            <strong class="unavailable" *ngIf="getMarketPrice(car) <= 0">اعلام نشده</strong>
+          </div>
+          <div class="price-line factory">
+            <span>قیمت کارخانه</span>
+            <strong *ngIf="getFactoryPrice(car) > 0">{{ getFactoryPrice(car) | thousandSeparator:'fa-IR' }} <small>تومان</small></strong>
+            <strong class="unavailable" *ngIf="getFactoryPrice(car) <= 0">اعلام نشده</strong>
+          </div>
+        </div>
+
+        <a class="details-link" [routerLink]="['/carDetail', car.id]">
+          مشاهده جزئیات کامل
+          <span aria-hidden="true">←</span>
+        </a>
+      </div>
+    </article>
+  </section>
+
+  <section class="empty-state" *ngIf="!isLoading() && cars().length === 0">
+    <div class="empty-icon">⌕</div>
+    <h3>خودرویی با این فیلتر پیدا نشد</h3>
+    <p>فیلترها را تغییر دهید یا فهرست کامل خودروها را ببینید.</p>
+    <button type="button" class="reset-btn primary" (click)="resetFilter()">نمایش همه خودروها</button>
+  </section>
+</main>
