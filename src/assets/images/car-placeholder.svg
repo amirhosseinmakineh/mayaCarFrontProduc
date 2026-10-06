@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
+  <rect width="800" height="520" rx="36" fill="#fff8df"/>
+  <path d="M170 315h460l-42-115a34 34 0 0 0-32-22H244a34 34 0 0 0-32 22l-42 115Z" fill="#e0b354"/>
+  <path d="M213 195h374l-28-52a30 30 0 0 0-27-17H268a30 30 0 0 0-27 17l-28 52Z" fill="#c9a03d"/>
+  <path d="M260 150h280l25 45H235l25-45Z" fill="#fffdf7"/>
+  <circle cx="250" cy="335" r="42" fill="#5f4714"/><circle cx="250" cy="335" r="18" fill="#fff8df"/>
+  <circle cx="550" cy="335" r="42" fill="#5f4714"/><circle cx="550" cy="335" r="18" fill="#fff8df"/>
+  <rect x="140" y="268" width="520" height="68" rx="28" fill="#d5aa3f"/>
+  <text x="400" y="440" text-anchor="middle" font-family="Arial" font-size="34" fill="#8f6f1d">CarShow</text>
+</svg>
