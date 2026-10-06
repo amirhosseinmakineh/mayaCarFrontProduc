@@ -5,6 +5,7 @@ import { Car } from '../../models/car/car';
 import { CarFilter } from '../../models/car/carFilter';
 import { Company } from '../../models/company/companyName';
 import { Result } from '../../models/result';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,7 @@ export class CarService {
 
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  //private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = environment.apiUrl;
   constructor() { }
 
   getAllCarsWithFilter(filter: CarFilter): Observable<any> {
