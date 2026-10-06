@@ -1,229 +1,124 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  signal
-} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
-import { Car }
-from '../../models/car/car';
-
-import { CarFilter }
-from '../../models/car/carFilter';
-
-import { Company }
-from '../../models/company/companyName';
-
-import { CarService }
-from '../../services/car/car.service';
-
-import { FormsModule }
-from '@angular/forms';
-
-import { CommonModule }
-from '@angular/common';
-
-import {
-  RouterLink,
-  Router
-}
-from '@angular/router';
-
-import { ThousandSeparatorPipe }
-from '../../../../pipes/ThousandSeparatorPipe.pipe';
+import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
+import { Car } from '../../models/car/car';
+import { CarFilter } from '../../models/car/carFilter';
+import { Company } from '../../models/company/companyName';
+import { CarService } from '../../services/car/car.service';
 
 @Component({
   selector: 'app-car-list',
   templateUrl: './carList.component.html',
   styleUrls: ['./carList.component.css'],
   standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule,
-    RouterLink,
-    ThousandSeparatorPipe
-  ]
+  imports: [FormsModule, CommonModule, RouterLink, ThousandSeparatorPipe]
 })
-export class CarListComponent
-implements OnInit {
+export class CarListComponent implements OnInit {
+  private readonly carService = inject(CarService);
 
-  private readonly carService =
-    inject(CarService);
+  cars = signal<Car[]>([]);
+  companyList = signal<Company[]>([]);
+  isLoading = signal(false);
+  isFilterOpen = false;
 
-  private readonly router =
-    inject(Router);
+  carFilter = signal<CarFilter>({
+    minPrice: undefined,
+    maxPrice: undefined,
+    company: '',
+    pageSize: 12,
+    pageNumber: 0
+  });
 
-  // ================= Signals =================
+  ngOnInit(): void {
+    this.loadCompanies();
+    this.applyFilter();
+  }
 
-  cars =
-    signal<Car[]>([]);
+  loadCompanies(): void {
+    this.carService.getAllCompanies().subscribe({
+      next: (res) => this.companyList.set(res?.data || res || []),
+      error: () => this.companyList.set([])
+    });
+  }
 
-  companyList =
-    signal<Company[]>([]);
+  applyFilter(): void {
+    this.isLoading.set(true);
+    this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
+      next: (res) => {
+        this.cars.set(res?.data || res || []);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.cars.set([]);
+        this.isLoading.set(false);
+      }
+    });
+  }
 
-  isLoading =
-    signal(false);
-
-  // ================= Filter =================
-
-  carFilter =
-    signal<CarFilter>({
+  resetFilter(): void {
+    this.carFilter.set({
       minPrice: undefined,
       maxPrice: undefined,
       company: '',
-      pageSize: 10,
-      pageNumber: 1
+      pageSize: 12,
+      pageNumber: 0
     });
-
-  isFilterOpen = false;
-
-  // ================= Image =================
-
-  //imageBaseUrl = 'http://localhost:8080';
-
-  imageBaseUrl =
-    'https://mayakhoddrobackend-mayacar.runflare.run/';
-
-  ngOnInit(): void {
-
-    this.loadCompanies();
-
     this.applyFilter();
-
   }
 
-  // ================= Companies =================
-
-  loadCompanies(): void {
-
-    this.carService
-      .getAllCompanies()
-      .subscribe({
-
-        next: (res) => {
-
-          this.companyList
-            .set(res.data || []);
-
-        },
-
-        error: (err) => {
-
-          console.error(err);
-
-          this.companyList
-            .set([]);
-
-        }
-
-      });
-
+  updateCompany(value: string): void {
+    this.carFilter.update(filter => ({ ...filter, company: value }));
   }
 
-  // ================= Cars =================
-
-  applyFilter(): void {
-
-    this.isLoading
-      .set(true);
-
-    this.carService
-      .getAllCarsWithFilter(
-        this.carFilter()
-      )
-      .subscribe({
-
-        next: (res) => {
-
-          this.cars
-            .set(res || []);
-
-          this.isLoading
-            .set(false);
-
-        },
-
-        error: (err) => {
-
-          console.error(err);
-
-          this.cars
-            .set([]);
-
-          this.isLoading
-            .set(false);
-
-        }
-
-      });
-
-  }
-
-  // ================= Updates =================
-
-  updateCompany(
-    value: string
-  ): void {
-
-    this.carFilter.update(f => ({
-      ...f,
-      company: value
+  updateMinPrice(value: string | number): void {
+    this.carFilter.update(filter => ({
+      ...filter,
+      minPrice: value === '' ? undefined : Number(value)
     }));
-
   }
 
-  updateMinPrice(
-    value: string
-  ): void {
-
-    this.carFilter.update(f => ({
-      ...f,
-      minPrice: value
-        ? +value
-        : undefined
+  updateMaxPrice(value: string | number): void {
+    this.carFilter.update(filter => ({
+      ...filter,
+      maxPrice: value === '' ? undefined : Number(value)
     }));
-
   }
 
-  updateMaxPrice(
-    value: string
-  ): void {
-
-    this.carFilter.update(f => ({
-      ...f,
-      maxPrice: value
-        ? +value
-        : undefined
-    }));
-
+  getCompany(car: Car): string {
+    return car.companyName || car.company || 'برند ثبت نشده';
   }
 
-  // ================= TrackBy =================
+  getModel(car: Car): string {
+    return car.carModeName || car.name;
+  }
 
-  trackByCompany(
-    index: number,
-    item: Company
-  ) {
+  getMarketPrice(car: Car): number {
+    return car.marketPrice ?? car.price ?? 0;
+  }
 
+  getFactoryPrice(car: Car): number {
+    return car.factoryPrice ?? 0;
+  }
+
+  getImageUrl(car: Car): string {
+    const image = car.imageName || car.details?.imageUrl || '';
+    if (!image) return 'assets/images/car-placeholder.svg';
+    return image.startsWith('http') ? image : image;
+  }
+
+  trackByCompany(index: number, item: Company): number {
     return item.id;
-
   }
 
-  trackByCar(
-    index: number,
-    item: Car
-  ) {
-
+  trackByCar(index: number, item: Car): number {
     return item.id;
-
   }
 
-  // ================= Accessor =================
-
-  companies() {
-
-    return this.companyList();
-
+  hasActiveFilter(): boolean {
+    const filter = this.carFilter();
+    return Boolean(filter.company || filter.minPrice != null || filter.maxPrice != null);
   }
-
 }
