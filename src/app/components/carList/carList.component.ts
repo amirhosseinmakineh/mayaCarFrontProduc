@@ -106,7 +106,7 @@ export class CarListComponent implements OnInit {
   getImageUrl(car: Car): string {
     const image = car.imageName || car.details?.imageUrl || '';
     if (!image) return 'assets/images/car-placeholder.svg';
-    return image.startsWith('http') ? image : image;
+    return image.startsWith('http') ? image : `https://api.mayakhodro.com${image.startsWith('/') ? image : `/${image}`}`;
   }
 
   trackByCompany(index: number, item: Company): number {
