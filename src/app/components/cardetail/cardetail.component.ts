@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CarService } from '../../services/car/car.service';
 import { Car } from '../../models/car/car';
+import { environment } from '../../../environments/environment';
 import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
 
 @Component({
@@ -19,7 +20,7 @@ export class CardetailComponent implements OnInit {
 
   car: Car | null = null;
   isLoading = true;
-  imageBaseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/';
+  imageBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -33,23 +34,24 @@ export class CardetailComponent implements OnInit {
     this.isLoading = true;
     this.service.getCarDetail(carId).subscribe({
       next: (res: any) => {
-        this.car = res?.data ?? res;
+        this.car = res && 'data' in res ? res.data : res;
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: () => { this.car = null; this.isLoading = false; }
+      error: () => { this.car = null; this.isLoading = false; this.cdr.markForCheck(); }
     });
   }
 
   getMarketPrice(car: Car): number { return Number(car.marketPrice ?? car.price ?? 0); }
   getFactoryPrice(car: Car): number { return Number(car.factoryPrice ?? 0); }
-  getPriceGap(car: Car): number { return Math.max(0, this.getMarketPrice(car) - this.getFactoryPrice(car)); }
+  hasPriceComparison(car: Car): boolean { return this.getMarketPrice(car) > 0 && this.getFactoryPrice(car) > 0; }
+  getPriceGap(car: Car): number { return this.getMarketPrice(car) - this.getFactoryPrice(car); }
   getPriceGapPercent(car: Car): number {
     const factory = this.getFactoryPrice(car);
     return factory > 0 ? Math.round((this.getPriceGap(car) / factory) * 100) : 0;
   }
   getImageUrl(car: Car): string {
-    const image = (car.imageName || '').trim();
+    const image = (car.details?.imageUrl || car.imageName || '').trim();
     if (!image) return '/assets/images/car-placeholder.svg';
     if (/^(https?:|data:|blob:)/i.test(image)) return image;
     return `${this.imageBaseUrl.replace(/\/$/, '')}/${image.replace(/^\//, '')}`;
