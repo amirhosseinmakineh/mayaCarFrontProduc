@@ -1,179 +1,63 @@
-import {
-  Component,
-  inject,
-  OnInit
-} from '@angular/core';
-
-import {
-  ActivatedRoute
-} from '@angular/router';
-
-import {
-  CommonModule
-} from '@angular/common';
-import { RouterLink } from '@angular/router';
-
-import {
-  CarService
-} from '../../services/car/car.service';
-
-import {
-  Car
-} from '../../models/car/car';
-
-import {
-  ThousandSeparatorPipe
-}
-from '../../../../pipes/ThousandSeparatorPipe.pipe';
-import {
-  ChangeDetectorRef
-} from '@angular/core';
+import { Component, ChangeDetectorRef, inject, OnInit } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { CarService } from '../../services/car/car.service';
+import { Car } from '../../models/car/car';
+import { environment } from '../../../environments/environment';
+import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
 
 @Component({
   selector: 'app-cardetail',
   templateUrl: './cardetail.component.html',
   styleUrls: ['./cardetail.component.css'],
   standalone: true,
-  imports: [
-    CommonModule,
-    ThousandSeparatorPipe,
-    RouterLink
-  ]
+  imports: [CommonModule, ThousandSeparatorPipe, RouterLink]
 })
 export class CardetailComponent implements OnInit {
-private readonly cdr =
-  inject(ChangeDetectorRef);
-  private readonly service =
-    inject(CarService);
-
-  private readonly route =
-    inject(ActivatedRoute);
-
-  // ================= DATA =================
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly service = inject(CarService);
+  private readonly route = inject(ActivatedRoute);
 
   car: Car | null = null;
-
   isLoading = true;
-
-  // ================= IMAGE =================
-
-  //imageBaseUrl = 'http://localhost:8080';
-  imageBaseUrl =
-    'https://mayakhoddrobackend-mayacar.runflare.run/';
-
-  // ================= INIT =================
+  imageBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
 
   ngOnInit(): void {
-          this.cdr.detectChanges();
-    this.route.paramMap.subscribe({
-
-      next: (params) => {
-
-        const id =
-          params.get('carId');
-
-        const carId =
-          Number(id);
-
-        console.log('CAR ID =>', carId);
-
-        if (!carId || isNaN(carId)) {
-
-          console.error('carId نامعتبر است');
-
-          this.isLoading = false;
-
-          return;
-
-        }
-
-        this.getCarDetail(carId);
-
-      },
-
-      error: (err) => {
-
-        console.error(err);
-
-        this.isLoading = false;
-
-      }
-
+    this.route.paramMap.subscribe(params => {
+      const carId = Number(params.get('carId'));
+      if (!carId || Number.isNaN(carId)) { this.isLoading = false; return; }
+      this.getCarDetail(carId);
     });
-
   }
-
-  // ================= GET DETAIL =================
 
   getCarDetail(carId: number): void {
-
     this.isLoading = true;
-
-    this.car = null;
-
-    this.service
-      .getCarDetail(carId)
-      .subscribe({
-
-        next: (res: any) => {
-          console.log('API RESPONSE =>', res);
-
-          if (res?.data) {
-
-            this.car = res.data;
-
-          }
-          else {
-
-            this.car = res;
-
-          }
-
-          console.log('CAR =>', this.car);
-          this.isLoading = false;
-          this.cdr.detectChanges();
-
-        },
-
-        error: (err) => {
-
-          console.error('DETAIL ERROR =>', err);
-
-          this.car = null;
-
-          this.isLoading = false;
-
-        },
-
-        complete: () => {
-
-          console.log('REQUEST COMPLETED');
-
-        }
-
-      });
-
+    this.service.getCarDetail(carId).subscribe({
+      next: (res: any) => {
+        this.car = res && 'data' in res ? res.data : res;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.car = null; this.isLoading = false; this.cdr.markForCheck(); }
+    });
   }
 
-  getMarketPrice(car: Car): number {
-    return Number(car.marketPrice ?? car.price ?? 0);
+  getMarketPrice(car: Car): number { return Number(car.marketPrice ?? car.price ?? 0); }
+  getFactoryPrice(car: Car): number { return Number(car.factoryPrice ?? 0); }
+  hasPriceComparison(car: Car): boolean { return this.getMarketPrice(car) > 0 && this.getFactoryPrice(car) > 0; }
+  getPriceGap(car: Car): number { return this.getMarketPrice(car) - this.getFactoryPrice(car); }
+  getPriceGapPercent(car: Car): number {
+    const factory = this.getFactoryPrice(car);
+    return factory > 0 ? Math.round((this.getPriceGap(car) / factory) * 100) : 0;
   }
-
-  getFactoryPrice(car: Car): number {
-    return Number(car.factoryPrice ?? 0);
-  }
-
   getImageUrl(car: Car): string {
-    const image = (car.imageName || '').trim();
+    const image = (car.details?.imageUrl || car.imageName || '').trim();
     if (!image) return '/assets/images/car-placeholder.svg';
     if (/^(https?:|data:|blob:)/i.test(image)) return image;
     return `${this.imageBaseUrl.replace(/\/$/, '')}/${image.replace(/^\//, '')}`;
   }
-
   onImageError(event: Event): void {
     const image = event.target as HTMLImageElement;
-    if (image.src.endsWith('/assets/images/car-placeholder.svg')) return;
-    image.src = '/assets/images/car-placeholder.svg';
+    if (!image.src.endsWith('/assets/images/car-placeholder.svg')) image.src = '/assets/images/car-placeholder.svg';
   }
-
 }
