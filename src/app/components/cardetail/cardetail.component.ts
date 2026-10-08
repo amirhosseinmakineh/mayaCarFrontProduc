@@ -11,6 +11,7 @@ import {
 import {
   CommonModule
 } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import {
   CarService
@@ -35,7 +36,8 @@ import {
   standalone: true,
   imports: [
     CommonModule,
-    ThousandSeparatorPipe
+    ThousandSeparatorPipe,
+    RouterLink
   ]
 })
 export class CardetailComponent implements OnInit {
@@ -114,8 +116,6 @@ private readonly cdr =
       .subscribe({
 
         next: (res: any) => {
-          debugger;
-
           console.log('API RESPONSE =>', res);
 
           if (res?.data) {
@@ -130,7 +130,6 @@ private readonly cdr =
           }
 
           console.log('CAR =>', this.car);
-          debugger;
           this.isLoading = false;
           this.cdr.detectChanges();
 
@@ -154,6 +153,27 @@ private readonly cdr =
 
       });
 
+  }
+
+  getMarketPrice(car: Car): number {
+    return Number(car.marketPrice ?? car.price ?? 0);
+  }
+
+  getFactoryPrice(car: Car): number {
+    return Number(car.factoryPrice ?? 0);
+  }
+
+  getImageUrl(car: Car): string {
+    const image = (car.imageName || '').trim();
+    if (!image) return '/assets/images/car-placeholder.svg';
+    if (/^(https?:|data:|blob:)/i.test(image)) return image;
+    return `${this.imageBaseUrl.replace(/\/$/, '')}/${image.replace(/^\//, '')}`;
+  }
+
+  onImageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (image.src.endsWith('/assets/images/car-placeholder.svg')) return;
+    image.src = '/assets/images/car-placeholder.svg';
   }
 
 }
