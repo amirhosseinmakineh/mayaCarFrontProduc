@@ -27,7 +27,11 @@
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": [
+                "mayakhodro.com",
+                "www.mayakhodro.com",
+                "api.mayakhodro.com"
+              ]
             },
             "ssr": {
               "entry": "src/server.ts"
