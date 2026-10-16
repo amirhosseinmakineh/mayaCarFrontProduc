@@ -109,6 +109,12 @@ const payload = JSON.parse(atob(base64));
 }
 
 }
+goToTelegramChannels(): void {
+  this.activeSection = 'telegramChannels';
+  this.pageTitle = 'مدیریت کانال‌های تلگرام';
+  this.router.navigate(['/adminDashboard/telegramChannels']);
+}
+
 logout(){
   this.auth.logout();
   this.router.navigate(["/"])
