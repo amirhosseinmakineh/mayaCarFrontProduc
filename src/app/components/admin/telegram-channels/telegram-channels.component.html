@@ -6,4 +6,7 @@
   <p class="error" *ngIf="error">{{error}}</p>
   <p *ngIf="result">{{result.created}} ایجاد شد، {{result.duplicates}} تکراری، {{result.invalid}} نامعتبر و {{result.queued}} job در صف قرار گرفت.</p>
   <table><thead><tr><th>کانال</th><th>وضعیت</th><th>آخرین تلاش</th><th>پیام</th><th>آگهی</th><th>خطا</th><th>عملیات</th></tr></thead><tbody><tr *ngFor="let c of channels"><td>{{c.publicUrl || c.identifier}}</td><td>{{c.status}}</td><td>{{c.lastAttemptAt | date:'short'}}</td><td>{{c.messagesCollected}}</td><td>{{c.listingsExtracted}}</td><td>{{c.lastError}}</td><td><button (click)="toggle(c)">{{c.enabled ? 'Pause' : 'Resume'}}</button><button (click)="test(c)">Test</button><button (click)="retry(c)">Retry</button><button (click)="remove(c)">حذف</button></td></tr></tbody></table>
+
+  <h2>لاگ پردازش‌ها</h2>
+  <table><thead><tr><th>Job</th><th>Channel</th><th>Status</th><th>Attempt</th><th>Created</th><th>Error</th></tr></thead><tbody><tr *ngFor="let job of jobs"><td>{{job.id}}</td><td>{{job.channelId}}</td><td>{{job.status}}</td><td>{{job.attempt}}</td><td>{{job.createdAt | date:'short'}}</td><td>{{job.error}}</td></tr></tbody></table>
 </section>
