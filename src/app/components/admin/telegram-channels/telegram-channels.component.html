@@ -1,7 +1,8 @@
 <section class="telegram-page" dir="rtl">
   <h1>مدیریت کانال‌های تلگرام</h1>
+  <div class="capability" *ngIf="capability"><strong>Provider: {{capability.provider}}</strong><span>{{capability.message}}</span><small *ngIf="capability.supportsPublicUsernames">ورودی مجاز: @username یا URL عمومی t.me</small></div>
   <div class="summary" *ngIf="summary"><b>کل: {{summary.totalChannels}}</b><span>فعال: {{summary.active}}</span><span>متوقف: {{summary.paused}}</span><span>خطا: {{summary.errors}}</span><span>در صف: {{summary.pending + summary.processing}}</span><span>پیام: {{summary.messagesCollected}}</span><span>آگهی: {{summary.listingsExtracted}}</span></div>
-  <textarea [(ngModel)]="input" rows="8" placeholder="هر خط یک @username یا https://t.me/channelname"></textarea>
+  <textarea [(ngModel)]="input" rows="8" placeholder="هر خط یک @username یا https://t.me/channelname — فقط کانال‌های Public"></textarea>
   <button (click)="importChannels()" [disabled]="loading">افزودن و صف‌بندی کانال‌ها</button>
   <p class="error" *ngIf="error">{{error}}</p>
   <p *ngIf="result">{{result.created}} ایجاد شد، {{result.duplicates}} تکراری، {{result.invalid}} نامعتبر و {{result.queued}} job در صف قرار گرفت.</p>
