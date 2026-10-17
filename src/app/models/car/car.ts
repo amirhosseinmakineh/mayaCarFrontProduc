@@ -1,10 +1,12 @@
 export interface Car {
   id: number;
   categoryName?: string | number;
+  categoryId?: number;
   tipName?: string;
   carModeName?: string;
   company?: string;
   companyName?: string;
+  carModelId?: number;
   name: string;
   startDate?: string;
   price?: number;
