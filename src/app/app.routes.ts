@@ -34,7 +34,8 @@ export const routes: Routes = [
     children: [
       { path: 'userManagment', component: UserManagementComponent },
       { path: '', redirectTo: 'userManagment', pathMatch: 'full' },
-      {path : 'carManagement',component:CarManagmentComponent},
+      {path : 'carManagement',component:CarManagmentComponent, data: { isUsed: false }},
+      {path : 'usedCarManagement',component:CarManagmentComponent, data: { isUsed: true }},
       {path:'category',component : CategoryComponent},
       {path : 'company',component : CompanyComponent},
       {path : 'model',component:CarModelComponent},
@@ -44,7 +45,8 @@ export const routes: Routes = [
       {path: 'telegramChannels', component: TelegramChannelsComponent}
     ],
   },
-   {path : 'carList',component : CarListComponent},
+   {path : 'carList',component : CarListComponent, data: { isUsed: false }},
+  {path : 'usedCarList',component : CarListComponent, data: { isUsed: true }},
   { path: '', redirectTo: '/adminDashboard', pathMatch: 'full' },
     {path:'userPannel', component:UserPannelComponent},
     {path:'installment',component:InstallmentComponent},
