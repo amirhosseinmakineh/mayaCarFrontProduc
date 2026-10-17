@@ -54,8 +54,10 @@ export class AdminService {
     return this.client.get<Role[]>(`${this.baseUrl}/role`);
   }
 
-  getCars(): Observable<Car[]> {
-    return this.client.get<Car[]>(`${this.baseUrl}/car`);
+  getCars(isUsed = false): Observable<Car[]> {
+    return this.client.get<Car[]>(`${this.baseUrl}/car`, {
+      params: { isUsed }
+    });
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
