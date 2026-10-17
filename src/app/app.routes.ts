@@ -20,6 +20,7 @@ import { Component } from "@angular/core";
 import { CardetailComponent } from "./components/cardetail/cardetail.component";
 import { AboutUsComponent } from "./pages/about-us/about-us.component";
 import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
+import { TelegramChannelsComponent } from "./components/admin/telegram-channels/telegram-channels.component";
 
 export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -39,7 +40,8 @@ export const routes: Routes = [
       {path : 'model',component:CarModelComponent},
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
-      {path : 'orderItem',component:OrderItemComponent}
+      {path : 'orderItem',component:OrderItemComponent},
+      {path: 'telegramChannels', component: TelegramChannelsComponent}
     ],
   },
    {path : 'carList',component : CarListComponent},
