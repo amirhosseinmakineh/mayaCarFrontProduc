@@ -1,90 +1,85 @@
-<div *ngIf="isLoading" class="loader">
-  در حال دریافت اطلاعات...
-</div>
+<main class="details-page" dir="rtl">
+  <div class="page-shell">
+    <a class="back-link" routerLink="/carList"><span aria-hidden="true">→</span>بازگشت به فهرست خودروها</a>
 
-<div
-  class="details-container"
-  *ngIf="!isLoading && car">
+    <div class="loading-card" *ngIf="isLoading" role="status"><span class="spinner"></span>در حال دریافت جزئیات خودرو...</div>
 
-  <!-- بخش اصلی -->
-  <section class="car-hero">
+    <section class="error-card" *ngIf="!isLoading && !car">
+      <div class="error-icon">!</div>
+      <h1>جزئیات خودرو در دسترس نیست</h1>
+      <p>لطفاً دوباره تلاش کنید یا از فهرست خودروها انتخاب کنید.</p>
+      <a class="gold-button" routerLink="/carList">بازگشت به فهرست</a>
+    </section>
 
-    <div class="image-wrapper">
-      <img
-        [src]="imageBaseUrl + car.imageName"
-        [alt]="car.name">
-    </div>
+    <ng-container *ngIf="!isLoading && car as vehicle">
+      <section class="detail-hero">
+        <div class="hero-image-wrap">
+          <img class="hero-image" [src]="getImageUrl(vehicle)" [alt]="vehicle.name" (error)="onImageError($event)">
+          <span class="hero-badge" *ngIf="vehicle.companyName || vehicle.company">{{ vehicle.companyName || vehicle.company }}</span>
+        </div>
+        <div class="hero-content">
+          <span class="eyebrow">مشخصات و قیمت خودرو</span>
+          <h1>{{ vehicle.name }}</h1>
+          <p class="hero-subtitle" *ngIf="vehicle.carModeName || vehicle.tipName">
+            {{ vehicle.carModeName }}<span *ngIf="vehicle.carModeName && vehicle.tipName"> · </span>{{ vehicle.tipName }}
+          </p>
+          <div class="price-grid">
+            <div class="price-card market-price">
+              <span>قیمت بازار</span>
+              <strong *ngIf="getMarketPrice(vehicle) > 0">{{ getMarketPrice(vehicle) | thousandSeparator:'fa-IR' }}</strong>
+              <strong class="unavailable" *ngIf="getMarketPrice(vehicle) <= 0">اعلام نشده</strong>
+              <small *ngIf="getMarketPrice(vehicle) > 0">تومان</small>
+            </div>
+            <div class="price-card factory-price">
+              <span>قیمت کارخانه</span>
+              <strong *ngIf="getFactoryPrice(vehicle) > 0">{{ getFactoryPrice(vehicle) | thousandSeparator:'fa-IR' }}</strong>
+              <strong class="unavailable" *ngIf="getFactoryPrice(vehicle) <= 0">اعلام نشده</strong>
+              <small *ngIf="getFactoryPrice(vehicle) > 0">تومان</small>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <div class="hero-info">
+      <section class="quick-specs" aria-label="مشخصات سریع">
+        <div class="quick-spec" *ngIf="vehicle.companyName || vehicle.company"><span>برند</span><strong>{{ vehicle.companyName || vehicle.company }}</strong></div>
+        <div class="quick-spec" *ngIf="vehicle.carModeName"><span>مدل</span><strong>{{ vehicle.carModeName }}</strong></div>
+        <div class="quick-spec" *ngIf="vehicle.tipName"><span>تیپ</span><strong>{{ vehicle.tipName }}</strong></div>
+        <div class="quick-spec" *ngIf="vehicle.startDate"><span>سال ساخت</span><strong>{{ vehicle.startDate }}</strong></div>
+        <div class="quick-spec" *ngIf="vehicle.lastUpdated"><span>آخرین به‌روزرسانی</span><strong>{{ vehicle.lastUpdated | date:'yyyy/MM/dd' }}</strong></div>
+      </section>
 
-      <span class="badge">
-        {{car.categoryName}}
-      </span>
+      <section class="information-grid">
+        <div class="main-information">
+          <details class="info-panel" open *ngIf="vehicle.description || vehicle.details?.description">
+            <summary><span>درباره این خودرو</span><span class="summary-icon">⌄</span></summary>
+            <div class="panel-content description-text">{{ vehicle.details?.description || vehicle.description }}</div>
+          </details>
 
-      <h1>{{car.name}}</h1>
+          <ng-container *ngIf="vehicle.details?.sections?.length">
+            <details class="info-panel" open *ngFor="let section of vehicle.details?.sections">
+              <summary><span>{{ section.name }}</span><span class="summary-icon">⌄</span></summary>
+              <div class="panel-content">
+                <div class="spec-table" *ngIf="section.specifications?.length">
+                  <div class="table-row" *ngFor="let item of section.specifications"><span>{{ item.name }}</span><strong>{{ item.value || '—' }}</strong></div>
+                </div>
+                <p class="detail-paragraph" *ngFor="let paragraph of section.paragraphs">{{ paragraph }}</p>
+              </div>
+            </details>
+          </ng-container>
 
-      <p class="brand-name">
-        {{car.company}}
-      </p>
+          <details class="info-panel" *ngIf="!vehicle.details?.sections?.length && !vehicle.description && !vehicle.details?.description">
+            <summary><span>جزئیات خودرو</span><span class="summary-icon">⌄</span></summary>
+            <div class="panel-content empty-detail">اطلاعات تکمیلی برای این خودرو ثبت نشده است.</div>
+          </details>
+        </div>
 
-    </div>
-
-  </section>
-
-  <!-- specs -->
-
-  <section class="specs-section">
-
-    <div class="spec-item">
-      <label>تیپ</label>
-      <span>{{car.tipName}}</span>
-    </div>
-
-    <div class="spec-item">
-      <label>مدل</label>
-      <span>{{car.carModeName}}</span>
-    </div>
-
-    <div class="spec-item">
-      <label>سال ساخت</label>
-      <span>{{car.startDate}}</span>
-    </div>
-
-  </section>
-
-  <!-- desc -->
-
-  <section class="desc-section">
-
-    <h3>درباره این خودرو</h3>
-
-    <p>{{car.description}}</p>
-
-  </section>
-
-  <!-- footer -->
-
-  <footer class="action-footer">
-
-    <div class="price-box">
-
-      <small>قیمت نهایی</small>
-
-      <div class="price-val">
-        {{ car.price | thousandSeparator:'fa-IR' }}
-        <span>تومان</span>
-      </div>
-
-    </div>
-
-    <button class="btn-gold">
-
-      <a href="https://web.bale.ai/chat?uid=1835365862">
-        تماس با کارشناسی
-      </a>
-
-    </button>
-
-  </footer>
-
-</div>
+        <aside class="contact-card">
+          <span class="contact-kicker">نیاز به راهنمایی دارید؟</span>
+          <h2>برای خرید مطمئن با کارشناسان ما صحبت کنید.</h2>
+          <p>قیمت‌ها و مشخصات قبل از تصمیم‌گیری در کنار شماست.</p>
+          <a class="gold-button contact-button" href="https://web.bale.ai/chat?uid=1835365862" target="_blank" rel="noopener">تماس با کارشناسی <span aria-hidden="true">←</span></a>
+        </aside>
+      </section>
+    </ng-container>
+  </div>
+</main>

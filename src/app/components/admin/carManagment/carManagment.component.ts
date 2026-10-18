@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { AdminService }
@@ -60,6 +61,8 @@ implements OnInit {
   private adminService =
     inject(AdminService);
 
+  private route = inject(ActivatedRoute);
+
   // ======================
   // CONSTANTS
   // ======================
@@ -90,6 +93,9 @@ implements OnInit {
   // FILE
   // ======================
 
+  isUsed = false;
+  vehicleLabel = 'ماشین‌های صفر';
+
   selectedFile: File | null = null;
 
   imagePreview:
@@ -100,9 +106,9 @@ implements OnInit {
   // ======================
 
   ngOnInit(): void {
-
+    this.isUsed = this.route.snapshot.data['isUsed'] === true;
+    this.vehicleLabel = this.isUsed ? 'ماشین‌های دست‌دوم' : 'ماشین‌های صفر';
     this.loadInitialData();
-
   }
 
   // ======================
@@ -133,7 +139,8 @@ implements OnInit {
       price: 0,
 
       imageName: '',
-      description: ''
+      description: '',
+      isUsed: this.isUsed
 
     };
   }
@@ -144,7 +151,7 @@ implements OnInit {
 
   loadCars(): void {
 
-    this.adminService.getCars().subscribe({
+    this.adminService.getCars(this.isUsed).subscribe({
 
       next: res => {
         this.cars.set(res);
@@ -300,7 +307,9 @@ implements OnInit {
         car.imageName || '',
 
       description:
-        car.description || ''
+        car.description || '',
+
+      isUsed: this.isUsed
 
     });
 
@@ -401,6 +410,11 @@ implements OnInit {
     formData.append(
       'Name',
       dto.name
+    );
+
+    formData.append(
+      'IsUsed',
+      this.isUsed.toString()
     );
 
     formData.append(

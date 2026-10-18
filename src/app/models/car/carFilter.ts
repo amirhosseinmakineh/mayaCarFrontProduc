@@ -4,4 +4,5 @@ export interface CarFilter {
   company?: string;
   pageSize?: number;
   pageNumber?: number;
+  isUsed?: boolean;
 }

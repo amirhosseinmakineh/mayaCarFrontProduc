@@ -1,5 +1,6 @@
 export interface Car {
   id: number;
+  isUsed?: boolean;
   categoryName?: string | number;
   tipName?: string;
   carModeName?: string;

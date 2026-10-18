@@ -20,6 +20,7 @@ import { Component } from "@angular/core";
 import { CardetailComponent } from "./components/cardetail/cardetail.component";
 import { AboutUsComponent } from "./pages/about-us/about-us.component";
 import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
+import { TelegramChannelsComponent } from "./components/admin/telegram-channels/telegram-channels.component";
 
 export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -33,16 +34,19 @@ export const routes: Routes = [
     children: [
       { path: 'userManagment', component: UserManagementComponent },
       { path: '', redirectTo: 'userManagment', pathMatch: 'full' },
-      {path : 'carManagement',component:CarManagmentComponent},
+      {path : 'carManagement',component:CarManagmentComponent, data: { isUsed: false }},
+      {path : 'usedCarManagement',component:CarManagmentComponent, data: { isUsed: true }},
       {path:'category',component : CategoryComponent},
       {path : 'company',component : CompanyComponent},
       {path : 'model',component:CarModelComponent},
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
-      {path : 'orderItem',component:OrderItemComponent}
+      {path : 'orderItem',component:OrderItemComponent},
+      {path: 'telegramChannels', component: TelegramChannelsComponent}
     ],
   },
-   {path : 'carList',component : CarListComponent},
+   {path : 'carList',component : CarListComponent, data: { isUsed: false }},
+  {path : 'usedCarList',component : CarListComponent, data: { isUsed: true }},
   { path: '', redirectTo: '/adminDashboard', pathMatch: 'full' },
     {path:'userPannel', component:UserPannelComponent},
     {path:'installment',component:InstallmentComponent},

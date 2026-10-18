@@ -94,6 +94,26 @@
 
       </div>
 
+      <!-- USED CARS -->
+      <div class="nav-item"
+           [class.active]="activeSection==='usedCars'"
+           (click)="goToSection('usedCars')">
+
+        <svg width="20"
+             height="20"
+             stroke="currentColor"
+             fill="none"
+             stroke-width="2">
+          <path d="M3 13l2-5h14l2 5"></path>
+          <circle cx="7.5" cy="17.5" r="2.5"></circle>
+          <circle cx="16.5" cy="17.5" r="2.5"></circle>
+        </svg>
+
+        <span *ngIf="isSidebarOpen">
+          مدیریت ماشین‌های دست‌دوم
+        </span>
+      </div>
+
       <!-- CATEGORY -->
       <div class="nav-item"
            [class.active]="activeSection==='category'"
@@ -209,7 +229,11 @@
 
       </div>
 
-    </div>
+          <div class="nav-item" [class.active]="activeSection==='telegramChannels'" (click)="goToTelegramChannels()">
+        <span *ngIf="isSidebarOpen">کانال‌های تلگرام</span>
+      </div>
+
+  </div>
 
   </aside>
 
