@@ -9,8 +9,8 @@ import { Result } from '../../models/result';
   providedIn: 'root'
 })
 export class UserPannelService {
-  private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  //private readonly baseUrl = 'http://localhost:8080/api';
+  //private readonly baseUrl = 'https://api.mayakhodro.com/api';
+  private readonly baseUrl = 'http://localhost:8080/api';
   private client = inject(HttpClient);
 constructor() { }
 getOrders(userId : string) : Observable<Result<Order[]>>{
