@@ -11,7 +11,8 @@ export interface ImportResult { total: number; created: number; duplicates: numb
 @Injectable({ providedIn: 'root' })
 export class TelegramChannelsService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'https://api.mayakhodro.com/api/admin/telegram-channels';
+  //private readonly baseUrl = 'https://api.mayakhodro.com/api/admin/telegram-channels';
+  private readonly baseUrl = 'http://localhost:8080/api';
   getAll(): Observable<TelegramChannel[]> { return this.http.get<TelegramChannel[]>(this.baseUrl); }
   getSummary(): Observable<TelegramSummary> { return this.http.get<TelegramSummary>(`${this.baseUrl}/summary`); }
   getCapabilities(): Observable<TelegramCapability> { return this.http.get<TelegramCapability>(`${this.baseUrl}/capabilities`); }
