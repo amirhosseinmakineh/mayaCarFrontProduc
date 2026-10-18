@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface TelegramChannel { id: number; identifier: string; username: string; publicUrl: string; title: string; status: string; enabled: boolean; lastAttemptAt?: string; lastSuccessAt?: string; lastError?: string; messagesCollected: number; listingsExtracted: number; retryCount: number; }
 export interface TelegramSummary { totalChannels: number; active: number; paused: number; errors: number; pending: number; processing: number; messagesCollected: number; listingsExtracted: number; lastCollection?: string; }
@@ -11,7 +12,7 @@ export interface ImportResult { total: number; created: number; duplicates: numb
 @Injectable({ providedIn: 'root' })
 export class TelegramChannelsService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'https://api.mayakhodro.com/api/admin/telegram-channels';
+  private readonly baseUrl = `${environment.apiUrl}/admin/telegram-channels`;
   getAll(): Observable<TelegramChannel[]> { return this.http.get<TelegramChannel[]>(this.baseUrl); }
   getSummary(): Observable<TelegramSummary> { return this.http.get<TelegramSummary>(`${this.baseUrl}/summary`); }
   getCapabilities(): Observable<TelegramCapability> { return this.http.get<TelegramCapability>(`${this.baseUrl}/capabilities`); }
