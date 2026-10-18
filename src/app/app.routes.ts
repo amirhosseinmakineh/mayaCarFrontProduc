@@ -23,6 +23,11 @@ import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
 import { TelegramChannelsComponent } from "./components/admin/telegram-channels/telegram-channels.component";
 
 export const routes: Routes = [
+  {
+    path: 'admin/dashboard/telegram-channels',
+    redirectTo: '/adminDashboard/telegramChannels',
+    pathMatch: 'full'
+  },
   { path: 'register', component: RegisterComponent },
   { path: '', component: HomeComponent },
   { path: 'about-us', component: AboutUsComponent },

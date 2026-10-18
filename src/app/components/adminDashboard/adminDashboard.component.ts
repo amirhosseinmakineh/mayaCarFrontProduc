@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkWithHref } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../services/auth/auth-service';
 
@@ -14,6 +14,7 @@ import { AuthService } from '../../services/auth/auth-service';
 })
 export class AdminDashboardComponent implements OnInit {
 
+  private readonly platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private toastr = inject(ToastrService);
   private  auth = inject(AuthService)
@@ -25,6 +26,10 @@ export class AdminDashboardComponent implements OnInit {
   constructor() {}
 
 ngOnInit(): void {
+  if (!isPlatformBrowser(this.platformId)) {
+    return;
+  }
+
   const token = localStorage.getItem('token');
 
   if (!token) {
