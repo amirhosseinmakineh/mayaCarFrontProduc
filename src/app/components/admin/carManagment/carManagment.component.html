@@ -8,14 +8,14 @@
         style="margin-left: 10px;">
       </i>
 
-      لیست ماشین‌ها
+      لیست {{ vehicleLabel }}
     </h2>
 
     <button
       class="add-user-btn"
       (click)="openCreate()">
 
-      افزودن ماشین جدید
+      افزودن {{ vehicleLabel }}
 
     </button>
 
@@ -155,8 +155,8 @@
 
         {{
           activeModal() === 'create'
-          ? 'افزودن ماشین جدید'
-          : 'ویرایش ماشین'
+          ? 'افزودن ' + vehicleLabel
+          : 'ویرایش ' + vehicleLabel
         }}
 
       </span>
@@ -401,7 +401,7 @@
 
     <div class="modal-header">
 
-      <span>حذف ماشین</span>
+      <span>حذف {{ vehicleLabel }}</span>
 
       <button
         class="close-btn"
@@ -417,7 +417,7 @@
 
       <p style="margin-bottom: 20px;">
 
-        آیا از حذف این ماشین مطمئن هستید؟
+        آیا از حذف این مورد مطمئن هستید؟
 
       </p>
 

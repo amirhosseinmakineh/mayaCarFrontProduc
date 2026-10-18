@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
 import { Car } from '../../models/car/car';
@@ -18,6 +18,11 @@ import { CarService } from '../../services/car/car.service';
 })
 export class CarListComponent implements OnInit {
   private readonly carService = inject(CarService);
+  private readonly route = inject(ActivatedRoute);
+
+  isUsed = false;
+  pageTitle = 'خودروهای صفر';
+  pageDescription = 'خودروی موردنظرتان را پیدا کنید و جزئیات کامل، قیمت کارخانه و بازار را ببینید.';
 
   cars = signal<Car[]>([]);
   companyList = signal<Company[]>([]);
@@ -29,10 +34,17 @@ export class CarListComponent implements OnInit {
     maxPrice: undefined,
     company: '',
     pageSize: 12,
-    pageNumber: 0
+    pageNumber: 0,
+    isUsed: false
   });
 
   ngOnInit(): void {
+    this.isUsed = this.route.snapshot.data['isUsed'] === true;
+    this.pageTitle = this.isUsed ? 'خودروهای دست‌دوم' : 'خودروهای صفر';
+    this.pageDescription = this.isUsed
+      ? 'خودروهای دست‌دوم را با مشخصات و قیمت به‌روز بررسی کنید.'
+      : 'خودروی موردنظرتان را پیدا کنید و جزئیات کامل، قیمت کارخانه و بازار را ببینید.';
+    this.carFilter.update(filter => ({ ...filter, isUsed: this.isUsed }));
     this.loadCompanies();
     this.applyFilter();
   }
@@ -64,7 +76,8 @@ export class CarListComponent implements OnInit {
       maxPrice: undefined,
       company: '',
       pageSize: 12,
-      pageNumber: 0
+      pageNumber: 0,
+      isUsed: this.isUsed
     });
     this.applyFilter();
   }

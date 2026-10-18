@@ -36,6 +36,9 @@ export class CarService {
     if (filter.pageNumber != null)
       params = params.set('pageNumber', filter.pageNumber.toString());
 
+    if (filter.isUsed != null)
+      params = params.set('isUsed', filter.isUsed.toString());
+
     return this.http.get<Car[]>(`${this.baseUrl}/car`, { params });
   }
 getAllCompanies(): Observable<any> {
