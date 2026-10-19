@@ -10,6 +10,9 @@ export interface Car {
   startDate?: string;
   price?: number;
   marketPrice?: number;
+  marketPriceDay?: string;
+  priceSampleCount?: number;
+  priceCalculatedAt?: string;
   factoryPrice?: number;
   imageName?: string;
   description?: string;

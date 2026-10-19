@@ -13,6 +13,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, finalize, forkJoin, timer } from 'rxjs';
 import {
   ImportResult,
+  TelegramObservation,
+  DailyCarPrice,
+  TelegramPricingState,
   TelegramCapability,
   TelegramChannel,
   TelegramChannelsService,
@@ -33,6 +36,13 @@ export class TelegramChannelsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
 
+  pricingState?: TelegramPricingState | null;
+  observations: TelegramObservation[] = [];
+  dailyPrices: DailyCarPrice[] = [];
+  priceCarId: number | null = null;
+  pricePage = 0;
+  matchFilter = '';
+  observationPage = 0;
   channels: TelegramChannel[] = [];
   capability?: TelegramCapability;
   jobs: TelegramJobLog[] = [];
@@ -64,6 +74,9 @@ export class TelegramChannelsComponent implements OnInit {
       summary: this.service.getSummary(),
       capability: this.service.getCapabilities(),
       jobs: this.service.getJobs(),
+      observations: this.service.getObservations(this.matchFilter, this.observationPage),
+      dailyPrices: this.service.getDailyPrices(this.priceCarId, this.pricePage),
+      pricingState: this.service.getPricingState(),
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
@@ -78,9 +91,39 @@ export class TelegramChannelsComponent implements OnInit {
           this.summary = data.summary;
           this.capability = data.capability;
           this.jobs = data.jobs;
+          this.observations = data.observations;
+          this.dailyPrices = data.dailyPrices;
+          this.pricingState = data.pricingState;
         },
         error: (error) => this.showError(error),
       });
+  }
+
+  asUtc(value?: string): string | null {
+    if (!value) {
+      return null;
+    }
+    return /(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : `${value}Z`;
+  }
+
+  filterPrices(): void {
+    this.pricePage = 0;
+    this.refresh();
+  }
+
+  changePricePage(offset: number): void {
+    this.pricePage = Math.max(0, this.pricePage + offset);
+    this.refresh();
+  }
+
+  filterObservations(): void {
+    this.observationPage = 0;
+    this.refresh();
+  }
+
+  changeObservationPage(offset: number): void {
+    this.observationPage = Math.max(0, this.observationPage + offset);
+    this.refresh();
   }
 
   importChannels(): void {

@@ -53,6 +53,9 @@ describe('Telegram channel management', () => {
       message: 'Public preview',
     });
     http.expectOne(`${baseUrl}/jobs`).flush([]);
+    http.expectOne(request => request.url.endsWith('/telegram-pricing/observations')).flush([]);
+    http.expectOne(request => request.url.endsWith('/telegram-pricing/prices')).flush([]);
+    http.expectOne(`${environment.apiUrl}/admin/telegram-pricing/state`).flush(null);
   }
 
   it('submits textarea through the service with the complete API path', fakeAsync(() => {
@@ -140,6 +143,9 @@ describe('Telegram channel management', () => {
     http.expectOne(`${baseUrl}/summary`).flush({});
     http.expectOne(`${baseUrl}/capabilities`).flush({});
     http.expectOne(`${baseUrl}/jobs`).flush([]);
+    http.expectOne(request => request.url.endsWith('/telegram-pricing/observations')).flush([]);
+    http.expectOne(request => request.url.endsWith('/telegram-pricing/prices')).flush([]);
+    http.expectOne(`${environment.apiUrl}/admin/telegram-pricing/state`).flush(null);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(
       'https://t.me/telegram',
