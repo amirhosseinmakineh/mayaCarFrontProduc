@@ -35,7 +35,10 @@
           <th>تیپ</th>
           <th>شرکت</th>
           <th>سال تولید</th>
-          <th>قیمت</th>
+          <th>قیمت بازار (تومان)</th>
+          <th>روز قیمت</th>
+          <th>تعداد نمونه معتبر</th>
+          <th>آخرین محاسبه موفق</th>
           <th>عکس</th>
           <th>توضیحات</th>
           <th>عملیات</th>
@@ -56,13 +59,17 @@
 
           <td data-label="تیپ">{{ item.tipName }}</td>
 
-          <td data-label="شرکت">{{ item.company }}</td>
+          <td data-label="شرکت">{{ item.companyName || item.company }}</td>
 
           <td data-label="سال تولید">{{ item.startDate }}</td>
 
           <td data-label="قیمت">
-            {{ item.price | thousandSeparator:'fa-IR' }}
+            {{ (item.marketPrice ?? item.price ?? 0) | thousandSeparator:'fa-IR' }}
           </td>
+
+          <td data-label="روز قیمت">{{ item.marketPriceDay || '—' }}</td>
+          <td data-label="تعداد نمونه معتبر">{{ item.priceCalculatedAt ? item.priceSampleCount : '—' }}</td>
+          <td data-label="آخرین محاسبه موفق">{{ item.priceCalculatedAt ? (item.priceCalculatedAt | date:'medium':'+0330') : '—' }}</td>
 
           <td data-label="عکس">
 

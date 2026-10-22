@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import {
   Component,
   OnInit,
@@ -67,8 +68,7 @@ implements OnInit {
   // CONSTANTS
   // ======================
 
-  //imageBaseUrl ='http://localhost:8080';
-   imageBaseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/';
+  imageBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
 
   // ======================
   // SIGNALS

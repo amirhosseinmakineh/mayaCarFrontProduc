@@ -100,3 +100,61 @@
     </tbody>
   </table>
 </section>
+
+<section class="pricing-panel" dir="rtl">
+  <h2>قیمت بازار و تاریخچه روزانه</h2>
+  <label>شناسه خودرو برای مشاهده تاریخچه
+    <input type="number" min="1" [(ngModel)]="priceCarId" (ngModelChange)="filterPrices()" placeholder="همه خودروها">
+  </label>
+  <p *ngIf="pricingState?.lastSuccessAt">آخرین اجرای موفق: {{ asUtc(pricingState!.lastSuccessAt) | date:'medium':'+0330' }}</p>
+  <p *ngIf="pricingState?.lastError" role="alert">خطای محاسبه: {{ pricingState!.lastError }}</p>
+  <p>واحد: تومان · روز انتشار به وقت تهران · قیمت روز تا پایان مهلت دریافت قابل به‌روزرسانی است.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>خودرو</th><th>روز قیمت</th><th>میانگین بازار</th><th>نمونه معتبر متمایز</th><th>آخرین محاسبه موفق</th><th>وضعیت</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let price of dailyPrices">
+          <td>{{ price.name }} (#{{ price.carId }})</td>
+          <td>{{ price.priceDay }}</td>
+          <td>{{ price.marketPrice | number:'1.0-2' }}</td>
+          <td>{{ price.sampleCount }}</td>
+          <td>{{ asUtc(price.calculatedAt) | date:'medium':'+0330' }}</td>
+          <td>{{ price.isFinal ? 'نهایی' : 'در حال تکمیل' }}</td>
+        </tr>
+        <tr *ngIf="!dailyPrices.length"><td colspan="6">هنوز قیمت روزانه‌ای محاسبه نشده است؛ قیمت قبلی خودرو حفظ می‌شود.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <button type="button" [disabled]="loading || pricePage === 0" (click)="changePricePage(-1)">تاریخچه قبلی</button>
+  <span>صفحه {{ pricePage + 1 }}</span>
+  <button type="button" [disabled]="loading || dailyPrices.length < 100" (click)="changePricePage(1)">تاریخچه بعدی</button>
+  <h2>تطبیق آگهی‌ها</h2>
+  <label>وضعیت
+    <select [(ngModel)]="matchFilter" (ngModelChange)="filterObservations()">
+      <option value="">همه</option><option value="Matched">تطبیق‌شده</option>
+      <option value="Ambiguous">مبهم</option><option value="Unmatched">بدون تطبیق</option>
+      <option value="Invalid">نامعتبر</option><option value="Late">دریافت پس از نهایی‌شدن</option>
+      <option value="Pending">در انتظار پردازش</option>
+      <option value="CalculationError">خطای محاسبه</option>
+    </select>
+  </label>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>منبع</th><th>شناسه خودرو</th><th>مبلغ اصلی</th><th>تومان</th><th>روز انتشار</th><th>وضعیت و علت</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let observation of observations">
+          <td><a *ngIf="observation.sourceUrl" [href]="observation.sourceUrl" target="_blank" rel="noopener noreferrer">{{ observation.sourceChannel }} / {{ observation.sourceMessageId }}</a></td>
+          <td>{{ observation.carId || '—' }}</td>
+          <td>{{ observation.price | number }} {{ observation.currency }}</td>
+          <td>{{ observation.normalizedPrice | number }}</td>
+          <td>{{ observation.priceDay || '—' }}</td>
+          <td>{{ observation.matchStatus }}<br>{{ observation.matchReason }}</td>
+        </tr>
+        <tr *ngIf="!observations.length"><td colspan="6">آگهی‌ای با این وضعیت موجود نیست.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <button type="button" [disabled]="loading || observationPage === 0" (click)="changeObservationPage(-1)">قبلی</button>
+  <span>صفحه {{ observationPage + 1 }}</span>
+  <button type="button" [disabled]="loading || observations.length < 100" (click)="changeObservationPage(1)">بعدی</button>
+</section>

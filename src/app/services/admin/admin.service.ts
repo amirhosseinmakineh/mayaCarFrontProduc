@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
 import { Observable } from "rxjs";
@@ -28,8 +29,7 @@ import { OrderItem } from "../../models/orderItem/orderItem";
   providedIn: 'root'
 })
 export class AdminService {
-  //private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = environment.apiUrl;
   private client = inject(HttpClient);
 
   constructor() { }

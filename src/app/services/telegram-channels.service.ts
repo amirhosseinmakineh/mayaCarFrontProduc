@@ -64,6 +64,24 @@ export class TelegramChannelsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/admin/telegram-channels`;
 
+  getObservations(status = '', page = 0): Observable<TelegramObservation[]> {
+    return this.http.get<TelegramObservation[]>(`${environment.apiUrl}/admin/telegram-pricing/observations`, {
+      params: { status, page },
+    });
+  }
+
+  getPricingState(): Observable<TelegramPricingState | null> {
+    return this.http.get<TelegramPricingState | null>(`${environment.apiUrl}/admin/telegram-pricing/state`);
+  }
+
+  getDailyPrices(carId: number | null = null, page = 0): Observable<DailyCarPrice[]> {
+    const params: Record<string, string | number> = { page };
+    if (carId !== null && carId > 0) {
+      params['carId'] = carId;
+    }
+    return this.http.get<DailyCarPrice[]>(`${environment.apiUrl}/admin/telegram-pricing/prices`, { params });
+  }
+
   getAll(): Observable<TelegramChannel[]> {
     return this.http.get<TelegramChannel[]>(this.baseUrl);
   }
@@ -99,4 +117,38 @@ export class TelegramChannelsService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+}
+
+export interface TelegramObservation {
+  id: number;
+  carId?: number;
+  rawMessageId?: number;
+  sourceChannel: string;
+  sourceMessageId: string;
+  sourceUrl?: string;
+  price?: number;
+  currency?: string;
+  normalizedPrice?: number;
+  publishedAt?: string;
+  receivedAt?: string;
+  priceDay?: string;
+  matchStatus: string;
+  matchReason?: string;
+}
+
+export interface DailyCarPrice {
+  carId: number;
+  name: string;
+  marketPrice: number;
+  factoryPrice: number;
+  priceDay: string;
+  sampleCount: number;
+  calculatedAt: string;
+  isFinal: boolean;
+}
+
+export interface TelegramPricingState {
+  lastSuccessAt?: string;
+  lastAttemptAt?: string;
+  lastError?: string;
 }

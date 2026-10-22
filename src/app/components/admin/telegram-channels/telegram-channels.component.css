@@ -45,3 +45,9 @@ td {
 .capability small {
   color: #41634a;
 }
+
+.pricing-panel { margin-top: 2rem; padding: 1.25rem; background: #fff; border-radius: 1rem; }
+.pricing-panel .table-wrap { overflow-x: auto; margin: 1rem 0; }
+.pricing-panel table { width: 100%; border-collapse: collapse; min-width: 740px; }
+.pricing-panel td, .pricing-panel th { padding: .75rem; text-align: right; border-bottom: 1px solid #e2e8f0; }
+.pricing-panel select, .pricing-panel button { padding: .5rem .75rem; margin: .4rem; }
