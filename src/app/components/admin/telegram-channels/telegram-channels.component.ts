@@ -42,6 +42,7 @@ export class TelegramChannelsComponent implements OnInit {
   loading = false;
   submitting = false;
   error = '';
+  private authorizationFailed = false;
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
@@ -54,7 +55,7 @@ export class TelegramChannelsComponent implements OnInit {
   }
 
   refresh(): void {
-    if (this.loading) {
+    if (this.loading || this.authorizationFailed) {
       return;
     }
 
@@ -141,6 +142,16 @@ export class TelegramChannelsComponent implements OnInit {
   }
 
   private showError(error: HttpErrorResponse): void {
+    if (error.status === 401 || error.status === 403) {
+      this.authorizationFailed = true;
+      this.error =
+        error.status === 401
+          ? 'ورود شما معتبر نیست؛ با حساب ادمین دوباره وارد شوید.'
+          : 'این حساب دسترسی ادمین برای مدیریت کانال‌ها ندارد.';
+      this.changeDetector.markForCheck();
+      return;
+    }
+
     const message =
       typeof error.error === 'string'
         ? error.error
