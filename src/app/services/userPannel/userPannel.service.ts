@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -9,8 +10,7 @@ import { Result } from '../../models/result';
   providedIn: 'root'
 })
 export class UserPannelService {
-  //private readonly baseUrl = 'https://api.mayakhodro.com/api';
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = environment.apiUrl;
   private client = inject(HttpClient);
 constructor() { }
 getOrders(userId : string) : Observable<Result<Order[]>>{
