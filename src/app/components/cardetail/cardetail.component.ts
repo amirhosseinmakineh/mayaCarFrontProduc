@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import {
   Component,
   inject,
@@ -57,9 +58,7 @@ private readonly cdr =
 
   // ================= IMAGE =================
 
-  //imageBaseUrl = 'http://localhost:8080';
-  imageBaseUrl =
-    'https://mayakhoddrobackend-mayacar.runflare.run/';
+  imageBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
 
   // ================= INIT =================
 
