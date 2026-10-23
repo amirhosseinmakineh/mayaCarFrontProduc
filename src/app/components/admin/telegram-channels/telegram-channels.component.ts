@@ -13,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, finalize, forkJoin, timer } from 'rxjs';
 import {
   ImportResult,
+  TelegramPreviewReport,
   TelegramObservation,
   DailyCarPrice,
   TelegramPricingState,
@@ -48,6 +49,9 @@ export class TelegramChannelsComponent implements OnInit {
   jobs: TelegramJobLog[] = [];
   summary?: TelegramSummary;
   input = '';
+  messageLimit = 500;
+  previewing = false;
+  previewReports: TelegramPreviewReport[] = [];
   result?: ImportResult;
   loading = false;
   submitting = false;
@@ -158,6 +162,24 @@ export class TelegramChannelsComponent implements OnInit {
         },
         error: (error) => this.showError(error),
       });
+  }
+
+  previewChannels(channels?: string[], before: number | null = null): void {
+    if (this.previewing) return;
+    const entries = channels ?? this.input.split(/[\s,;]+/).filter(Boolean).map(value => value.replace(/^https?:\/\/t\.me\//i, '').replace(/\/$/, ''));
+    if (!entries.length || entries.length > 10 || !Number.isInteger(this.messageLimit) || this.messageLimit < 1 || this.messageLimit > 500) {
+      this.error = 'یک تا ۱۰ شناسه کانال و تعداد پیام بین ۱ تا ۵۰۰ وارد کنید.';
+      return;
+    }
+    this.previewing = true;
+    this.error = '';
+    this.service.preview(entries, this.messageLimit, before).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => { this.previewing = false; this.changeDetector.markForCheck(); }),
+    ).subscribe({
+      next: reports => { this.previewReports = reports; },
+      error: error => this.showError(error),
+    });
   }
 
   toggle(channel: TelegramChannel): void {

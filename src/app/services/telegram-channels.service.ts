@@ -82,6 +82,10 @@ export class TelegramChannelsService {
     return this.http.get<DailyCarPrice[]>(`${environment.apiUrl}/admin/telegram-pricing/prices`, { params });
   }
 
+  preview(channels: string[], messageLimit: number, before: number | null = null): Observable<TelegramPreviewReport[]> {
+    return this.http.post<TelegramPreviewReport[]>(`${this.baseUrl}/preview`, { channels, messageLimit, before });
+  }
+
   getAll(): Observable<TelegramChannel[]> {
     return this.http.get<TelegramChannel[]>(this.baseUrl);
   }
@@ -151,4 +155,16 @@ export interface TelegramPricingState {
   lastSuccessAt?: string;
   lastAttemptAt?: string;
   lastError?: string;
+}
+
+export interface TelegramPreviewListing {
+  channelId: string; messageId: string; carName: string | null; trim: string | null;
+  year: number | null; mileage: number | null; price: number | null;
+  currency: string | null; messageUrl: string | null;
+}
+export interface TelegramPreviewReport {
+  channelId: string; requested: number; received: number; carAds: number; pricesExtracted: number;
+  pagesFetched: number; nextBefore: number | null; stopReason: string;
+  durationMilliseconds: number; success: boolean; error: string | null;
+  listings: TelegramPreviewListing[];
 }
