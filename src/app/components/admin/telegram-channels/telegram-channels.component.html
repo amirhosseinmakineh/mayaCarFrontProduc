@@ -28,6 +28,27 @@
       افزودن و صف‌بندی کانال‌ها
     </button>
   </form>
+  <label>حداکثر پیام برای هر کانال
+    <input type="number" min="1" max="500" [(ngModel)]="messageLimit">
+  </label>
+  <button type="button" (click)="previewChannels()" [disabled]="previewing">دریافت و بررسی پیام‌های عمومی</button>
+  <p *ngIf="previewing" role="status">در حال دریافت؛ هر کانال ممکن است تا سه دقیقه زمان ببرد.</p>
+  <section *ngFor="let report of previewReports">
+    <h2>{{ report.channelId }}</h2>
+    <p>درخواست: {{ report.requested }} · دریافت واقعی: {{ report.received }} · آگهی خودرو: {{ report.carAds }} · قیمت: {{ report.pricesExtracted }} · صفحه: {{ report.pagesFetched }} · زمان: {{ report.durationMilliseconds / 1000 | number:'1.0-1' }} ثانیه</p>
+    <p *ngIf="report.error" role="alert">{{ report.error }}</p>
+    <p>وضعیت دریافت: {{ report.stopReason }}؛ دسترسی کامل به تاریخچه تضمین نمی‌شود.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>خودرو</th><th>تیپ</th><th>سال</th><th>کارکرد</th><th>قیمت و واحد</th><th>منبع</th></tr></thead>
+      <tbody><tr *ngFor="let listing of report.listings">
+        <td>{{ listing.carName || 'نامشخص' }}</td><td>{{ listing.trim || '—' }}</td>
+        <td>{{ listing.year || '—' }}</td><td>{{ listing.mileage ?? '—' }}</td>
+        <td>{{ listing.price | number }} {{ listing.currency || 'واحد نامشخص' }}</td>
+        <td><a [href]="listing.messageUrl" target="_blank" rel="noopener noreferrer">پیام {{ listing.messageId }}</a></td>
+      </tr></tbody>
+    </table></div>
+    <button type="button" *ngIf="report.nextBefore && report.received" [disabled]="previewing" (click)="previewChannels([report.channelId], report.nextBefore)">پیام‌های قدیمی‌تر این کانال</button>
+  </section>
   <p *ngIf="submitting" role="status">در حال ثبت و صف‌بندی...</p>
   <button type="button" (click)="refresh()" [disabled]="loading">
     تازه‌سازی وضعیت
