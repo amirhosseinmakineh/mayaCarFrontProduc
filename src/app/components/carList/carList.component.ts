@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -119,7 +120,7 @@ export class CarListComponent implements OnInit {
   getImageUrl(car: Car): string {
     const image = car.imageName || car.details?.imageUrl || '';
     if (!image) return 'assets/images/car-placeholder.svg';
-    return image.startsWith('http') ? image : `https://api.mayakhodro.com${image.startsWith('/') ? image : `/${image}`}`;
+    return image.startsWith('http') ? image : `${environment.apiUrl.replace(/\/api\/?$/, '')}${image.startsWith('/') ? image : `/${image}`}`;
   }
 
   trackByCompany(index: number, item: Company): number {
