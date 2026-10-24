@@ -251,3 +251,6 @@
             pointer-events: none;
             z-index: 0;
         }
+
+.auth-error { color: #9b1c1c !important; background: #fff1f1; padding: 12px; border: 1px solid #e8b4b4; border-radius: 8px; margin: 12px 0; }
+button:disabled { opacity: .65; cursor: wait; }
