@@ -7,7 +7,7 @@
         <div class="form-body">
             <div class="form-title"> ثبت‌ نام </div>
 
-            <form >
+            <form (ngSubmit)="registerUser()" novalidate>
                 <div class="row-2cols">
                     <div class="input-group">
                         <label>نام</label>
@@ -20,8 +20,8 @@
                 </div>
 
                 <div class="input-group">
-                    <label>آدرس ایمیل</label>
-                    <input type="email" placeholder="example@mayakar.com" required [(ngModel)]="dto.email" name="email">
+                    <label>آدرس ایمیل (اختیاری)</label>
+                    <input type="email" placeholder="example@mayakar.com" [(ngModel)]="dto.email" name="email">
                 </div>
 
                 <div class="input-group">
@@ -40,7 +40,10 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-gold" (click)="registerUser()"> ساخت حساب کاربری </button>
+                @if (errorMessage()) {
+                  <p role="alert" class="auth-error">{{ errorMessage() }}</p>
+                }
+                <button type="submit" class="btn-gold" [disabled]="isSubmitting()" [attr.aria-busy]="isSubmitting()"> {{ isSubmitting() ? 'در حال ارسال…' : 'ساخت حساب کاربری' }} </button>
 
                 <div class="login-link">
                   <a (click)="onGoToLogin()" style="cursor: pointer;"> قبلاً عضو شده‌اید؟</a>

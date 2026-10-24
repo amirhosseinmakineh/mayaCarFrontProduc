@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { authErrorMessage, normalizeMobile } from '../../services/auth/auth-form';
+import { finalize } from 'rxjs';
 import { LoginDto } from '../../models/user/loginDto';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -16,49 +18,56 @@ export class LoginComponent implements OnInit {
   private api = inject(AuthService);
   private router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly errorMessage = signal('');
+  readonly isSubmitting = signal(false);
   constructor() {}
+  private showError(message: string): void { this.errorMessage.set(message); }
   dto: LoginDto = {
     mobileNumber: '',
     password: '',
   };
   ngOnInit(): void {
     if (this.route.snapshot.queryParamMap.get('reason') === 'session-expired') {
-      this.toastr.error('اعتبار ورود شما تأیید نشد؛ دوباره وارد شوید.');
+      this.showError('اعتبار ورود شما تأیید نشد؛ دوباره وارد شوید.');
     }
   }
   private onValidateModel = (dto: LoginDto): boolean => {
     const phoneRegex = /^09[0-9]{9}$/;
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
     if (!dto.mobileNumber || dto.mobileNumber.trim() === '') {
-      this.toastr.error('شماره تلفن نمی‌تواند خالی باشد', 'خطای اعتبارسنجی');
+      this.showError('شماره تلفن نمی‌تواند خالی باشد');
       return false;
     }
     if (!dto.password || dto.password.trim() === '') {
-      this.toastr.error('رمز عبور نمی‌تواند خالی باشد', 'خطای اعتبارسنجی');
+      this.showError('رمز عبور نمی‌تواند خالی باشد');
       return false;
     }
-    if (!passwordRegex.test(dto.password)) {
-      this.toastr.error(
-        'رمز عبور باید حداقل ۸ کاراکتر، شامل حروف بزرگ، حروف کوچک، عدد و یکی از کاراکترهای ویژه (@$!%*?&) باشد',
-        'خطای اعتبارسنجی',
-      );
+    if (!phoneRegex.test(dto.mobileNumber)) {
+      this.showError('شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد');
       return false;
     }
+
     return true;
   };
   public onLogin(): void {
+    if (this.isSubmitting()) return;
+    this.errorMessage.set('');
+    this.dto.mobileNumber = normalizeMobile(this.dto.mobileNumber);
     if (!this.onValidateModel(this.dto)) {
       return;
     }
 
-    this.api.loginUser(this.dto).subscribe({
+    this.isSubmitting.set(true);
+    this.api.loginUser(this.dto).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
       next: (response) => {
+        if (!response.isSuccess) {
+          this.showError(response.message || 'شماره موبایل یا رمز عبور اشتباه است');
+          return;
+        }
         const token = response?.data?.token;
 
         if (!token) {
-          this.toastr.error('کاربر یافت نشد');
+          this.showError('کاربر یافت نشد');
           return;
         }
 
@@ -66,7 +75,7 @@ export class LoginComponent implements OnInit {
 
         if (!this.api.getToken()) {
           this.api.logout();
-          this.toastr.error(
+          this.showError(
             'توکن دریافتی معتبر نیست؛ تنظیمات ورود سرور را بررسی کنید.',
           );
           return;
@@ -93,7 +102,7 @@ export class LoginComponent implements OnInit {
       },
 
       error: (err) => {
-        this.toastr.error(err.error);
+        this.showError(authErrorMessage(err));
       },
     });
   }

@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from "@angular/core";
+import { Component, OnInit, inject, signal } from "@angular/core";
+import { authErrorMessage, normalizeMobile } from '../../services/auth/auth-form';
+import { finalize } from 'rxjs';
 import { FormsModule } from "@angular/forms";
 import { RegisterDto } from "../../models/user/registerDto";
 import { AuthService } from "../../services/auth/auth-service";
@@ -17,7 +19,10 @@ export class RegisterComponent implements OnInit {
   private toastr = inject(ToastrService);
   private api = inject(AuthService);
   private readonly router = inject(Router)
+  readonly errorMessage = signal('');
+  readonly isSubmitting = signal(false);
   constructor(){}
+  private showError(message: string): void { this.errorMessage.set(message); }
   dto : RegisterDto = {
     name : '',
     family : '',
@@ -32,59 +37,65 @@ private onValidateModel = (dto: RegisterDto): boolean => {
   const phoneRegex = /^09[0-9]{9}$/;
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-  if (!dto.email || dto.email.trim() === '') {
-    this.toastr.error('ایمیل نمی‌تواند خالی باشد', 'خطای اعتبارسنجی');
+  if (!dto.name.trim() || !dto.family.trim()) {
+    this.showError('نام و نام خانوادگی را وارد کنید');
     return false;
   }
   if (!dto.mobileNumber || dto.mobileNumber.trim() === '') {
-    this.toastr.error('شماره تلفن نمی‌تواند خالی باشد', 'خطای اعتبارسنجی');
+    this.showError('شماره تلفن نمی‌تواند خالی باشد');
     return false;
   }
   if (!dto.password || dto.password.trim() === '') {
-    this.toastr.error('رمز عبور نمی‌تواند خالی باشد', 'خطای اعتبارسنجی');
+    this.showError('رمز عبور نمی‌تواند خالی باشد');
     return false;
   }
   if (!dto.rePassword || dto.rePassword.trim() === '') {
-    this.toastr.error('تکرار رمز عبور نمی‌تواند خالی باشد', 'خطای اعتبارسنجی');
+    this.showError('تکرار رمز عبور نمی‌تواند خالی باشد');
     return false;
   }
 
-  if (!emailRegex.test(dto.email)) {
-    this.toastr.error('فرمت ایمیل صحیح نیست (مثال: name@domain.com)', 'خطای اعتبارسنجی');
+  if (dto.email && !emailRegex.test(dto.email)) {
+    this.showError('فرمت ایمیل صحیح نیست (مثال: name@domain.com)');
     return false;
   }
   if (!phoneRegex.test(dto.mobileNumber)) {
-    this.toastr.error('شماره تلفن همراه معتبر نیست. باید با 09 شروع و ۱۱ رقم باشد', 'خطای اعتبارسنجی');
+    this.showError('شماره تلفن همراه معتبر نیست. باید با 09 شروع و ۱۱ رقم باشد');
     return false;
   }
   if (!passwordRegex.test(dto.password)) {
-    this.toastr.error('رمز عبور باید حداقل ۸ کاراکتر، شامل حروف بزرگ، حروف کوچک، عدد و یکی از کاراکترهای ویژه (@$!%*?&) باشد', 'خطای اعتبارسنجی');
+    this.showError('رمز عبور باید حداقل ۸ کاراکتر، شامل حروف بزرگ، حروف کوچک، عدد و یکی از کاراکترهای ویژه (@$!%*?&) باشد');
     return false;
   }
   if (dto.password !== dto.rePassword) {
-    this.toastr.error('رمز عبور و تکرار آن مطابقت ندارند', 'خطای اعتبارسنجی');
+    this.showError('رمز عبور و تکرار آن مطابقت ندارند');
     return false;
   }
 
   return true;
 };
 public registerUser(): void {
-debugger;
+  if (this.isSubmitting()) return;
+  this.errorMessage.set('');
+  this.dto.mobileNumber = normalizeMobile(this.dto.mobileNumber);
+  this.dto.name = this.dto.name.trim();
+  this.dto.family = this.dto.family.trim();
+  this.dto.email = this.dto.email?.trim();
   if (!this.onValidateModel(this.dto)) {
     return;
   }
 
-  this.api.registerUser(this.dto).subscribe({
+  this.isSubmitting.set(true);
+  this.api.registerUser(this.dto).pipe(finalize(() => this.isSubmitting.set(false))).subscribe({
     next: (response) => {
+      if (!response.isSuccess) {
+        this.showError(response.message || 'ثبت‌نام انجام نشد');
+        return;
+      }
       this.toastr.success('ثبت‌نام با موفقیت انجام شد', 'موفقیت');
       this.router.navigate(["/login"])
     },
     error: (err) => {
-      let errorMessage = 'خطایی در ثبت‌نام رخ داده است';
-      if (err.error && typeof err.error === 'string') {
-        errorMessage = err.error;
-      }
-      this.toastr.error(errorMessage, 'خطا');
+      this.showError(authErrorMessage(err));
     }
   });
 }

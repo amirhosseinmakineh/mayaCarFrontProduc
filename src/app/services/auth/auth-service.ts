@@ -1,12 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginDto } from '../../models/user/loginDto';
 import { RegisterDto } from '../../models/user/registerDto';
 
-interface LoginResponse {
-  data?: { token?: string };
+export interface AuthResponse<T> {
+  isSuccess: boolean;
+  message?: string;
+  data?: T;
 }
 
 interface SessionClaims {
@@ -26,12 +28,14 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly tokenState = signal(this.readStoredToken());
 
-  registerUser(dto: RegisterDto): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/user`, dto);
+  registerUser(dto: RegisterDto): Observable<AuthResponse<unknown>> {
+    return this.http.post<AuthResponse<unknown>>(`${this.baseUrl}/user`, {
+      ...dto, emaail: dto.email,
+    }).pipe(timeout(20000));
   }
 
-  loginUser(dto: LoginDto): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/user/login`, dto);
+  loginUser(dto: LoginDto): Observable<AuthResponse<{ token?: string }>> {
+    return this.http.post<AuthResponse<{ token?: string }>>(`${this.baseUrl}/user/login`, dto).pipe(timeout(20000));
   }
 
   setToken(token: string): void {
