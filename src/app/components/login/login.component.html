@@ -7,7 +7,7 @@
         <div class="form-body">
             <div class="form-title">ورود</div>
 
-            <form>
+            <form (ngSubmit)="onLogin()" novalidate>
 
                 <div class="input-group">
                     <label>شماره موبایل</label>
@@ -21,7 +21,10 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-gold" (click)="onLogin()"> ورود به حساب کاربری </button>
+                @if (errorMessage()) {
+                  <p role="alert" class="auth-error">{{ errorMessage() }}</p>
+                }
+                <button type="submit" class="btn-gold" [disabled]="isSubmitting()" [attr.aria-busy]="isSubmitting()"> {{ isSubmitting() ? 'در حال ارسال…' : 'ورود به حساب کاربری' }} </button>
 
                 <div class="login-link">
                   <a (click)="onGoToRegister()" style="text-decoration: none; cursor: pointer;">حساب کاربری ندارید ؟ </a>
