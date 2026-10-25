@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.mayakhodro.com/api'
+  apiUrl: 'http://api.mayakhodro.com/api'
 };
