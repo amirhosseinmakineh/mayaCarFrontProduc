@@ -22,6 +22,7 @@ const proxiedPathPrefixes = ['/api', '/images', '/WeatherForecast'];
 // Keep browser traffic on mayakhodro.com. Runflare permits the frontend
 // service to reach the backend through its internal HTTP endpoint, while the
 // public HTTPS endpoint can time out for users on some Iranian networks.
+// The proxy also keeps authentication requests same-origin for the browser.
 app.use(async (req, res, next) => {
   const requestPath = req.path;
   const shouldProxy = proxiedPathPrefixes.some(
