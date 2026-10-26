@@ -140,7 +140,18 @@ export interface TelegramObservation {
   priceDay?: string;
   matchStatus: string;
   matchReason?: string;
-  manufacturer?: string; primaryImageUrl?: string; comparisonStatus?: string; comparisonAveragePrice?: number; comparedChannelCount?: number; validPriceSourceCount?: number; processingStatus: string;
+  manufacturer?: string;
+  primaryImageUrl?: string;
+  comparisonStatus?: string;
+  comparisonAveragePrice?: number;
+  comparedChannelCount?: number;
+  validPriceSourceCount?: number;
+  processingStatus: string;
+  reasonCode?: string;
+  year?: number;
+  mileage?: number;
+  isUsed?: boolean;
+  trim?: string;
 }
 
 export interface DailyCarPrice {
@@ -162,7 +173,7 @@ export interface TelegramPricingState {
 
 export interface TelegramPreviewListing {
   channelId: string; messageId: string; carName: string | null; trim: string | null;
-  year: number | null; mileage: number | null; price: number | null;
+  year: number | null; yearCalendar: string | null; mileage: number | null; price: number | null;
   currency: string | null; messageUrl: string | null;
 }
 export interface TelegramPreviewReport {

@@ -374,7 +374,11 @@
             <tr *ngFor="let listing of report.listings">
               <td>{{ listing.carName || "نامشخص" }}</td>
               <td>{{ listing.trim || "نامشخص" }}</td>
-              <td>{{ listing.year || "نامشخص" }}</td>
+              <td>
+                {{ listing.year || "نامشخص" }}
+                <span *ngIf="listing.yearCalendar === 'Jalali'">شمسی</span>
+                <span *ngIf="listing.yearCalendar === 'Gregorian'">میلادی</span>
+              </td>
               <td>{{ listing.mileage ?? "نامشخص" }}</td>
               <td>
                 {{ listing.price | number }}
@@ -429,6 +433,8 @@
     >
       <option value="">همه آگهی‌ها</option>
       <option value="Matched">خودرو شناسایی شد</option>
+      <option value="NeedsReview">اطلاعات ناقص؛ نیازمند بررسی</option>
+      <option value="WaitingForComparableChannels">منتظر پنج کانال دیگر</option>
       <option value="Unmatched">خودرو شناسایی نشد</option>
       <option value="Ambiguous">مشخصات مبهم</option>
       <option value="Invalid">اطلاعات نامعتبر</option>
@@ -446,6 +452,7 @@
             <th>نتیجه مقایسه</th>
             <th>میانگین مقایسه (تومان)</th>
             <th>منابع مقایسه</th>
+            <th>دلیل یا مورد نیاز</th>
           </tr>
         </thead>
         <tbody>
@@ -479,10 +486,16 @@
             <td>
               {{ observation.comparedChannelCount ?? "—" }} کانال بررسی‌شده /
               {{ observation.validPriceSourceCount ?? "—" }} منبع قیمت
+              <span *ngIf="observation.comparisonStatus === 'WaitingForComparableChannels'">
+                ({{ remainingComparisonChannels(observation) }} کانال دیگر لازم است)
+              </span>
+            </td>
+            <td>
+              {{ observationReason(observation) }}
             </td>
           </tr>
           <tr *ngIf="!observations.length">
-            <td colspan="6">
+            <td colspan="7">
               آگهی‌ای برای نمایش با این وضعیت دریافت نشده است.
             </td>
           </tr>

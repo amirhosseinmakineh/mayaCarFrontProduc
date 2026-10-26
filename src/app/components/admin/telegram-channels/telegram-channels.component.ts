@@ -337,6 +337,8 @@ export class TelegramChannelsComponent implements OnInit {
       AccessRequired: 'کانال در دسترس نیست',
       UnsupportedByCurrentCredentials: 'کانال قابل دریافت نیست',
       Matched: 'خودرو شناسایی شد',
+      NeedsReview: 'اطلاعات ناقص؛ نیازمند بررسی',
+      WaitingForComparableChannels: 'منتظر کانال‌های بیشتر',
       Unmatched: 'خودرو شناسایی نشد',
       Ambiguous: 'مشخصات خودرو مبهم است',
       Invalid: 'اطلاعات نامعتبر',
@@ -360,6 +362,14 @@ export class TelegramChannelsComponent implements OnInit {
     return status
       ? labels[status] || 'نیازمند بررسی پشتیبانی'
       : 'هنوز بررسی نشده';
+  }
+
+  remainingComparisonChannels(observation: TelegramObservation): number {
+    return Math.max(0, 5 - (observation.comparedChannelCount ?? 0));
+  }
+
+  observationReason(observation: TelegramObservation): string {
+    return observation.matchReason || observation.reasonCode || 'دلیل ثبت نشده است.';
   }
 
   channelHelp(channel: TelegramChannel): string {
