@@ -36,7 +36,7 @@ describe('Telegram channel management', () => {
     http.verify({ ignoreCancelled: true });
   });
 
-  function completeRefresh(): void {
+  function completeRefresh(pricingUnavailable = false): void {
     http.expectOne(baseUrl).flush([]);
     http.expectOne(`${baseUrl}/summary`).flush({
       totalChannels: 0,
@@ -53,9 +53,20 @@ describe('Telegram channel management', () => {
       message: 'Public preview',
     });
     http.expectOne(`${baseUrl}/jobs`).flush([]);
-    http.expectOne(request => request.url.endsWith('/telegram-pricing/observations')).flush([]);
-    http.expectOne(request => request.url.endsWith('/telegram-pricing/prices')).flush([]);
-    http.expectOne(`${environment.apiUrl}/admin/telegram-pricing/state`).flush(null);
+    const observations = http.expectOne((request) =>
+      request.url.endsWith('/telegram-pricing/observations'),
+    );
+    if (pricingUnavailable) {
+      observations.flush({}, { status: 404, statusText: 'Not Found' });
+    } else {
+      observations.flush([]);
+    }
+    http
+      .expectOne((request) => request.url.endsWith('/telegram-pricing/prices'))
+      .flush([]);
+    http
+      .expectOne(`${environment.apiUrl}/admin/telegram-pricing/state`)
+      .flush(null);
   }
 
   it('submits textarea through the service with the complete API path', fakeAsync(() => {
@@ -85,7 +96,7 @@ describe('Telegram channel management', () => {
     completeRefresh();
     fixture.detectChanges();
     expect(fixture.componentInstance.submitting).toBeFalse();
-    expect(fixture.nativeElement.textContent).toContain('1 ایجاد شد');
+    expect(fixture.nativeElement.textContent).toContain('1 کانال اضافه شد');
     fixture.destroy();
   }));
 
@@ -118,7 +129,7 @@ describe('Telegram channel management', () => {
     expect(fixture.componentInstance.submitting).toBeFalse();
     expect(
       fixture.nativeElement.querySelector('[role="alert"]').textContent,
-    ).toContain('Import failed');
+    ).toContain('دوباره تلاش کنید');
     fixture.destroy();
   }));
 
@@ -143,14 +154,45 @@ describe('Telegram channel management', () => {
     http.expectOne(`${baseUrl}/summary`).flush({});
     http.expectOne(`${baseUrl}/capabilities`).flush({});
     http.expectOne(`${baseUrl}/jobs`).flush([]);
-    http.expectOne(request => request.url.endsWith('/telegram-pricing/observations')).flush([]);
-    http.expectOne(request => request.url.endsWith('/telegram-pricing/prices')).flush([]);
-    http.expectOne(`${environment.apiUrl}/admin/telegram-pricing/state`).flush(null);
+    http
+      .expectOne((request) =>
+        request.url.endsWith('/telegram-pricing/observations'),
+      )
+      .flush([]);
+    http
+      .expectOne((request) => request.url.endsWith('/telegram-pricing/prices'))
+      .flush([]);
+    http
+      .expectOne(`${environment.apiUrl}/admin/telegram-pricing/state`)
+      .flush(null);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(
       'https://t.me/telegram',
     );
-    expect(fixture.nativeElement.textContent).toContain('Active');
+    expect(fixture.nativeElement.textContent).toContain('دریافت فعال');
     fixture.destroy();
   }));
+  it('keeps channel management usable when pricing details are unavailable', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(0);
+    completeRefresh(true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.loading).toBeFalse();
+    expect(fixture.componentInstance.optionalDataUnavailable).toBeTrue();
+    expect(fixture.componentInstance.error).toBe('');
+    expect(fixture.nativeElement.textContent).toContain(
+      'هنوز کانالی اضافه نشده است',
+    );
+    fixture.destroy();
+  }));
+
+  it('uses clear Persian labels and hides unknown technical status values', () => {
+    expect(fixture.componentInstance.statusLabel('Active')).toBe('دریافت فعال');
+    expect(fixture.componentInstance.statusLabel('AccessRequired')).toBe(
+      'کانال در دسترس نیست',
+    );
+    expect(
+      fixture.componentInstance.statusLabel('UnrecognizedInternalState'),
+    ).toBe('نیازمند بررسی پشتیبانی');
+  });
 });
