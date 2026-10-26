@@ -140,7 +140,7 @@ export interface TelegramObservation {
   priceDay?: string;
   matchStatus: string;
   matchReason?: string;
-  manufacturer?: string; primaryImageUrl?: string; comparisonStatus?: string; comparisonAveragePrice?: number; comparedChannelCount: number; validPriceSourceCount: number; processingStatus: string;
+  manufacturer?: string; primaryImageUrl?: string; comparisonStatus?: string; comparisonAveragePrice?: number; comparedChannelCount?: number; validPriceSourceCount?: number; processingStatus: string;
 }
 
 export interface DailyCarPrice {

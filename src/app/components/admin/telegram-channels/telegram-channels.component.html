@@ -1,181 +1,606 @@
-<section class="telegram-page" dir="rtl">
-  <h1>مدیریت کانال‌های تلگرام</h1>
-  <div class="capability" *ngIf="capability">
-    <strong>Provider: {{ capability.provider }}</strong>
-    <span>{{ capability.message }}</span>
-    <small *ngIf="capability.supportsPublicUsernames"
-      >ورودی مجاز: @username یا URL عمومی t.me</small
+<main class="telegram-page" dir="rtl">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">منابع آگهی خودرو</span>
+      <h1>دریافت آگهی از تلگرام</h1>
+      <p>
+        کانال‌های فروش خودرو را اضافه کنید و وضعیت دریافت آگهی‌ها را همین‌جا
+        ببینید.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="secondary"
+      (click)="refresh()"
+      [disabled]="loading"
     >
-  </div>
-  <div class="summary" *ngIf="summary">
-    <b>کل: {{ summary.totalChannels }}</b>
-    <span>فعال: {{ summary.active }}</span>
-    <span>متوقف: {{ summary.paused }}</span>
-    <span>خطا: {{ summary.errors }}</span>
-    <span>در صف: {{ summary.pending }}</span>
-    <span>در حال پردازش: {{ summary.processing }}</span>
-    <span>پیام: {{ summary.messagesCollected }}</span>
-    <span>آگهی: {{ summary.listingsExtracted }}</span><span>صفر: {{ summary.newCars }}</span><span>دست‌دوم: {{ summary.usedCars }}</span><span>مقایسه موفق: {{ summary.comparedCars }}</span><span>در انتظار: {{ summary.pendingListings }}</span><span>ردشده: {{ summary.rejectedListings }}</span><span>فاقد تصویر: {{ summary.missingImageListings }}</span><span>فاقد شرکت: {{ summary.missingManufacturerListings }}</span>
-  </div>
-  <form (ngSubmit)="importChannels()">
-    <textarea
-      name="channels"
-      [(ngModel)]="input"
-      rows="8"
-      placeholder="هر خط یک @username یا https://t.me/channelname — فقط کانال‌های Public"
-    ></textarea>
-    <button type="submit" [disabled]="submitting">
-      افزودن و صف‌بندی کانال‌ها
+      {{ loading ? "در حال به‌روزرسانی…" : "به‌روزرسانی وضعیت" }}
     </button>
-  </form>
-  <label>حداکثر پیام برای هر کانال
-    <input type="number" min="1" max="500" [(ngModel)]="messageLimit">
-  </label>
-  <button type="button" (click)="previewChannels()" [disabled]="previewing">دریافت و بررسی پیام‌های عمومی</button>
-  <p *ngIf="previewing" role="status">در حال دریافت؛ هر کانال ممکن است تا سه دقیقه زمان ببرد.</p>
-  <section *ngFor="let report of previewReports">
-    <h2>{{ report.channelId }}</h2>
-    <p>درخواست: {{ report.requested }} · دریافت واقعی: {{ report.received }} · آگهی خودرو: {{ report.carAds }} · قیمت: {{ report.pricesExtracted }} · صفحه: {{ report.pagesFetched }} · زمان: {{ report.durationMilliseconds / 1000 | number:'1.0-1' }} ثانیه</p>
-    <p *ngIf="report.error" role="alert">{{ report.error }}</p>
-    <p>وضعیت دریافت: {{ report.stopReason }}؛ دسترسی کامل به تاریخچه تضمین نمی‌شود.</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>خودرو</th><th>تیپ</th><th>سال</th><th>کارکرد</th><th>قیمت و واحد</th><th>منبع</th></tr></thead>
-      <tbody><tr *ngFor="let listing of report.listings">
-        <td>{{ listing.carName || 'نامشخص' }}</td><td>{{ listing.trim || '—' }}</td>
-        <td>{{ listing.year || '—' }}</td><td>{{ listing.mileage ?? '—' }}</td>
-        <td>{{ listing.price | number }} {{ listing.currency || 'واحد نامشخص' }}</td>
-        <td><a [href]="listing.messageUrl" target="_blank" rel="noopener noreferrer">پیام {{ listing.messageId }}</a></td>
-      </tr></tbody>
-    </table></div>
-    <button type="button" *ngIf="report.nextBefore && report.received" [disabled]="previewing" (click)="previewChannels([report.channelId], report.nextBefore)">پیام‌های قدیمی‌تر این کانال</button>
+  </header>
+
+  <div class="notice error" *ngIf="error" role="alert">{{ error }}</div>
+  <div class="notice success" *ngIf="success" role="status">{{ success }}</div>
+  <div class="notice success" *ngIf="result" role="status">
+    <strong>{{ result.created }} کانال اضافه شد.</strong>
+    {{ result.queued }} کانال در انتظار دریافت پیام است.
+    <span *ngIf="result.duplicates"
+      >{{ result.duplicates }} مورد قبلاً ثبت شده بود.</span
+    >
+    <span *ngIf="result.invalid"
+      >{{ result.invalid }} ورودی پذیرفته نشد؛ شناسه‌ها را بررسی کنید.</span
+    >
+    <p *ngIf="result.invalidEntries.length" dir="ltr">
+      {{ result.invalidEntries.join("، ") }}
+    </p>
+  </div>
+
+  <section class="guide" aria-label="راهنمای شروع">
+    <div>
+      <span class="step">۱</span>
+      <h2>کانال را اضافه کنید</h2>
+      <p>لینک یا شناسه یک کانال عمومی فروش خودرو را وارد کنید.</p>
+    </div>
+    <div>
+      <span class="step">۲</span>
+      <h2>منتظر دریافت بمانید</h2>
+      <p>
+        سامانه پیام‌ها را بررسی می‌کند. لازم نیست چند بار دکمه دریافت را بزنید.
+      </p>
+    </div>
+    <div>
+      <span class="step">۳</span>
+      <h2>نتیجه را ببینید</h2>
+      <p>
+        وضعیت کانال و آگهی‌ها را پایین صفحه ببینید. هر پیام الزاماً آگهی قابل
+        انتشار نیست.
+      </p>
+    </div>
   </section>
-  <p *ngIf="submitting" role="status">در حال ثبت و صف‌بندی...</p>
-  <button type="button" (click)="refresh()" [disabled]="loading">
-    تازه‌سازی وضعیت
-  </button>
-  <p role="alert" class="error" *ngIf="error">{{ error }}</p>
-  <p *ngIf="result">
-    {{ result.created }} ایجاد شد، {{ result.duplicates }} تکراری،
-    {{ result.invalid }} نامعتبر و {{ result.queued }} job در صف قرار گرفت.
-  </p>
-  <p *ngIf="result?.invalidEntries?.length">
-    ورودی‌های نامعتبر: {{ result?.invalidEntries?.join("، ") }}
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th>کانال</th>
-        <th>وضعیت</th>
-        <th>آخرین تلاش</th>
-        <th>آخرین موفقیت</th>
-        <th>تلاش مجدد</th>
-        <th>پیام</th>
-        <th>آگهی</th><th>پردازش‌شده</th><th>ناموفق</th>
-        <th>خطا</th>
-        <th>عملیات</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let c of channels">
-        <td>{{ c.publicUrl || c.identifier }}</td>
-        <td>{{ c.status }}</td>
-        <td>{{ c.lastAttemptAt | date: "short" }}</td>
-        <td>{{ c.lastSuccessAt | date: "short" }}</td>
-        <td>{{ c.retryCount }}</td>
-        <td>{{ c.messagesCollected }}</td>
-        <td>{{ c.listingsExtracted }}</td><td>{{ c.processedListings }}</td><td>{{ c.failedListings }}</td>
-        <td>{{ c.lastError }}</td>
-        <td>
-          <button (click)="toggle(c)">
-            {{ c.enabled ? "Pause" : "Resume" }}
+
+  <section class="overview" *ngIf="summary" aria-label="خلاصه وضعیت">
+    <div>
+      <span>کانال‌های ثبت‌شده</span
+      ><strong>{{ summary.totalChannels | number }}</strong>
+    </div>
+    <div>
+      <span>کانال‌های فعال</span><strong>{{ summary.active | number }}</strong>
+    </div>
+    <div>
+      <span>پیام‌های دریافت‌شده</span
+      ><strong>{{ summary.messagesCollected | number }}</strong>
+    </div>
+    <div>
+      <span>آگهی‌های استخراج‌شده</span
+      ><strong>{{ summary.listingsExtracted | number }}</strong>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="section-heading">
+      <div>
+        <h2>افزودن کانال فروش خودرو</h2>
+        <p>
+          فقط کانال عمومی پذیرفته می‌شود. لینک دعوت خصوصی قابل استفاده نیست.
+        </p>
+      </div>
+    </div>
+    <form (ngSubmit)="importChannels()">
+      <label for="channel-input"
+        >لینک یا شناسه کانال <span class="required">(ضروری)</span></label
+      >
+      <textarea
+        id="channel-input"
+        name="channels"
+        [(ngModel)]="input"
+        rows="3"
+        dir="ltr"
+        placeholder="@channelname&#10;https://t.me/channelname"
+        aria-describedby="channel-input-help"
+      ></textarea>
+      <p class="hint" id="channel-input-help">
+        برای افزودن چند کانال، هر کانال را در یک خط بنویسید. پس از ثبت، دریافت
+        پیام به‌صورت خودکار آغاز می‌شود.
+      </p>
+      <button
+        class="primary"
+        type="submit"
+        [disabled]="submitting || !input.trim()"
+      >
+        {{ submitting ? "در حال ثبت کانال‌ها…" : "افزودن کانال و شروع دریافت" }}
+      </button>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="channels-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="channels-title">کانال‌های شما</h2>
+        <p>
+          وضعیت این فهرست هر چند ثانیه به‌روز می‌شود. برای کانال‌های دارای مشکل،
+          راهنمای همان کانال را بخوانید.
+        </p>
+      </div>
+      <label class="search-label"
+        >جست‌وجوی کانال<input
+          type="search"
+          [(ngModel)]="channelSearch"
+          (ngModelChange)="channelPage = 0"
+          placeholder="نام یا شناسه کانال"
+      /></label>
+    </div>
+    <div *ngIf="loading && !channels.length" class="empty" role="status">
+      در حال دریافت فهرست کانال‌ها…
+    </div>
+    <div *ngIf="!loading && !channels.length" class="empty">
+      <h3>هنوز کانالی اضافه نشده است</h3>
+      <p>
+        برای شروع، لینک یک کانال عمومی فروش خودرو را در کادر بالا وارد کنید.
+      </p>
+    </div>
+    <div *ngIf="channels.length && !filteredChannelCount" class="empty">
+      کانالی با این نام پیدا نشد. عبارت جست‌وجو را تغییر دهید.
+    </div>
+    <div class="channel-list">
+      <article class="channel-card" *ngFor="let c of visibleChannels">
+        <div class="channel-top">
+          <div>
+            <h3>{{ c.title || c.username || c.identifier }}</h3>
+            <a
+              [href]="c.publicUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              dir="ltr"
+              >{{ c.publicUrl || c.identifier }}</a
+            >
+          </div>
+          <span
+            class="badge"
+            [class.good]="c.enabled && c.status === 'Active'"
+            [class.warn]="
+              c.enabled &&
+              (c.status === 'Error' || c.status === 'AccessRequired')
+            "
+            >{{ !c.enabled ? "دریافت متوقف است" : statusLabel(c.status) }}</span
+          >
+        </div>
+        <p class="channel-help">{{ channelHelp(c) }}</p>
+        <dl class="channel-stats">
+          <div>
+            <dt>پیام دریافت‌شده</dt>
+            <dd>{{ c.messagesCollected | number }}</dd>
+          </div>
+          <div>
+            <dt>آگهی استخراج‌شده</dt>
+            <dd>{{ c.listingsExtracted | number }}</dd>
+          </div>
+          <div *ngIf="c.processedListings != null">
+            <dt>آگهی منتشرشده</dt>
+            <dd>{{ c.processedListings | number }}</dd>
+          </div>
+          <div *ngIf="c.failedListings != null">
+            <dt>آگهی ناموفق</dt>
+            <dd>{{ c.failedListings | number }}</dd>
+          </div>
+        </dl>
+        <div class="timestamps">
+          <span
+            >آخرین بررسی:
+            {{
+              (asUtc(c.lastAttemptAt) | date: "yyyy/MM/dd HH:mm" : "+0330") ||
+                "هنوز بررسی نشده"
+            }}</span
+          ><span
+            >آخرین دریافت موفق:
+            {{
+              (asUtc(c.lastSuccessAt) | date: "yyyy/MM/dd HH:mm" : "+0330") ||
+                "هنوز دریافت نشده"
+            }}</span
+          >
+        </div>
+        <p class="inline-warning" *ngIf="c.lastError">
+          آخرین دریافت با مشکل مواجه شد. شناسه و عمومی‌بودن کانال را بررسی کنید
+          و دوباره تلاش کنید.
+        </p>
+        <div class="actions">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="actionBusy"
+            (click)="retry(c)"
+          >
+            دریافت دوباره</button
+          ><button
+            type="button"
+            class="quiet"
+            [disabled]="actionBusy"
+            (click)="toggle(c)"
+          >
+            {{ c.enabled ? "توقف دریافت" : "فعال‌کردن دریافت" }}</button
+          ><button
+            type="button"
+            class="quiet"
+            [disabled]="actionBusy"
+            (click)="test(c)"
+          >
+            بررسی دسترسی کانال</button
+          ><button
+            type="button"
+            class="danger-link"
+            [disabled]="actionBusy"
+            (click)="pendingRemoval = c.id"
+          >
+            حذف کانال
           </button>
-          <button (click)="test(c)">Test</button>
-          <button (click)="retry(c)">Retry</button>
-          <button (click)="remove(c)">حذف</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+        </div>
+        <div
+          class="remove-confirm"
+          *ngIf="pendingRemoval === c.id"
+          role="alert"
+        >
+          <p>
+            کانال «{{ c.title || c.username || c.identifier }}» از فهرست حذف
+            شود؟
+          </p>
+          <button
+            type="button"
+            class="danger"
+            [disabled]="actionBusy"
+            (click)="remove(c)"
+          >
+            بله، حذف کانال</button
+          ><button
+            type="button"
+            class="secondary"
+            (click)="pendingRemoval = null"
+          >
+            انصراف
+          </button>
+        </div>
+      </article>
+    </div>
+    <nav
+      class="pagination"
+      aria-label="صفحه‌های کانال‌ها"
+      *ngIf="filteredChannelCount > 10"
+    >
+      <button
+        type="button"
+        [disabled]="channelPage === 0"
+        (click)="channelPage = channelPage - 1"
+      >
+        قبلی</button
+      ><span>صفحه {{ channelPage + 1 }}</span
+      ><button
+        type="button"
+        [disabled]="(channelPage + 1) * 10 >= filteredChannelCount"
+        (click)="channelPage = channelPage + 1"
+      >
+        بعدی
+      </button>
+    </nav>
+  </section>
 
-  <h2>لاگ پردازش‌ها</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Job</th>
-        <th>Channel</th>
-        <th>Status</th>
-        <th>Attempt</th>
-        <th>Created</th>
-        <th>Error</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let job of jobs">
-        <td>{{ job.id }}</td>
-        <td>{{ job.channelId }}</td>
-        <td>{{ job.status }}</td>
-        <td>{{ job.attempt }}</td>
-        <td>{{ job.createdAt | date: "short" }}</td>
-        <td>{{ job.error }}</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+  <section class="panel" *ngIf="summary && summary.newCars != null">
+    <h2>وضعیت آگهی‌های خودرو</h2>
+    <p class="hint">
+      این آمار مربوط به بررسی آگهی‌هاست. دریافت پیام به‌تنهایی به معنی نمایش
+      خودرو در سایت نیست.
+    </p>
+    <div class="metric-grid">
+      <div>
+        <span>خودروهای صفر</span><strong>{{ summary.newCars | number }}</strong>
+      </div>
+      <div>
+        <span>خودروهای کارکرده</span
+        ><strong>{{ summary.usedCars | number }}</strong>
+      </div>
+      <div>
+        <span>مقایسه انجام‌شده</span
+        ><strong>{{ summary.comparedCars | number }}</strong>
+      </div>
+      <div>
+        <span>منتظر بررسی</span
+        ><strong>{{ summary.pendingListings | number }}</strong>
+      </div>
+      <div>
+        <span>قابل انتشار نیست</span
+        ><strong>{{ summary.rejectedListings | number }}</strong>
+      </div>
+      <div>
+        <span>فاقد تصویر</span
+        ><strong>{{ summary.missingImageListings | number }}</strong>
+      </div>
+      <div>
+        <span>شرکت سازنده نامشخص</span
+        ><strong>{{ summary.missingManufacturerListings | number }}</strong>
+      </div>
+    </div>
+  </section>
 
-<section class="pricing-panel" dir="rtl">
-  <h2>قیمت بازار و تاریخچه روزانه</h2>
-  <label>شناسه خودرو برای مشاهده تاریخچه
-    <input type="number" min="1" [(ngModel)]="priceCarId" (ngModelChange)="filterPrices()" placeholder="همه خودروها">
-  </label>
-  <p *ngIf="pricingState?.lastSuccessAt">آخرین اجرای موفق: {{ asUtc(pricingState!.lastSuccessAt) | date:'medium':'+0330' }}</p>
-  <p *ngIf="pricingState?.lastError" role="alert">خطای محاسبه: {{ pricingState!.lastError }}</p>
-  <p>واحد: تومان · روز انتشار به وقت تهران · قیمت روز تا پایان مهلت دریافت قابل به‌روزرسانی است.</p>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>خودرو</th><th>روز قیمت</th><th>میانگین بازار</th><th>نمونه معتبر متمایز</th><th>آخرین محاسبه موفق</th><th>وضعیت</th></tr></thead>
-      <tbody>
-        <tr *ngFor="let price of dailyPrices">
-          <td>{{ price.name }} (#{{ price.carId }})</td>
-          <td>{{ price.priceDay }}</td>
-          <td>{{ price.marketPrice | number:'1.0-2' }}</td>
-          <td>{{ price.sampleCount }}</td>
-          <td>{{ asUtc(price.calculatedAt) | date:'medium':'+0330' }}</td>
-          <td>{{ price.isFinal ? 'نهایی' : 'در حال تکمیل' }}</td>
-        </tr>
-        <tr *ngIf="!dailyPrices.length"><td colspan="6">هنوز قیمت روزانه‌ای محاسبه نشده است؛ قیمت قبلی خودرو حفظ می‌شود.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <button type="button" [disabled]="loading || pricePage === 0" (click)="changePricePage(-1)">تاریخچه قبلی</button>
-  <span>صفحه {{ pricePage + 1 }}</span>
-  <button type="button" [disabled]="loading || dailyPrices.length < 100" (click)="changePricePage(1)">تاریخچه بعدی</button>
-  <h2>تطبیق آگهی‌ها</h2>
-  <label>وضعیت
-    <select [(ngModel)]="matchFilter" (ngModelChange)="filterObservations()">
-      <option value="">همه</option><option value="Matched">تطبیق‌شده</option>
-      <option value="Ambiguous">مبهم</option><option value="Unmatched">بدون تطبیق</option>
-      <option value="Invalid">نامعتبر</option><option value="Late">دریافت پس از نهایی‌شدن</option>
-      <option value="Pending">در انتظار پردازش</option>
-      <option value="CalculationError">خطای محاسبه</option>
+  <details class="panel advanced">
+    <summary>بررسی آزمایشی پیام‌های یک کانال</summary>
+    <p>
+      برای دیدن نمونه پیام‌های کانال، ابتدا شناسه آن را در کادر «افزودن کانال»
+      بنویسید و سپس این دکمه را بزنید. این بررسی جایگزین ثبت کانال و پردازش
+      آگهی‌ها نیست.
+    </p>
+    <label for="message-limit">حداکثر تعداد پیام برای بررسی (۱ تا ۵۰۰)</label
+    ><input
+      id="message-limit"
+      type="number"
+      min="1"
+      max="500"
+      [(ngModel)]="messageLimit"
+    />
+    <p class="hint">
+      ممکن است تلگرام تعداد کمتری پیام در اختیار سامانه بگذارد.
+    </p>
+    <button
+      type="button"
+      class="secondary"
+      (click)="previewChannels()"
+      [disabled]="previewing"
+    >
+      {{ previewing ? "در حال دریافت پیام‌ها…" : "نمایش نمونه پیام‌ها" }}
+    </button>
+    <p *ngIf="previewing" role="status">
+      لطفاً منتظر بمانید؛ بررسی هر کانال ممکن است چند دقیقه طول بکشد.
+    </p>
+    <section class="preview-result" *ngFor="let report of previewReports">
+      <h3 dir="ltr">{{ report.channelId }}</h3>
+      <p>
+        {{ report.received }} پیام از {{ report.requested }} پیام درخواستی
+        دریافت شد؛ {{ report.carAds }} آگهی خودرو و
+        {{ report.pricesExtracted }} قیمت استخراج شد.
+      </p>
+      <p>{{ statusLabel(report.stopReason) }}</p>
+      <p class="inline-warning" *ngIf="report.error">
+        دریافت کامل نشد. شناسه و عمومی‌بودن کانال را بررسی کنید و دوباره تلاش
+        کنید.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>خودرو</th>
+              <th>تیپ</th>
+              <th>سال</th>
+              <th>کارکرد</th>
+              <th>قیمت</th>
+              <th>پیام اصلی</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let listing of report.listings">
+              <td>{{ listing.carName || "نامشخص" }}</td>
+              <td>{{ listing.trim || "نامشخص" }}</td>
+              <td>{{ listing.year || "نامشخص" }}</td>
+              <td>{{ listing.mileage ?? "نامشخص" }}</td>
+              <td>
+                {{ listing.price | number }}
+                {{
+                  listing.currency === "IRR"
+                    ? "ریال"
+                    : listing.currency === "IRT"
+                      ? "تومان"
+                      : "واحد نامشخص"
+                }}
+              </td>
+              <td>
+                <a
+                  [href]="listing.messageUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >مشاهده در تلگرام</a
+                >
+              </td>
+            </tr>
+            <tr *ngIf="!report.listings.length">
+              <td colspan="6">
+                از پیام‌های دریافت‌شده، آگهی قابل تشخیصی پیدا نشد.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button
+        type="button"
+        *ngIf="report.nextBefore && report.received"
+        [disabled]="previewing"
+        (click)="previewChannels([report.channelId], report.nextBefore)"
+      >
+        بررسی پیام‌های قدیمی‌تر
+      </button>
+    </section>
+  </details>
+
+  <details class="panel advanced">
+    <summary>جزئیات بررسی آگهی‌ها و قیمت‌ها</summary>
+    <p>این بخش برای پیگیری آگهی‌هایی است که شناسایی یا مقایسه نشده‌اند.</p>
+    <p class="inline-warning" *ngIf="optionalDataUnavailable">
+      جزئیات بررسی قیمت‌ها فعلاً از سرور دریافت نمی‌شود. مدیریت کانال‌ها همچنان
+      در دسترس است.
+    </p>
+    <label for="match-filter">نمایش آگهی‌ها بر اساس نتیجه بررسی</label
+    ><select
+      id="match-filter"
+      [(ngModel)]="matchFilter"
+      (ngModelChange)="filterObservations()"
+    >
+      <option value="">همه آگهی‌ها</option>
+      <option value="Matched">خودرو شناسایی شد</option>
+      <option value="Unmatched">خودرو شناسایی نشد</option>
+      <option value="Ambiguous">مشخصات مبهم</option>
+      <option value="Invalid">اطلاعات نامعتبر</option>
+      <option value="Late">خارج از بازه محاسبه</option>
+      <option value="Pending">در انتظار بررسی</option>
+      <option value="CalculationError">محاسبه انجام نشد</option>
     </select>
-  </label>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>منبع</th><th>شناسه خودرو</th><th>مبلغ اصلی</th><th>تومان</th><th>روز انتشار</th><th>شرکت</th><th>مقایسه</th><th>وضعیت و علت</th></tr></thead>
-      <tbody>
-        <tr *ngFor="let observation of observations">
-          <td><a *ngIf="observation.sourceUrl" [href]="observation.sourceUrl" target="_blank" rel="noopener noreferrer">{{ observation.sourceChannel }} / {{ observation.sourceMessageId }}</a></td>
-          <td>{{ observation.carId || '—' }}</td>
-          <td>{{ observation.price | number }} {{ observation.currency }}</td>
-          <td>{{ observation.normalizedPrice | number }}</td>
-          <td>{{ observation.priceDay || '—' }}</td>
-          <td>{{ observation.manufacturer || 'نامشخص' }}</td><td>{{ observation.comparisonStatus || '—' }} ({{ observation.comparedChannelCount }} کانال / {{ observation.validPriceSourceCount }} قیمت)<br>{{ observation.comparisonAveragePrice | number }}</td><td>{{ observation.processingStatus }}<br>{{ observation.matchStatus }}<br>{{ observation.matchReason }}</td>
-        </tr>
-        <tr *ngIf="!observations.length"><td colspan="6">آگهی‌ای با این وضعیت موجود نیست.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <button type="button" [disabled]="loading || observationPage === 0" (click)="changeObservationPage(-1)">قبلی</button>
-  <span>صفحه {{ observationPage + 1 }}</span>
-  <button type="button" [disabled]="loading || observations.length < 100" (click)="changeObservationPage(1)">بعدی</button>
-</section>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>پیام اصلی</th>
+            <th>قیمت آگهی (تومان)</th>
+            <th>نتیجه شناسایی</th>
+            <th>نتیجه مقایسه</th>
+            <th>میانگین مقایسه (تومان)</th>
+            <th>منابع مقایسه</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let observation of observations">
+            <td>
+              <a
+                *ngIf="observation.sourceUrl"
+                [href]="observation.sourceUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                >مشاهده پیام {{ observation.sourceMessageId }} در
+                {{ observation.sourceChannel }}</a
+              >
+            </td>
+            <td>
+              {{
+                observation.normalizedPrice != null
+                  ? (observation.normalizedPrice | number)
+                  : "قیمت معتبر نیست"
+              }}
+            </td>
+            <td>{{ statusLabel(observation.matchStatus) }}</td>
+            <td>{{ statusLabel(observation.comparisonStatus) }}</td>
+            <td>
+              {{
+                observation.comparisonAveragePrice != null
+                  ? (observation.comparisonAveragePrice | number)
+                  : "هنوز محاسبه نشده"
+              }}
+            </td>
+            <td>
+              {{ observation.comparedChannelCount ?? "—" }} کانال بررسی‌شده /
+              {{ observation.validPriceSourceCount ?? "—" }} منبع قیمت
+            </td>
+          </tr>
+          <tr *ngIf="!observations.length">
+            <td colspan="6">
+              آگهی‌ای برای نمایش با این وضعیت دریافت نشده است.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <nav class="pagination" aria-label="صفحه‌های آگهی‌ها">
+      <button
+        type="button"
+        [disabled]="loading || observationPage === 0"
+        (click)="changeObservationPage(-1)"
+      >
+        قبلی</button
+      ><span>صفحه {{ observationPage + 1 }}</span
+      ><button
+        type="button"
+        [disabled]="loading || observations.length < 100"
+        (click)="changeObservationPage(1)"
+      >
+        بعدی
+      </button>
+    </nav>
+    <h3>تاریخچه قیمت‌های روزانه</h3>
+    <label for="price-car"
+      >شماره خودرو (اختیاری؛ خالی بگذارید تا همه نمایش داده شوند)</label
+    ><input
+      id="price-car"
+      type="number"
+      min="1"
+      [(ngModel)]="priceCarId"
+      (ngModelChange)="filterPrices()"
+    />
+    <p *ngIf="pricingState?.lastSuccessAt">
+      آخرین محاسبه موفق:
+      {{
+        asUtc(pricingState!.lastSuccessAt) | date: "yyyy/MM/dd HH:mm" : "+0330"
+      }}
+    </p>
+    <p class="inline-warning" *ngIf="pricingState?.lastError">
+      آخرین محاسبه کامل نشد. اگر مشکل ادامه داشت، با پشتیبانی تماس بگیرید.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>خودرو</th>
+            <th>روز</th>
+            <th>قیمت بازار (تومان)</th>
+            <th>قیمت معتبر متمایز</th>
+            <th>وضعیت</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let price of dailyPrices">
+            <td>{{ price.name }}</td>
+            <td>{{ price.priceDay }}</td>
+            <td>{{ price.marketPrice | number }}</td>
+            <td>{{ price.sampleCount }}</td>
+            <td>{{ price.isFinal ? "نهایی شده" : "هنوز قابل به‌روزرسانی" }}</td>
+          </tr>
+          <tr *ngIf="!dailyPrices.length">
+            <td colspan="5">
+              هنوز قیمت روزانه‌ای برای این انتخاب ثبت نشده است.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <nav class="pagination" aria-label="صفحه‌های تاریخچه">
+      <button
+        type="button"
+        [disabled]="loading || pricePage === 0"
+        (click)="changePricePage(-1)"
+      >
+        قبلی</button
+      ><span>صفحه {{ pricePage + 1 }}</span
+      ><button
+        type="button"
+        [disabled]="loading || dailyPrices.length < 100"
+        (click)="changePricePage(1)"
+      >
+        بعدی
+      </button>
+    </nav>
+  </details>
+
+  <details class="panel advanced">
+    <summary>سوابق درخواست‌های دریافت</summary>
+    <p>
+      آخرین درخواست‌های دریافت پیام و نتیجه اجرای آن‌ها. برای پیگیری مشکلات
+      تکرارشونده، شماره درخواست را به پشتیبانی بدهید.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>شماره درخواست</th>
+            <th>شماره کانال</th>
+            <th>نتیجه</th>
+            <th>تعداد تلاش</th>
+            <th>زمان ثبت</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let job of jobs">
+            <td>{{ job.id }}</td>
+            <td>{{ job.channelId }}</td>
+            <td>{{ statusLabel(job.status) }}</td>
+            <td>{{ job.attempt }}</td>
+            <td>
+              {{ asUtc(job.createdAt) | date: "yyyy/MM/dd HH:mm" : "+0330" }}
+            </td>
+          </tr>
+          <tr *ngIf="!jobs.length">
+            <td colspan="5">هنوز درخواستی ثبت نشده است.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</main>
