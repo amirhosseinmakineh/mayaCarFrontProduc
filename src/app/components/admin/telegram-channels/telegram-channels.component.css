@@ -51,3 +51,8 @@ td {
 .pricing-panel table { width: 100%; border-collapse: collapse; min-width: 740px; }
 .pricing-panel td, .pricing-panel th { padding: .75rem; text-align: right; border-bottom: 1px solid #e2e8f0; }
 .pricing-panel select, .pricing-panel button { padding: .5rem .75rem; margin: .4rem; }
+
+.telegram-page h1,.pricing-panel h2 { color: #172033; }
+.summary span,.summary b { background: #f2f5f9; border-radius: 999px; padding: .45rem .8rem; }
+.table-wrap { overflow-x: auto; }
+@media (max-width: 700px) { .telegram-page,.pricing-panel { padding: 12px; } table { min-width: 760px; } }

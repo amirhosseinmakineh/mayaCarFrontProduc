@@ -15,7 +15,7 @@
     <span>در صف: {{ summary.pending }}</span>
     <span>در حال پردازش: {{ summary.processing }}</span>
     <span>پیام: {{ summary.messagesCollected }}</span>
-    <span>آگهی: {{ summary.listingsExtracted }}</span>
+    <span>آگهی: {{ summary.listingsExtracted }}</span><span>صفر: {{ summary.newCars }}</span><span>دست‌دوم: {{ summary.usedCars }}</span><span>مقایسه موفق: {{ summary.comparedCars }}</span><span>در انتظار: {{ summary.pendingListings }}</span><span>ردشده: {{ summary.rejectedListings }}</span><span>فاقد تصویر: {{ summary.missingImageListings }}</span><span>فاقد شرکت: {{ summary.missingManufacturerListings }}</span>
   </div>
   <form (ngSubmit)="importChannels()">
     <textarea
@@ -70,7 +70,7 @@
         <th>آخرین موفقیت</th>
         <th>تلاش مجدد</th>
         <th>پیام</th>
-        <th>آگهی</th>
+        <th>آگهی</th><th>پردازش‌شده</th><th>ناموفق</th>
         <th>خطا</th>
         <th>عملیات</th>
       </tr>
@@ -83,7 +83,7 @@
         <td>{{ c.lastSuccessAt | date: "short" }}</td>
         <td>{{ c.retryCount }}</td>
         <td>{{ c.messagesCollected }}</td>
-        <td>{{ c.listingsExtracted }}</td>
+        <td>{{ c.listingsExtracted }}</td><td>{{ c.processedListings }}</td><td>{{ c.failedListings }}</td>
         <td>{{ c.lastError }}</td>
         <td>
           <button (click)="toggle(c)">
@@ -161,7 +161,7 @@
   </label>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>منبع</th><th>شناسه خودرو</th><th>مبلغ اصلی</th><th>تومان</th><th>روز انتشار</th><th>وضعیت و علت</th></tr></thead>
+      <thead><tr><th>منبع</th><th>شناسه خودرو</th><th>مبلغ اصلی</th><th>تومان</th><th>روز انتشار</th><th>شرکت</th><th>مقایسه</th><th>وضعیت و علت</th></tr></thead>
       <tbody>
         <tr *ngFor="let observation of observations">
           <td><a *ngIf="observation.sourceUrl" [href]="observation.sourceUrl" target="_blank" rel="noopener noreferrer">{{ observation.sourceChannel }} / {{ observation.sourceMessageId }}</a></td>
@@ -169,7 +169,7 @@
           <td>{{ observation.price | number }} {{ observation.currency }}</td>
           <td>{{ observation.normalizedPrice | number }}</td>
           <td>{{ observation.priceDay || '—' }}</td>
-          <td>{{ observation.matchStatus }}<br>{{ observation.matchReason }}</td>
+          <td>{{ observation.manufacturer || 'نامشخص' }}</td><td>{{ observation.comparisonStatus || '—' }} ({{ observation.comparedChannelCount }} کانال / {{ observation.validPriceSourceCount }} قیمت)<br>{{ observation.comparisonAveragePrice | number }}</td><td>{{ observation.processingStatus }}<br>{{ observation.matchStatus }}<br>{{ observation.matchReason }}</td>
         </tr>
         <tr *ngIf="!observations.length"><td colspan="6">آگهی‌ای با این وضعیت موجود نیست.</td></tr>
       </tbody>

@@ -33,7 +33,7 @@ export class CarListComponent implements OnInit {
   carFilter = signal<CarFilter>({
     minPrice: undefined,
     maxPrice: undefined,
-    company: '',
+    company: '', model: '', trim: '', year: undefined, minMileage: undefined, maxMileage: undefined, sort: 'newest',
     pageSize: 12,
     pageNumber: 0,
     isUsed: false
@@ -75,7 +75,7 @@ export class CarListComponent implements OnInit {
     this.carFilter.set({
       minPrice: undefined,
       maxPrice: undefined,
-      company: '',
+      company: '', model: '', trim: '', year: undefined, minMileage: undefined, maxMileage: undefined, sort: 'newest',
       pageSize: 12,
       pageNumber: 0,
       isUsed: this.isUsed
@@ -86,6 +86,11 @@ export class CarListComponent implements OnInit {
   updateCompany(value: string): void {
     this.carFilter.update(filter => ({ ...filter, company: value }));
   }
+
+  updateModel(value: string): void { this.carFilter.update(filter => ({ ...filter, model: value })); }
+  updateTrim(value: string): void { this.carFilter.update(filter => ({ ...filter, trim: value })); }
+  updateYear(value: string | number): void { this.carFilter.update(filter => ({ ...filter, year: value === '' ? undefined : Number(value) })); }
+  updateSort(value: string): void { this.carFilter.update(filter => ({ ...filter, sort: value })); }
 
   updateMinPrice(value: string | number): void {
     this.carFilter.update(filter => ({
@@ -133,6 +138,6 @@ export class CarListComponent implements OnInit {
 
   hasActiveFilter(): boolean {
     const filter = this.carFilter();
-    return Boolean(filter.company || filter.minPrice != null || filter.maxPrice != null);
+    return Boolean(filter.company || filter.model || filter.trim || filter.year != null || filter.minPrice != null || filter.maxPrice != null || filter.sort !== 'newest');
   }
 }

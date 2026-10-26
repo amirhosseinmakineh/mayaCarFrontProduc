@@ -27,8 +27,13 @@ export class CarService {
     if (filter.maxPrice != null)
       params = params.set('maxPrice', filter.maxPrice.toString());
 
-    if (filter.company)
-      params = params.set('company', filter.company);
+    if (filter.company) params = params.set('company', filter.company);
+    if (filter.model) params = params.set('model', filter.model);
+    if (filter.trim) params = params.set('trim', filter.trim);
+    if (filter.year != null) params = params.set('year', filter.year.toString());
+    if (filter.minMileage != null) params = params.set('minMileage', filter.minMileage.toString());
+    if (filter.maxMileage != null) params = params.set('maxMileage', filter.maxMileage.toString());
+    if (filter.sort) params = params.set('sort', filter.sort);
 
     if (filter.pageSize != null)
       params = params.set('pageSize', filter.pageSize.toString());
