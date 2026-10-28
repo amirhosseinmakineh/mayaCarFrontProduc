@@ -18,6 +18,8 @@ export interface TelegramChannel {
   listingsExtracted: number;
   retryCount: number;
   processedListings: number; failedListings: number;
+  needsReviewListings?: number; waitingComparisonListings?: number;
+  validPriceListings?: number; ignoredMessages?: number;
 }
 
 export interface TelegramSummary {
@@ -30,6 +32,7 @@ export interface TelegramSummary {
   messagesCollected: number;
   listingsExtracted: number;
   lastCollection?: string;
+  ignoredMessages?: number; validPriceListings?: number;
   newCars: number; usedCars: number; comparedCars: number; pendingListings: number; rejectedListings: number; missingImageListings: number; missingManufacturerListings: number;
 }
 
@@ -148,6 +151,8 @@ export interface TelegramObservation {
   validPriceSourceCount?: number;
   processingStatus: string;
   reasonCode?: string;
+  model?: string; priceText?: string; yearCalendar?: string;
+  comparisonReason?: string; extractionVersion?: number;
   year?: number;
   mileage?: number;
   isUsed?: boolean;

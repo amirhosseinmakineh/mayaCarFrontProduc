@@ -12,6 +12,7 @@ import {
 } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { TelegramChannelsComponent } from './telegram-channels.component';
+import { TelegramObservation } from '../../../services/telegram-channels.service';
 
 describe('Telegram channel management', () => {
   const baseUrl = `${environment.apiUrl}/admin/telegram-channels`;
@@ -34,6 +35,32 @@ describe('Telegram channel management', () => {
   afterEach(() => {
     fixture.destroy();
     http.verify({ ignoreCancelled: true });
+  });
+
+  const observation = (changes: Partial<TelegramObservation> = {}): TelegramObservation => ({
+    id: 1, sourceChannel: 'example', sourceMessageId: '1',
+    matchStatus: 'NeedsReview', processingStatus: 'NeedsReview', extractionVersion: 2,
+    ...changes,
+  });
+
+  it('explains missing prices instead of reporting a support failure', () => {
+    const component = fixture.componentInstance;
+    expect(component.statusLabel('NeedsReview')).toBe('اطلاعات آگهی کامل نیست');
+    expect(component.observationReason(observation({reasonCode: 'PRICE_MISSING'}))).toContain('قیمت روشنی');
+    expect(component.priceUnavailableLabel(observation())).toBe('قیمتی استخراج نشده است');
+  });
+
+  it('distinguishes missing currency and counts only other comparison channels', () => {
+    const component = fixture.componentInstance;
+    expect(component.priceUnavailableLabel(observation({price: 850}))).toContain('واحد پول');
+    const waiting = observation({reasonCode: 'INSUFFICIENT_INDEPENDENT_CHANNELS', comparedChannelCount: 2});
+    expect(component.remainingComparisonChannels(waiting)).toBe(3);
+    expect(component.observationReason(waiting)).toContain('3 کانال دیگر');
+  });
+
+  it('labels legacy rows as queued for automatic reprocessing', () => {
+    expect(fixture.componentInstance.observationReason(observation({extractionVersion: 0})))
+      .toContain('پردازش دوباره خودکار');
   });
 
   function completeRefresh(pricingUnavailable = false): void {

@@ -181,6 +181,10 @@
             <dt>آگهی ناموفق</dt>
             <dd>{{ c.failedListings | number }}</dd>
           </div>
+          <div><dt>قیمت استخراج‌شده</dt><dd>{{ c.validPriceListings ?? 0 | number }}</dd></div>
+          <div><dt>اطلاعات ناقص</dt><dd>{{ c.needsReviewListings ?? 0 | number }}</dd></div>
+          <div><dt>منتظر کانال بیشتر</dt><dd>{{ c.waitingComparisonListings ?? 0 | number }}</dd></div>
+          <div><dt>پیام غیرآگهی/شناخته‌نشده</dt><dd>{{ c.ignoredMessages ?? 0 | number }}</dd></div>
         </dl>
         <div class="timestamps">
           <span
@@ -314,6 +318,8 @@
         <span>شرکت سازنده نامشخص</span
         ><strong>{{ summary.missingManufacturerListings | number }}</strong>
       </div>
+      <div><span>پیام‌های غیرآگهی یا شناخته‌نشده</span><strong>{{ summary.ignoredMessages ?? 0 | number }}</strong></div>
+      <div><span>آگهی دارای قیمت با واحد مشخص</span><strong>{{ summary.validPriceListings ?? 0 | number }}</strong></div>
     </div>
   </section>
 
@@ -383,9 +389,9 @@
               <td>
                 {{ listing.price | number }}
                 {{
-                  listing.currency === "IRR"
+                  (listing.currency === "IRR" || listing.currency === "Rial")
                     ? "ریال"
-                    : listing.currency === "IRT"
+                    : (listing.currency === "IRT" || listing.currency === "Toman")
                       ? "تومان"
                       : "واحد نامشخص"
                 }}
@@ -418,9 +424,9 @@
     </section>
   </details>
 
-  <details class="panel advanced">
-    <summary>جزئیات بررسی آگهی‌ها و قیمت‌ها</summary>
-    <p>این بخش برای پیگیری آگهی‌هایی است که شناسایی یا مقایسه نشده‌اند.</p>
+  <details class="panel advanced" open>
+    <summary>آگهی‌ها و دلیل آماده نشدن برای نمایش</summary>
+    <p>دلیل هر آگهی پایین نمایش داده می‌شود. برای مقایسه، آگهی هم‌شرایط از کانال منبع و پنج کانال دیگرِ ثبت‌شده در همان روز لازم است.</p>
     <p class="inline-warning" *ngIf="optionalDataUnavailable">
       جزئیات بررسی قیمت‌ها فعلاً از سرور دریافت نمی‌شود. مدیریت کانال‌ها همچنان
       در دسترس است.
@@ -431,7 +437,8 @@
       [(ngModel)]="matchFilter"
       (ngModelChange)="filterObservations()"
     >
-      <option value="">همه آگهی‌ها</option>
+      <option value="">آگهی‌های خودرو</option>
+      <option value="Ignored">پیام‌های غیرآگهی یا شناخته‌نشده</option>
       <option value="Matched">خودرو شناسایی شد</option>
       <option value="NeedsReview">اطلاعات ناقص؛ نیازمند بررسی</option>
       <option value="WaitingForComparableChannels">منتظر پنج کانال دیگر</option>
@@ -442,11 +449,11 @@
       <option value="Pending">در انتظار بررسی</option>
       <option value="CalculationError">محاسبه انجام نشد</option>
     </select>
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap observations-wrap">
+      <table class="observations-table">
         <thead>
           <tr>
-            <th>پیام اصلی</th>
+            <th>پیام اصلی و خودرو</th>
             <th>قیمت آگهی (تومان)</th>
             <th>نتیجه شناسایی</th>
             <th>نتیجه مقایسه</th>
@@ -457,7 +464,8 @@
         </thead>
         <tbody>
           <tr *ngFor="let observation of observations">
-            <td>
+            <td data-label="پیام اصلی و خودرو">
+              <p>{{ observation.manufacturer || 'شرکت نامشخص' }} / {{ observation.model || 'مدل نامشخص' }} / {{ observation.trim || 'تیپ نامشخص' }}</p>
               <a
                 *ngIf="observation.sourceUrl"
                 [href]="observation.sourceUrl"
@@ -467,30 +475,30 @@
                 {{ observation.sourceChannel }}</a
               >
             </td>
-            <td>
+            <td data-label="قیمت آگهی (تومان)">
               {{
                 observation.normalizedPrice != null
                   ? (observation.normalizedPrice | number)
-                  : "قیمت معتبر نیست"
+                  : priceUnavailableLabel(observation)
               }}
             </td>
-            <td>{{ statusLabel(observation.matchStatus) }}</td>
-            <td>{{ statusLabel(observation.comparisonStatus) }}</td>
-            <td>
+            <td data-label="نتیجه شناسایی">{{ statusLabel(observation.matchStatus) }}</td>
+            <td data-label="نتیجه مقایسه">{{ statusLabel(observation.comparisonStatus) }}</td>
+            <td data-label="میانگین مقایسه (تومان)">
               {{
                 observation.comparisonAveragePrice != null
                   ? (observation.comparisonAveragePrice | number)
                   : "هنوز محاسبه نشده"
               }}
             </td>
-            <td>
+            <td data-label="منابع مقایسه">
               {{ observation.comparedChannelCount ?? "—" }} کانال بررسی‌شده /
               {{ observation.validPriceSourceCount ?? "—" }} منبع قیمت
               <span *ngIf="observation.comparisonStatus === 'WaitingForComparableChannels'">
                 ({{ remainingComparisonChannels(observation) }} کانال دیگر لازم است)
               </span>
             </td>
-            <td>
+            <td data-label="دلیل یا مورد نیاز" class="observation-reason">
               {{ observationReason(observation) }}
             </td>
           </tr>

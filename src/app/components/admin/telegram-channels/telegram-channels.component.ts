@@ -337,7 +337,9 @@ export class TelegramChannelsComponent implements OnInit {
       AccessRequired: 'کانال در دسترس نیست',
       UnsupportedByCurrentCredentials: 'کانال قابل دریافت نیست',
       Matched: 'خودرو شناسایی شد',
-      NeedsReview: 'اطلاعات ناقص؛ نیازمند بررسی',
+      NeedsReview: 'اطلاعات آگهی کامل نیست',
+      Ignored: 'پیام غیرآگهی یا خودرو شناسایی نشده',
+      Stored: 'ذخیره‌شده',
       WaitingForComparableChannels: 'منتظر کانال‌های بیشتر',
       Unmatched: 'خودرو شناسایی نشد',
       Ambiguous: 'مشخصات خودرو مبهم است',
@@ -360,7 +362,7 @@ export class TelegramChannelsComponent implements OnInit {
       InvalidInput: 'شناسه کانال را اصلاح کنید',
     };
     return status
-      ? labels[status] || 'نیازمند بررسی پشتیبانی'
+      ? labels[status] || 'وضعیت هنوز شناسایی نشده'
       : 'هنوز بررسی نشده';
   }
 
@@ -369,7 +371,49 @@ export class TelegramChannelsComponent implements OnInit {
   }
 
   observationReason(observation: TelegramObservation): string {
-    return observation.matchReason || observation.reasonCode || 'دلیل ثبت نشده است.';
+    if ((observation.extractionVersion ?? 0) < 2) {
+      return 'این رکورد قدیمی در نوبت پردازش دوباره خودکار است.';
+    }
+    const reasons: Record<string, string> = {
+      PRICE_MISSING: 'در متن پیام قیمت روشنی پیدا نشد؛ تماس با فروشنده جای قیمت را نمی‌گیرد.',
+      PRICE_MISSING_OR_INVALID: 'قیمت قابل استفاده استخراج نشد.',
+      PRICE_INVALID_OR_AMBIGUOUS: 'قیمت صفر، نامعتبر یا دارای چند مقدار مبهم است.',
+      PRICE_UNIT_MISSING_OR_AMBIGUOUS: 'مبلغ یا واحد قیمت روشن نیست.',
+      INVALID_PRICE_OR_CURRENCY: 'قیمت یا واحد پول روشن و قابل استفاده نیست.',
+      CURRENCY_MISSING: 'عدد قیمت وجود دارد، اما تومان یا ریال بودن آن مشخص نیست.',
+      CONDITION_UNCLEAR: 'قیمت مشخص است، اما صفر یا کارکرده بودن خودرو روشن نیست.',
+      IDENTITY_INCOMPLETE: 'شرکت، مدل، تیپ یا سال خودرو کامل مشخص نیست.',
+      MANUFACTURER_MISSING: 'شرکت سازنده شناسایی نشده است.',
+      MODEL_MISSING: 'مدل خودرو شناسایی نشده است.',
+      TRIM_MISSING: 'تیپ خودرو مشخص نیست؛ ممکن است با تیپ دیگری اشتباه شود.',
+      YEAR_MISSING: 'سال ساخت معتبر در پیام مشخص نیست.',
+      DUPLICATE_AD: 'همین آگهی قبلاً دریافت شده است و دوباره وارد میانگین نمی‌شود.',
+      MISSING_VERIFIABLE_IMAGE: 'تصویر اصلی آگهی در دسترس نیست.',
+      MISSING_MILEAGE: 'کارکرد خودرو برای مقایسه مشخص نشده است.',
+      MISSING_SOURCE_LINK: 'لینک پیام اصلی در دسترس نیست.',
+      COMPARISON_FIELDS_INCOMPLETE: 'اطلاعات لازم برای مقایسه کامل نیست.',
+      DAILY_CALCULATION_FAILED: 'محاسبه قیمت روزانه انجام نشد؛ آگهی منتشر نشده است.',
+      PUBLICATION_DATE_INVALID: 'تاریخ انتشار پیام معتبر نیست.',
+      OUTSIDE_PRICE_WINDOW: 'پیام قدیمی است و در محاسبه قیمت روز وارد نمی‌شود.',
+      NON_VEHICLE_MESSAGE: 'پیام خبری، غیرآگهی یا فاقد نام خودرو قابل تشخیص است؛ متن اصلی نگهداری شده است.',
+      CATALOG_ENTRY_PENDING: 'خودرو پس از تکمیل مقایسه ساخته می‌شود.',
+      IDENTITY_AMBIGUOUS: 'مشخصات با بیش از یک خودرو سازگار است.',
+    };
+    if (observation.reasonCode === 'INSUFFICIENT_INDEPENDENT_CHANNELS'
+      || observation.comparisonStatus === 'WaitingForComparableChannels') {
+      if (observation.reasonCode && reasons[observation.reasonCode]) return reasons[observation.reasonCode];
+      return `${observation.comparedChannelCount ?? 0} کانال دیگر موجود است؛ ${this.remainingComparisonChannels(observation)} کانال دیگر لازم است.`;
+    }
+    if (observation.reasonCode && reasons[observation.reasonCode]) return reasons[observation.reasonCode];
+    if (observation.processingStatus === 'Published') return 'شرایط انتشار و مقایسه تکمیل شده است.';
+    if (observation.matchStatus === 'Late') return 'پیام قدیمی است و در قیمت روز وارد نمی‌شود.';
+    return observation.matchReason && /[آ-ی]/.test(observation.matchReason)
+      ? observation.matchReason : 'جزئیات این وضعیت هنوز ثبت نشده است.';
+  }
+
+  priceUnavailableLabel(observation: TelegramObservation): string {
+    return observation.price && !observation.currency
+      ? 'واحد پول قیمت مشخص نیست' : 'قیمتی استخراج نشده است';
   }
 
   channelHelp(channel: TelegramChannel): string {
