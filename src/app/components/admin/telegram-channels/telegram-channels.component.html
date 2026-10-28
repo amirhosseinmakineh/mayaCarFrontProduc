@@ -426,7 +426,7 @@
 
   <details class="panel advanced" open>
     <summary>آگهی‌ها و دلیل آماده نشدن برای نمایش</summary>
-    <p>دلیل هر آگهی پایین نمایش داده می‌شود. برای مقایسه، آگهی هم‌شرایط از کانال منبع و پنج کانال دیگرِ ثبت‌شده در همان روز لازم است.</p>
+    <p>دلیل هر آگهی پایین نمایش داده می‌شود. همهٔ کانال‌های ثبت‌شده بررسی می‌شوند. میانگین از آخرین آگهی معتبر هر کانال برای همان خودرو، سال، تیپ، وضعیت و روز ساخته می‌شود؛ کانال بدون نمونهٔ معتبر مانع محاسبه نیست.</p>
     <p class="inline-warning" *ngIf="optionalDataUnavailable">
       جزئیات بررسی قیمت‌ها فعلاً از سرور دریافت نمی‌شود. مدیریت کانال‌ها همچنان
       در دسترس است.
@@ -441,7 +441,7 @@
       <option value="Ignored">پیام‌های غیرآگهی یا شناخته‌نشده</option>
       <option value="Matched">خودرو شناسایی شد</option>
       <option value="NeedsReview">اطلاعات ناقص؛ نیازمند بررسی</option>
-      <option value="WaitingForComparableChannels">منتظر پنج کانال دیگر</option>
+      <option value="WaitingForComparableChannels">در نوبت محاسبه میانگین</option>
       <option value="Unmatched">خودرو شناسایی نشد</option>
       <option value="Ambiguous">مشخصات مبهم</option>
       <option value="Invalid">اطلاعات نامعتبر</option>
@@ -492,10 +492,10 @@
               }}
             </td>
             <td data-label="منابع مقایسه">
-              {{ observation.comparedChannelCount ?? "—" }} کانال بررسی‌شده /
-              {{ observation.validPriceSourceCount ?? "—" }} منبع قیمت
-              <span *ngIf="observation.comparisonStatus === 'WaitingForComparableChannels'">
-                ({{ remainingComparisonChannels(observation) }} کانال دیگر لازم است)
+              {{ observation.validPriceSourceCount ?? 0 }} کانال دارای قیمت معتبر
+              از {{ observation.registeredChannelCount ?? channels.length }} کانال ثبت‌شده
+              <span *ngIf="observation.validPriceSourceCount === 1">
+                (فعلاً فقط یک کانال قیمت معتبر دارد)
               </span>
             </td>
             <td data-label="دلیل یا مورد نیاز" class="observation-reason">
@@ -552,7 +552,7 @@
             <th>خودرو</th>
             <th>روز</th>
             <th>قیمت بازار (تومان)</th>
-            <th>قیمت معتبر متمایز</th>
+            <th>کانال دارای قیمت معتبر</th>
             <th>وضعیت</th>
           </tr>
         </thead>

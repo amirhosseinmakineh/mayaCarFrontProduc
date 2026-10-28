@@ -90,6 +90,10 @@
             <strong *ngIf="getMarketPrice(car) > 0">{{ getMarketPrice(car) | thousandSeparator:'fa-IR' }} <small>تومان</small></strong>
             <strong class="unavailable" *ngIf="getMarketPrice(car) <= 0">اعلام نشده</strong>
           </div>
+          <div class="price-line" *ngIf="(car.priceSampleCount ?? 0) > 0">
+            <span>{{ car.priceSampleCount === 1 ? 'قیمت یک کانال' : 'میانگین قیمت کانال‌ها' }}</span>
+            <strong>{{ car.priceSampleCount | number }} کانال</strong>
+          </div>
           <div class="price-line factory">
             <span>قیمت کارخانه</span>
             <strong *ngIf="getFactoryPrice(car) > 0">{{ getFactoryPrice(car) | thousandSeparator:'fa-IR' }} <small>تومان</small></strong>

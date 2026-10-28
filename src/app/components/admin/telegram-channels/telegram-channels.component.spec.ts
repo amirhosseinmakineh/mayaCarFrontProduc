@@ -50,12 +50,14 @@ describe('Telegram channel management', () => {
     expect(component.priceUnavailableLabel(observation())).toBe('قیمتی استخراج نشده است');
   });
 
-  it('distinguishes missing currency and counts only other comparison channels', () => {
+  it('distinguishes missing currency and does not require five comparison channels', () => {
     const component = fixture.componentInstance;
     expect(component.priceUnavailableLabel(observation({price: 850}))).toContain('واحد پول');
     const waiting = observation({reasonCode: 'INSUFFICIENT_INDEPENDENT_CHANNELS', comparedChannelCount: 2});
-    expect(component.remainingComparisonChannels(waiting)).toBe(3);
-    expect(component.observationReason(waiting)).toContain('3 کانال دیگر');
+    expect(component.observationReason(waiting)).toContain('حداقل پنج کانال لازم نیست');
+    expect(component.observationReason(observation({processingStatus: 'Published', validPriceSourceCount: 12})))
+      .toContain('12 کانال');
+    expect(component.statusLabel('Superseded')).toContain('جایگزین');
   });
 
   it('labels legacy rows as queued for automatic reprocessing', () => {
