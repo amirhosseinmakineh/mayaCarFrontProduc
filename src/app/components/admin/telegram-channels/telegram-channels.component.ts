@@ -340,13 +340,15 @@ export class TelegramChannelsComponent implements OnInit {
       NeedsReview: 'اطلاعات آگهی کامل نیست',
       Ignored: 'پیام غیرآگهی یا خودرو شناسایی نشده',
       Stored: 'ذخیره‌شده',
-      WaitingForComparableChannels: 'منتظر کانال‌های بیشتر',
+      WaitingForComparableChannels: 'در نوبت محاسبه میانگین',
       Unmatched: 'خودرو شناسایی نشد',
       Ambiguous: 'مشخصات خودرو مبهم است',
       Invalid: 'اطلاعات نامعتبر',
       Late: 'خارج از بازه محاسبه',
       CalculationError: 'محاسبه انجام نشد',
-      Compared: 'مقایسه انجام شد',
+      Compared: 'در میانگین روزانه محاسبه شد',
+      Superseded: 'قیمت جدیدتر همین کانال جایگزین شد',
+      Excluded: 'از میانگین کنار گذاشته شد',
       InsufficientComparisonData: 'منابع مقایسه کافی نیست',
       Rejected: 'قابل انتشار نیست',
       Published: 'منتشرشده',
@@ -366,10 +368,6 @@ export class TelegramChannelsComponent implements OnInit {
       : 'هنوز بررسی نشده';
   }
 
-  remainingComparisonChannels(observation: TelegramObservation): number {
-    return Math.max(0, 5 - (observation.comparedChannelCount ?? 0));
-  }
-
   observationReason(observation: TelegramObservation): string {
     if ((observation.extractionVersion ?? 0) < 2) {
       return 'این رکورد قدیمی در نوبت پردازش دوباره خودکار است.';
@@ -387,6 +385,7 @@ export class TelegramChannelsComponent implements OnInit {
       MODEL_MISSING: 'مدل خودرو شناسایی نشده است.',
       TRIM_MISSING: 'تیپ خودرو مشخص نیست؛ ممکن است با تیپ دیگری اشتباه شود.',
       YEAR_MISSING: 'سال ساخت معتبر در پیام مشخص نیست.',
+      NEWER_CHANNEL_SAMPLE: 'از این کانال آگهی معتبر جدیدتری وجود دارد؛ هر کانال فقط یک سهم در میانگین دارد.',
       DUPLICATE_AD: 'همین آگهی قبلاً دریافت شده است و دوباره وارد میانگین نمی‌شود.',
       MISSING_VERIFIABLE_IMAGE: 'تصویر اصلی آگهی در دسترس نیست.',
       MISSING_MILEAGE: 'کارکرد خودرو برای مقایسه مشخص نشده است.',
@@ -402,10 +401,12 @@ export class TelegramChannelsComponent implements OnInit {
     if (observation.reasonCode === 'INSUFFICIENT_INDEPENDENT_CHANNELS'
       || observation.comparisonStatus === 'WaitingForComparableChannels') {
       if (observation.reasonCode && reasons[observation.reasonCode]) return reasons[observation.reasonCode];
-      return `${observation.comparedChannelCount ?? 0} کانال دیگر موجود است؛ ${this.remainingComparisonChannels(observation)} کانال دیگر لازم است.`;
+      return 'این آگهی در نوبت محاسبه میانگین کانال‌های ثبت‌شده است؛ حداقل پنج کانال لازم نیست.';
     }
     if (observation.reasonCode && reasons[observation.reasonCode]) return reasons[observation.reasonCode];
-    if (observation.processingStatus === 'Published') return 'شرایط انتشار و مقایسه تکمیل شده است.';
+    if (observation.processingStatus === 'Published') {
+      return `میانگین از آخرین قیمت معتبر ${observation.validPriceSourceCount ?? 0} کانال ثبت شد؛ هر کانال یک سهم دارد.`;
+    }
     if (observation.matchStatus === 'Late') return 'پیام قدیمی است و در قیمت روز وارد نمی‌شود.';
     return observation.matchReason && /[آ-ی]/.test(observation.matchReason)
       ? observation.matchReason : 'جزئیات این وضعیت هنوز ثبت نشده است.';

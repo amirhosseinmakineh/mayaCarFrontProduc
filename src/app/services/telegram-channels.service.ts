@@ -149,6 +149,7 @@ export interface TelegramObservation {
   comparisonAveragePrice?: number;
   comparedChannelCount?: number;
   validPriceSourceCount?: number;
+  registeredChannelCount?: number;
   processingStatus: string;
   reasonCode?: string;
   model?: string; priceText?: string; yearCalendar?: string;
