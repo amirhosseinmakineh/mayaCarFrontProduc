@@ -395,3 +395,14 @@ th {
     padding: 13px;
   }
 }
+
+.observation-reason { min-width: 230px; white-space: normal; line-height: 1.9; }
+@media (max-width: 760px) {
+  .observations-wrap { overflow: visible; }
+  .observations-table, .observations-table tbody { display: block; width: 100%; min-width: 0; }
+  .observations-table thead { display: none; }
+  .observations-table tr { display: block; padding: 12px; margin-block: 12px; border: 1px solid #e1d4ba; border-radius: 12px; }
+  .observations-table td { display: block; min-width: 0; width: auto; text-align: right; white-space: normal; overflow-wrap: anywhere; padding: 9px 0; border: 0; }
+  .observations-table td[data-label]::before { content: attr(data-label); display: block; font-weight: 700; color: #705520; margin-bottom: 4px; }
+  .observations-table .observation-reason { background: #faf5e9; padding: 10px; border-radius: 8px; }
+}

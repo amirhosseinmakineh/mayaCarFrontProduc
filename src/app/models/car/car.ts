@@ -1,7 +1,11 @@
 export interface Car {
   id: number;
   isUsed?: boolean;
-  year?: number; mileage?: number; comparisonAveragePrice?: number; comparisonStatus?: string;
+  year?: number;
+  yearCalendar?: string;
+  mileage?: number;
+  comparisonAveragePrice?: number;
+  comparisonStatus?: string;
   categoryName?: string | number;
   tipName?: string;
   carModeName?: string;
