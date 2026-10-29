@@ -366,6 +366,12 @@ export class TelegramChannelsComponent implements OnInit {
       return;
     }
 
+    if (error.status === 507) {
+      this.error = error.error?.message || 'فضای دیتابیس پر است و تغییرات ذخیره نشد.';
+      this.changeDetector.markForCheck();
+      return;
+    }
+
     this.error =
       error.status === 0
         ? 'ارتباط با سرور برقرار نشد. چند لحظه دیگر دوباره تلاش کنید.'
