@@ -75,6 +75,57 @@
     </div>
   </section>
 
+  <section class="panel cleanup-panel" aria-labelledby="cleanup-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="cleanup-title">مدیریت آگهی‌های پیدا‌شده</h2>
+        <p>اکنون {{ (summary?.listingsExtracted ?? 0) | number }} آگهی در سامانه ثبت است. حذف، آگهی‌ها را از نمایش سایت خارج می‌کند.</p>
+      </div>
+      <button type="button" class="danger-button" (click)="pendingClearCount = summary?.listingsExtracted ?? 0"
+        [disabled]="actionBusy || loading || !summary?.listingsExtracted">حذف همهٔ آگهی‌ها</button>
+    </div>
+    <p class="hint" *ngIf="!summary?.listingsExtracted">فعلاً آگهی‌ای برای حذف وجود ندارد.</p>
+    <div class="cleanup-confirm" *ngIf="pendingClearCount !== null" role="alert">
+      <strong>حذف {{ pendingClearCount | number }} آگهی را تأیید می‌کنید؟</strong>
+      <p>آگهی‌های فعلی از فهرست و سایت حذف می‌شوند. پیام‌های اصلی تلگرام و تاریخچهٔ قیمت برای پیگیری باقی می‌مانند. پیام‌های جدید می‌توانند آگهی جدید بسازند.</p>
+      <div class="cleanup-buttons">
+        <button type="button" class="danger-button" (click)="clearListings()" [disabled]="actionBusy">{{ actionBusy ? 'در حال حذف…' : 'بله، حذف همهٔ آگهی‌ها' }}</button>
+        <button type="button" class="secondary" (click)="pendingClearCount = null" [disabled]="actionBusy">انصراف</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel timeline-panel" aria-label="روند سراسری دریافت و ذخیره">
+    <div class="section-heading">
+      <div>
+        <h2>روند دریافت تا ثبت قیمت</h2>
+        <p>وضعیت کل دور پردازش همهٔ کانال‌ها هر پنج ثانیه به‌روز می‌شود.</p>
+      </div>
+      <span class="pipeline-state" *ngIf="timeline as current" [class.active]="current.status === 'InProgress'">
+        {{ current.status === 'NotStarted' ? 'هنوز شروع نشده' : current.status === 'InProgress' ? 'در حال پردازش' : current.status === 'Completed' ? 'پایان یافته' : current.status === 'Partial' ? 'پایان با خطای بعضی کانال‌ها' : 'ناموفق' }}
+      </span>
+    </div>
+    <p *ngIf="timeline?.status === 'NotStarted'">دور جدید پس از ثبت یا دریافت کانال آغاز می‌شود.</p>
+    <p *ngIf="timelineUnavailable" role="alert">وضعیت روند پردازش فعلاً از سرور دریافت نشد.</p>
+    <div class="timeline-meta" *ngIf="timeline?.startedAt">
+      <span>شروع: {{ asUtc(timeline?.startedAt) | date:'yyyy/MM/dd HH:mm:ss':'+0330' }}</span>
+      <span>کانال‌ها: {{ timeline?.completedChannels }} از {{ timeline?.totalChannels }} پردازش‌شده</span>
+      <span *ngIf="timeline?.failedChannels">{{ timeline?.failedChannels }} کانال ناموفق</span>
+      <span *ngIf="timeline?.completedAt">پایان: {{ asUtc(timeline?.completedAt) | date:'yyyy/MM/dd HH:mm:ss':'+0330' }}</span>
+    </div>
+    <ol class="job-timeline" *ngIf="timeline?.stages?.length">
+      <li *ngFor="let stage of timeline?.stages; let index = index" [class.current]="stage.status === 'InProgress'"
+        [class.done]="stage.status === 'Completed'" [class.failed]="stage.status === 'Failed'"
+        [attr.aria-current]="stage.status === 'InProgress' ? 'step' : null">
+        <span class="timeline-node">{{ index + 1 }}</span>
+        <strong>{{ timelineLabel(stage) }}</strong>
+        <span>{{ timelineStatus(stage) }}</span>
+        <span *ngIf="stage.count > 0">{{ stage.count | number }} مورد</span>
+        <time *ngIf="stage.occurredAt">{{ asUtc(stage.occurredAt) | date:'yyyy/MM/dd HH:mm:ss':'+0330' }}</time>
+      </li>
+    </ol>
+  </section>
+
   <section class="panel">
     <div class="section-heading">
       <div>
@@ -430,15 +481,6 @@
     <p class="inline-warning" *ngIf="optionalDataUnavailable">
       آگهی‌ها فعلاً از سرور دریافت نمی‌شوند. دوباره تلاش کنید.
     </p>
-    <div class="listing-actions">
-      <button type="button" class="secondary" (click)="pendingClearCount = summary?.listingsExtracted ?? 0"
-        [disabled]="actionBusy || loading || !summary?.listingsExtracted">حذف همهٔ آگهی‌های پیدا‌شده</button>
-      <div class="notice error" *ngIf="pendingClearCount !== null" role="alert">
-        <p>آگهی‌های فعلی از فهرست و سایت حذف می‌شوند. پیام‌های اصلی تلگرام و تاریخچه قیمت برای پیگیری نگهداری می‌شوند؛ دریافت‌های جدید دوباره آگهی می‌سازند.</p>
-        <button type="button" (click)="clearListings()" [disabled]="actionBusy">بله، {{ pendingClearCount | number }} آگهی را حذف کن</button>
-        <button type="button" class="secondary" (click)="pendingClearCount = null" [disabled]="actionBusy">انصراف</button>
-      </div>
-    </div>
     <div class="table-wrap observations-wrap">
       <table class="observations-table">
         <thead>
@@ -580,32 +622,4 @@
     </nav>
   </details>
 
-  <section class="panel timeline-panel" aria-label="روند دریافت و ذخیره">
-    <h2>روند دریافت و ذخیره</h2>
-    <p>برای دیدن مرحله‌های واقعی هر درخواست، آن را انتخاب کنید. مرحله‌های انجام‌نشده به‌عنوان موفق نمایش داده نمی‌شوند.</p>
-    <label for="timeline-job" *ngIf="jobs.length">انتخاب درخواست دریافت</label>
-    <select id="timeline-job" *ngIf="jobs.length" [ngModel]="selectedJobId"
-      (ngModelChange)="selectJob($event)">
-      <option *ngFor="let job of jobs" [ngValue]="job.id">
-        درخواست {{ job.id }} · کانال {{ job.channelId }} · {{ statusLabel(job.status) }}
-      </option>
-    </select>
-    <div class="job-picker" *ngIf="jobs.length">
-      <button *ngFor="let job of jobs | slice:0:12" type="button"
-        [class.selected]="selectedJobId === job.id" (click)="selectJob(job.id)">
-        درخواست {{ job.id }} · کانال {{ job.channelId }} · {{ statusLabel(job.status) }}
-      </button>
-    </div>
-    <p *ngIf="!jobs.length">هنوز دریافت پیامی شروع نشده است.</p>
-    <p *ngIf="timelineUnavailable" role="alert">روند این درخواست فعلاً دریافت نشد. دوباره آن را انتخاب کنید.</p>
-    <ol class="job-timeline" *ngIf="timeline as current">
-      <li *ngFor="let stage of current.stages" [class.current]="stage.status === 'InProgress'"
-        [class.done]="stage.status === 'Completed'" [class.failed]="stage.status === 'Failed'">
-        <strong>{{ timelineLabel(stage) }}</strong>
-        <span>{{ timelineStatus(stage) }}<ng-container *ngIf="stage.count > 0"> · {{ stage.count | number }} مورد</ng-container></span>
-        <time *ngIf="stage.occurredAt">{{ asUtc(stage.occurredAt) | date:'yyyy/MM/dd HH:mm:ss':'+0330' }}</time>
-      </li>
-    </ol>
-    <p class="inline-warning" *ngIf="timeline?.error">{{ timeline?.error }}</p>
-  </section>
 </main>
