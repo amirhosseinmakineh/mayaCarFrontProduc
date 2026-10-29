@@ -367,7 +367,7 @@ export class TelegramChannelsComponent implements OnInit {
     }
 
     if (error.status === 507) {
-      this.error = error.error?.message || 'فضای دیتابیس پر است و تغییرات ذخیره نشد.';
+      this.error = error.error?.message || 'لاگ تراکنش دیتابیس پر است و تغییرات ذخیره نشد.';
       this.changeDetector.markForCheck();
       return;
     }

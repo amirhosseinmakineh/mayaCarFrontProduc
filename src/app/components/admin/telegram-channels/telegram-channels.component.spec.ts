@@ -70,9 +70,9 @@ describe('Telegram channel management', () => {
     component.remove({ id: 42 } as TelegramChannel);
     const request = http.expectOne(`${baseUrl}/42`);
     expect(request.request.method).toBe('DELETE');
-    request.flush({ message: 'فضای دیتابیس پر است و حذف کانال ذخیره نشد.' },
+    request.flush({ message: 'لاگ تراکنش دیتابیس پر است و حذف کانال ذخیره نشد.' },
       { status: 507, statusText: 'Insufficient Storage' });
-    expect(component.error).toContain('فضای دیتابیس پر است');
+    expect(component.error).toContain('لاگ تراکنش دیتابیس پر است');
   });
 
   function completeRefresh(pricingUnavailable = false): void {
