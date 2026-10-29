@@ -46,6 +46,29 @@ export interface TelegramJobLog {
   error?: string;
 }
 
+export interface TelegramTimelineStage {
+  code: string;
+  status: 'Waiting' | 'InProgress' | 'Completed' | 'NoData' | 'Failed';
+  occurredAt?: string;
+  count: number;
+}
+
+export interface TelegramJobTimeline {
+  jobId: number;
+  channelId: number;
+  jobStatus: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  error?: string;
+  stages: TelegramTimelineStage[];
+}
+
+export interface TelegramListingClearResult {
+  clearedCount: number;
+  preservedRawMessages: number;
+}
+
 export interface TelegramCapability {
   provider: string;
   publicPreviewEnabled: boolean;
@@ -72,6 +95,16 @@ export class TelegramChannelsService {
   getObservations(status = '', page = 0): Observable<TelegramObservation[]> {
     return this.http.get<TelegramObservation[]>(`${environment.apiUrl}/admin/telegram-pricing/observations`, {
       params: { status, page },
+    });
+  }
+
+  getTimeline(jobId: number): Observable<TelegramJobTimeline> {
+    return this.http.get<TelegramJobTimeline>(`${environment.apiUrl}/admin/telegram-pricing/jobs/${jobId}/timeline`);
+  }
+
+  clearListings(expectedCount: number): Observable<TelegramListingClearResult> {
+    return this.http.delete<TelegramListingClearResult>(`${environment.apiUrl}/admin/telegram-pricing/observations`, {
+      body: { expectedCount },
     });
   }
 

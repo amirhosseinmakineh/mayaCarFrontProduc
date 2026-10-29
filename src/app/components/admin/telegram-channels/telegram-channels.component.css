@@ -406,3 +406,14 @@ th {
   .observations-table td[data-label]::before { content: attr(data-label); display: block; font-weight: 700; color: #705520; margin-bottom: 4px; }
   .observations-table .observation-reason { background: #faf5e9; padding: 10px; border-radius: 8px; }
 }
+
+.listing-actions { margin: 1rem 0; }
+.job-picker { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.job-picker button { border: 1px solid #d7c7a4; border-radius: .75rem; background: #fff; padding: .6rem .8rem; color: #382c1e; }
+.job-picker button.selected { background: #f6e9ca; border-color: #9d7324; }
+.job-timeline { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .75rem; }
+.job-timeline li { border-right: .25rem solid #d7d7d7; padding: .45rem 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; }
+.job-timeline li.current { border-color: #c38b24; background: #fff7e7; }
+.job-timeline li.done { border-color: #22835b; }
+.job-timeline li.failed { border-color: #bb3c3c; }
+.job-timeline time { direction: ltr; white-space: nowrap; }

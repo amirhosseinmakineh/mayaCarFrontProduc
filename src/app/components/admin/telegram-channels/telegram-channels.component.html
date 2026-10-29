@@ -425,30 +425,20 @@
   </details>
 
   <details class="panel advanced" open>
-    <summary>آگهی‌ها و دلیل آماده نشدن برای نمایش</summary>
-    <p>دلیل هر آگهی پایین نمایش داده می‌شود. همهٔ کانال‌های ثبت‌شده بررسی می‌شوند. میانگین از آخرین آگهی معتبر هر کانال برای همان خودرو، سال، تیپ، وضعیت و روز ساخته می‌شود؛ کانال بدون نمونهٔ معتبر مانع محاسبه نیست.</p>
+    <summary>آگهی‌های سالم و ثبت‌شده</summary>
+    <p>فقط آگهی‌هایی نمایش داده می‌شوند که مشخصات و قیمت معتبرشان ثبت شده است. اطلاعات ناقص در این فهرست نیست.</p>
     <p class="inline-warning" *ngIf="optionalDataUnavailable">
-      جزئیات بررسی قیمت‌ها فعلاً از سرور دریافت نمی‌شود. مدیریت کانال‌ها همچنان
-      در دسترس است.
+      آگهی‌ها فعلاً از سرور دریافت نمی‌شوند. دوباره تلاش کنید.
     </p>
-    <label for="match-filter">نمایش آگهی‌ها بر اساس نتیجه بررسی</label
-    ><select
-      id="match-filter"
-      [(ngModel)]="matchFilter"
-      (ngModelChange)="filterObservations()"
-    >
-      <option value="">آگهی‌های خودرو</option>
-      <option value="Ignored">پیام‌های غیرآگهی یا شناخته‌نشده</option>
-      <option value="Matched">خودرو شناسایی شد</option>
-      <option value="NeedsReview">اطلاعات ناقص؛ نیازمند بررسی</option>
-      <option value="WaitingForComparableChannels">در نوبت محاسبه میانگین</option>
-      <option value="Unmatched">خودرو شناسایی نشد</option>
-      <option value="Ambiguous">مشخصات مبهم</option>
-      <option value="Invalid">اطلاعات نامعتبر</option>
-      <option value="Late">خارج از بازه محاسبه</option>
-      <option value="Pending">در انتظار بررسی</option>
-      <option value="CalculationError">محاسبه انجام نشد</option>
-    </select>
+    <div class="listing-actions">
+      <button type="button" class="secondary" (click)="pendingClearCount = summary?.listingsExtracted ?? 0"
+        [disabled]="actionBusy || loading || !summary?.listingsExtracted">حذف همهٔ آگهی‌های پیدا‌شده</button>
+      <div class="notice error" *ngIf="pendingClearCount !== null" role="alert">
+        <p>آگهی‌های فعلی از فهرست و سایت حذف می‌شوند. پیام‌های اصلی تلگرام و تاریخچه قیمت برای پیگیری نگهداری می‌شوند؛ دریافت‌های جدید دوباره آگهی می‌سازند.</p>
+        <button type="button" (click)="clearListings()" [disabled]="actionBusy">بله، {{ pendingClearCount | number }} آگهی را حذف کن</button>
+        <button type="button" class="secondary" (click)="pendingClearCount = null" [disabled]="actionBusy">انصراف</button>
+      </div>
+    </div>
     <div class="table-wrap observations-wrap">
       <table class="observations-table">
         <thead>
@@ -504,7 +494,7 @@
           </tr>
           <tr *ngIf="!observations.length">
             <td colspan="7">
-              آگهی‌ای برای نمایش با این وضعیت دریافت نشده است.
+              هنوز آگهی سالم و ثبت‌شده‌ای وجود ندارد.
             </td>
           </tr>
         </tbody>
@@ -590,38 +580,32 @@
     </nav>
   </details>
 
-  <details class="panel advanced">
-    <summary>سوابق درخواست‌های دریافت</summary>
-    <p>
-      آخرین درخواست‌های دریافت پیام و نتیجه اجرای آن‌ها. برای پیگیری مشکلات
-      تکرارشونده، شماره درخواست را به پشتیبانی بدهید.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>شماره درخواست</th>
-            <th>شماره کانال</th>
-            <th>نتیجه</th>
-            <th>تعداد تلاش</th>
-            <th>زمان ثبت</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let job of jobs">
-            <td>{{ job.id }}</td>
-            <td>{{ job.channelId }}</td>
-            <td>{{ statusLabel(job.status) }}</td>
-            <td>{{ job.attempt }}</td>
-            <td>
-              {{ asUtc(job.createdAt) | date: "yyyy/MM/dd HH:mm" : "+0330" }}
-            </td>
-          </tr>
-          <tr *ngIf="!jobs.length">
-            <td colspan="5">هنوز درخواستی ثبت نشده است.</td>
-          </tr>
-        </tbody>
-      </table>
+  <section class="panel timeline-panel" aria-label="روند دریافت و ذخیره">
+    <h2>روند دریافت و ذخیره</h2>
+    <p>برای دیدن مرحله‌های واقعی هر درخواست، آن را انتخاب کنید. مرحله‌های انجام‌نشده به‌عنوان موفق نمایش داده نمی‌شوند.</p>
+    <label for="timeline-job" *ngIf="jobs.length">انتخاب درخواست دریافت</label>
+    <select id="timeline-job" *ngIf="jobs.length" [ngModel]="selectedJobId"
+      (ngModelChange)="selectJob($event)">
+      <option *ngFor="let job of jobs" [ngValue]="job.id">
+        درخواست {{ job.id }} · کانال {{ job.channelId }} · {{ statusLabel(job.status) }}
+      </option>
+    </select>
+    <div class="job-picker" *ngIf="jobs.length">
+      <button *ngFor="let job of jobs | slice:0:12" type="button"
+        [class.selected]="selectedJobId === job.id" (click)="selectJob(job.id)">
+        درخواست {{ job.id }} · کانال {{ job.channelId }} · {{ statusLabel(job.status) }}
+      </button>
     </div>
-  </details>
+    <p *ngIf="!jobs.length">هنوز دریافت پیامی شروع نشده است.</p>
+    <p *ngIf="timelineUnavailable" role="alert">روند این درخواست فعلاً دریافت نشد. دوباره آن را انتخاب کنید.</p>
+    <ol class="job-timeline" *ngIf="timeline as current">
+      <li *ngFor="let stage of current.stages" [class.current]="stage.status === 'InProgress'"
+        [class.done]="stage.status === 'Completed'" [class.failed]="stage.status === 'Failed'">
+        <strong>{{ timelineLabel(stage) }}</strong>
+        <span>{{ timelineStatus(stage) }}<ng-container *ngIf="stage.count > 0"> · {{ stage.count | number }} مورد</ng-container></span>
+        <time *ngIf="stage.occurredAt">{{ asUtc(stage.occurredAt) | date:'yyyy/MM/dd HH:mm:ss':'+0330' }}</time>
+      </li>
+    </ol>
+    <p class="inline-warning" *ngIf="timeline?.error">{{ timeline?.error }}</p>
+  </section>
 </main>
