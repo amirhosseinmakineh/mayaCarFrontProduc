@@ -21,6 +21,8 @@ import {
   TelegramChannel,
   TelegramChannelsService,
   TelegramJobLog,
+  TelegramJobTimeline,
+  TelegramTimelineStage,
   TelegramSummary,
 } from '../../../services/telegram-channels.service';
 
@@ -47,6 +49,10 @@ export class TelegramChannelsComponent implements OnInit {
   channels: TelegramChannel[] = [];
   capability?: TelegramCapability;
   jobs: TelegramJobLog[] = [];
+  selectedJobId: number | null = null;
+  timeline?: TelegramJobTimeline;
+  timelineUnavailable = false;
+  pendingClearCount: number | null = null;
   summary?: TelegramSummary;
   input = '';
   messageLimit = 500;
@@ -86,6 +92,12 @@ export class TelegramChannelsComponent implements OnInit {
       summary: this.service.getSummary(),
       capability: this.service.getCapabilities(),
       jobs: this.service.getJobs(),
+      timeline: this.selectedJobId === null ? of(null) : this.service.getTimeline(this.selectedJobId).pipe(
+        catchError(() => {
+          this.timelineUnavailable = true;
+          return of(null);
+        }),
+      ),
       observations: this.service
         .getObservations(this.matchFilter, this.observationPage)
         .pipe(
@@ -115,11 +127,16 @@ export class TelegramChannelsComponent implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          this.error = '';
           this.channels = data.channels;
           this.summary = data.summary;
           this.capability = data.capability;
           this.jobs = data.jobs;
+          if (this.selectedJobId === null && this.jobs.length > 0) {
+            this.selectJob(this.jobs[0].id);
+          } else if (data.timeline) {
+            this.timeline = data.timeline;
+            this.timelineUnavailable = false;
+          }
           this.observations = data.observations;
           this.dailyPrices = data.dailyPrices;
           this.pricingState = data.pricingState;
@@ -258,6 +275,80 @@ export class TelegramChannelsComponent implements OnInit {
     );
   }
 
+  selectJob(jobId: number): void {
+    this.selectedJobId = jobId;
+    this.timeline = undefined;
+    this.timelineUnavailable = false;
+    this.service.getTimeline(jobId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (timeline) => {
+          if (this.selectedJobId === jobId) {
+            this.timeline = timeline;
+            this.changeDetector.markForCheck();
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.timelineUnavailable = true;
+          this.showError(error);
+        },
+      });
+  }
+
+  timelineLabel(stage: TelegramTimelineStage): string {
+    const labels: Record<string, string> = {
+      Queued: 'ثبت درخواست',
+      Collection: 'دریافت از کانال',
+      Received: 'ذخیره پیام خام',
+      Parsed: 'استخراج آگهی',
+      Validated: 'اعتبارسنجی',
+      Stored: 'ثبت آگهی سالم و قیمت',
+    };
+    return labels[stage.code] ?? stage.code;
+  }
+
+  timelineStatus(stage: TelegramTimelineStage): string {
+    const labels: Record<TelegramTimelineStage['status'], string> = {
+      Waiting: 'در انتظار',
+      InProgress: 'در حال انجام',
+      Completed: 'انجام شد',
+      NoData: 'داده‌ای برای این مرحله نبود',
+      Failed: 'ناموفق',
+    };
+    return labels[stage.status];
+  }
+
+  clearListings(): void {
+    const expectedCount = this.pendingClearCount;
+    if (expectedCount === null || this.actionBusy) {
+      return;
+    }
+    this.actionBusy = true;
+    this.success = '';
+    this.error = '';
+    this.service.clearListings(expectedCount)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.actionBusy = false;
+          this.changeDetector.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          this.pendingClearCount = null;
+          this.observations = [];
+          this.success = `${result.clearedCount} آگهی از نمایش حذف شد. پیام‌های خام و سابقه قیمت نگهداری شدند.`;
+          this.refresh();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.pendingClearCount = null;
+          this.showError(error);
+          this.refresh();
+        },
+      });
+  }
+
   private performAction(request: Observable<void>, message: string): void {
     if (this.actionBusy) {
       return;
@@ -289,6 +380,12 @@ export class TelegramChannelsComponent implements OnInit {
         error.status === 401
           ? 'ورود شما معتبر نیست؛ با حساب ادمین دوباره وارد شوید.'
           : 'این حساب دسترسی ادمین برای مدیریت کانال‌ها ندارد.';
+      this.changeDetector.markForCheck();
+      return;
+    }
+
+    if (error.status === 409) {
+      this.error = error.error?.message || 'فهرست در حال تغییر است؛ دوباره تلاش کنید.';
       this.changeDetector.markForCheck();
       return;
     }
