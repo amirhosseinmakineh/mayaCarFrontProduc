@@ -20,8 +20,7 @@ import {
   TelegramCapability,
   TelegramChannel,
   TelegramChannelsService,
-  TelegramJobLog,
-  TelegramJobTimeline,
+  TelegramPipelineTimeline,
   TelegramTimelineStage,
   TelegramSummary,
 } from '../../../services/telegram-channels.service';
@@ -48,9 +47,7 @@ export class TelegramChannelsComponent implements OnInit {
   observationPage = 0;
   channels: TelegramChannel[] = [];
   capability?: TelegramCapability;
-  jobs: TelegramJobLog[] = [];
-  selectedJobId: number | null = null;
-  timeline?: TelegramJobTimeline;
+  timeline?: TelegramPipelineTimeline;
   timelineUnavailable = false;
   pendingClearCount: number | null = null;
   summary?: TelegramSummary;
@@ -91,8 +88,7 @@ export class TelegramChannelsComponent implements OnInit {
       channels: this.service.getAll(),
       summary: this.service.getSummary(),
       capability: this.service.getCapabilities(),
-      jobs: this.service.getJobs(),
-      timeline: this.selectedJobId === null ? of(null) : this.service.getTimeline(this.selectedJobId).pipe(
+      timeline: this.service.getPipelineTimeline().pipe(
         catchError(() => {
           this.timelineUnavailable = true;
           return of(null);
@@ -130,10 +126,7 @@ export class TelegramChannelsComponent implements OnInit {
           this.channels = data.channels;
           this.summary = data.summary;
           this.capability = data.capability;
-          this.jobs = data.jobs;
-          if (this.selectedJobId === null && this.jobs.length > 0) {
-            this.selectJob(this.jobs[0].id);
-          } else if (data.timeline) {
+          if (data.timeline) {
             this.timeline = data.timeline;
             this.timelineUnavailable = false;
           }
@@ -275,34 +268,17 @@ export class TelegramChannelsComponent implements OnInit {
     );
   }
 
-  selectJob(jobId: number): void {
-    this.selectedJobId = jobId;
-    this.timeline = undefined;
-    this.timelineUnavailable = false;
-    this.service.getTimeline(jobId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (timeline) => {
-          if (this.selectedJobId === jobId) {
-            this.timeline = timeline;
-            this.changeDetector.markForCheck();
-          }
-        },
-        error: (error: HttpErrorResponse) => {
-          this.timelineUnavailable = true;
-          this.showError(error);
-        },
-      });
-  }
-
   timelineLabel(stage: TelegramTimelineStage): string {
     const labels: Record<string, string> = {
       Queued: 'ثبت درخواست',
-      Collection: 'دریافت از کانال',
+      Collection: 'دریافت از همهٔ کانال‌ها',
       Received: 'ذخیره پیام خام',
       Parsed: 'استخراج آگهی',
       Validated: 'اعتبارسنجی',
+      Pricing: 'پردازش قیمت‌ها',
+      Compared: 'مقایسه قیمت‌ها',
       Stored: 'ثبت آگهی سالم و قیمت',
+      Finished: 'پایان پردازش',
     };
     return labels[stage.code] ?? stage.code;
   }

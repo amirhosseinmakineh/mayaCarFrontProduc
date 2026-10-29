@@ -64,6 +64,16 @@ export interface TelegramJobTimeline {
   stages: TelegramTimelineStage[];
 }
 
+export interface TelegramPipelineTimeline {
+  status: 'NotStarted' | 'InProgress' | 'Completed' | 'Partial' | 'Failed';
+  startedAt?: string;
+  completedAt?: string;
+  totalChannels: number;
+  completedChannels: number;
+  failedChannels: number;
+  stages: TelegramTimelineStage[];
+}
+
 export interface TelegramListingClearResult {
   clearedCount: number;
   preservedRawMessages: number;
@@ -100,6 +110,10 @@ export class TelegramChannelsService {
 
   getTimeline(jobId: number): Observable<TelegramJobTimeline> {
     return this.http.get<TelegramJobTimeline>(`${environment.apiUrl}/admin/telegram-pricing/jobs/${jobId}/timeline`);
+  }
+
+  getPipelineTimeline(): Observable<TelegramPipelineTimeline> {
+    return this.http.get<TelegramPipelineTimeline>(`${environment.apiUrl}/admin/telegram-pricing/pipeline/timeline`);
   }
 
   clearListings(expectedCount: number): Observable<TelegramListingClearResult> {
