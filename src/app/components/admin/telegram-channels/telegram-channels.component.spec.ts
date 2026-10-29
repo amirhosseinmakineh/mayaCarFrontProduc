@@ -12,7 +12,7 @@ import {
 } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { TelegramChannelsComponent } from './telegram-channels.component';
-import { TelegramObservation } from '../../../services/telegram-channels.service';
+import { TelegramChannel, TelegramObservation } from '../../../services/telegram-channels.service';
 
 describe('Telegram channel management', () => {
   const baseUrl = `${environment.apiUrl}/admin/telegram-channels`;
@@ -63,6 +63,16 @@ describe('Telegram channel management', () => {
   it('labels legacy rows as queued for automatic reprocessing', () => {
     expect(fixture.componentInstance.observationReason(observation({extractionVersion: 0})))
       .toContain('پردازش دوباره خودکار');
+  });
+
+  it('shows the database capacity error returned by channel deletion', () => {
+    const component = fixture.componentInstance;
+    component.remove({ id: 42 } as TelegramChannel);
+    const request = http.expectOne(`${baseUrl}/42`);
+    expect(request.request.method).toBe('DELETE');
+    request.flush({ message: 'لاگ تراکنش دیتابیس پر است و حذف کانال ذخیره نشد.' },
+      { status: 507, statusText: 'Insufficient Storage' });
+    expect(component.error).toContain('لاگ تراکنش دیتابیس پر است');
   });
 
   function completeRefresh(pricingUnavailable = false): void {
