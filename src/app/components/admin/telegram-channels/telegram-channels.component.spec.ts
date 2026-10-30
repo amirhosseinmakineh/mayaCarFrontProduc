@@ -75,6 +75,32 @@ describe('Telegram channel management', () => {
     expect(component.error).toContain('لاگ تراکنش دیتابیس پر است');
   });
 
+  it('removes a deleted channel from the list immediately', () => {
+    const component = fixture.componentInstance;
+    component.loading = true;
+    component.channels = [{ id: 42 }, { id: 43 }] as TelegramChannel[];
+
+    component.remove(component.channels[0]);
+    http.expectOne(`${baseUrl}/42`).flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(component.channels.map((channel) => channel.id)).toEqual([43]);
+    expect(component.success).toContain('حذف شد');
+    expect(component.error).toBe('');
+  });
+
+  it('treats another deletion of an already removed channel as complete', () => {
+    const component = fixture.componentInstance;
+    component.loading = true;
+    component.channels = [{ id: 42 }] as TelegramChannel[];
+
+    component.remove(component.channels[0]);
+    http.expectOne(`${baseUrl}/42`).flush(null, { status: 404, statusText: 'Not Found' });
+
+    expect(component.channels).toEqual([]);
+    expect(component.success).toContain('حذف شد');
+    expect(component.error).toBe('');
+  });
+
   function completeRefresh(pricingUnavailable = false): void {
     http.expectOne(baseUrl).flush([]);
     http.expectOne(`${baseUrl}/summary`).flush({

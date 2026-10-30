@@ -263,8 +263,18 @@ export class TelegramChannelsComponent implements OnInit {
   remove(channel: TelegramChannel): void {
     this.pendingRemoval = null;
     this.performAction(
-      this.service.delete(channel.id),
+      this.service.delete(channel.id).pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            return of(void 0);
+          }
+          throw error;
+        }),
+      ),
       'کانال از فهرست حذف شد.',
+      () => {
+        this.channels = this.channels.filter((item) => item.id !== channel.id);
+      },
     );
   }
 
@@ -325,7 +335,7 @@ export class TelegramChannelsComponent implements OnInit {
       });
   }
 
-  private performAction(request: Observable<void>, message: string): void {
+  private performAction(request: Observable<void>, message: string, onSuccess?: () => void): void {
     if (this.actionBusy) {
       return;
     }
@@ -342,6 +352,7 @@ export class TelegramChannelsComponent implements OnInit {
       )
       .subscribe({
         next: () => {
+          onSuccess?.();
           this.success = message;
           this.refresh();
         },
