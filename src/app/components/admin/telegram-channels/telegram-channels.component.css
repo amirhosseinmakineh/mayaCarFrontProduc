@@ -396,15 +396,28 @@ th {
   }
 }
 
-.observation-reason { min-width: 230px; white-space: normal; line-height: 1.9; }
+.observation-toolbar { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; margin-top: 12px; }
+.observation-toolbar label { margin-top: 0; }
+.observation-toolbar select { min-width: 210px; }
+.observation-page-info { margin: 0; font-size: 13px; color: #52647c; }
+.observation-intro { font-size: 13px; }
+.observation-checks span, .observation-checks strong { display: block; margin-bottom: 4px; }
+.observation-checks strong { color: #253e61; }
+.observations-table .muted { color: #687789; font-size: 12px; }
+.observation-reason { min-width: 230px; white-space: normal; line-height: 1.7; font-weight: 600; color: #604617; background: #fbf6ea; }
+.observations-table tbody tr:hover { background: #f8fafc; }
+.observations-table td:first-child p { margin: 0 0 5px; }
 @media (max-width: 760px) {
   .observations-wrap { overflow: visible; }
   .observations-table, .observations-table tbody { display: block; width: 100%; min-width: 0; }
   .observations-table thead { display: none; }
-  .observations-table tr { display: block; padding: 12px; margin-block: 12px; border: 1px solid #e1d4ba; border-radius: 12px; }
+  .observations-table tr { display: block; padding: 16px; margin-block: 12px; border: 1px solid #dce5ee; border-radius: 14px; background: #fff; box-shadow: 0 4px 12px #1425410a; }
   .observations-table td { display: block; min-width: 0; width: auto; text-align: right; white-space: normal; overflow-wrap: anywhere; padding: 9px 0; border: 0; }
   .observations-table td[data-label]::before { content: attr(data-label); display: block; font-weight: 700; color: #705520; margin-bottom: 4px; }
-  .observations-table .observation-reason { background: #faf5e9; padding: 10px; border-radius: 8px; }
+  .observations-table .observation-reason { background: #faf5e9; padding: 12px; border-radius: 10px; }
+  .observations-table td:first-child { font-size: 14px; font-weight: 600; }
+  .observations-table td:first-child a, .observations-table td:first-child .muted { font-size: 12px; font-weight: 400; }
+  .pagination { gap: 10px; flex-wrap: wrap; }
 }
 
 .cleanup-panel {
