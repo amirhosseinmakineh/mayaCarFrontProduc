@@ -31,6 +31,7 @@ export interface TelegramSummary {
   processing: number;
   messagesCollected: number;
   listingsExtracted: number;
+  storedListingsIncludingRemovedChannels?: number;
   lastCollection?: string;
   ignoredMessages?: number; validPriceListings?: number;
   newCars: number; usedCars: number; comparedCars: number; pendingListings: number; rejectedListings: number; missingImageListings: number; missingManufacturerListings: number;
@@ -120,6 +121,10 @@ export class TelegramChannelsService {
     return this.http.delete<TelegramListingClearResult>(`${environment.apiUrl}/admin/telegram-pricing/observations`, {
       body: { expectedCount },
     });
+  }
+
+  clearLastCalculation(): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/admin/telegram-pricing/state`);
   }
 
   getPricingState(): Observable<TelegramPricingState | null> {

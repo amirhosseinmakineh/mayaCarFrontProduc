@@ -57,7 +57,10 @@
     </div>
   </section>
 
-  <section class="overview" *ngIf="summary" aria-label="خلاصه وضعیت">
+  <section class="panel" *ngIf="summary" aria-label="آمار کل کانال‌های موجود">
+    <h2>آمار کل کانال‌های موجود</h2>
+    <p class="hint">با حذف کانال، داده‌های آن از این آمار کنار گذاشته می‌شود؛ پیام‌های خام برای پیگیری نگهداری می‌شوند.</p>
+    <div class="overview">
     <div>
       <span>کانال‌های ثبت‌شده</span
       ><strong>{{ summary.totalChannels | number }}</strong>
@@ -73,24 +76,54 @@
       <span>آگهی‌های استخراج‌شده</span
       ><strong>{{ summary.listingsExtracted | number }}</strong>
     </div>
+    </div>
+    <div class="metric-grid" *ngIf="summary.newCars != null">
+      <div><span>خودروهای صفر</span><strong>{{ summary.newCars | number }}</strong></div>
+      <div><span>خودروهای کارکرده</span><strong>{{ summary.usedCars | number }}</strong></div>
+      <div><span>مقایسه انجام‌شده</span><strong>{{ summary.comparedCars | number }}</strong></div>
+      <div><span>منتظر بررسی</span><strong>{{ summary.pendingListings | number }}</strong></div>
+      <div><span>قابل انتشار نیست</span><strong>{{ summary.rejectedListings | number }}</strong></div>
+      <div><span>فاقد تصویر</span><strong>{{ summary.missingImageListings | number }}</strong></div>
+      <div><span>شرکت سازنده نامشخص</span><strong>{{ summary.missingManufacturerListings | number }}</strong></div>
+      <div><span>پیام‌های غیرآگهی یا شناخته‌نشده</span><strong>{{ summary.ignoredMessages ?? 0 | number }}</strong></div>
+      <div><span>آگهی دارای قیمت با واحد مشخص</span><strong>{{ summary.validPriceListings ?? 0 | number }}</strong></div>
+    </div>
   </section>
 
   <section class="panel cleanup-panel" aria-labelledby="cleanup-title">
     <div class="section-heading">
       <div>
         <h2 id="cleanup-title">مدیریت آگهی‌های پیدا‌شده</h2>
-        <p>اکنون {{ (summary?.listingsExtracted ?? 0) | number }} آگهی در سامانه ثبت است. حذف، آگهی‌ها را از نمایش سایت خارج می‌کند.</p>
+        <p>اکنون {{ (summary?.storedListingsIncludingRemovedChannels ?? summary?.listingsExtracted ?? 0) | number }} آگهی ذخیره‌شده از همهٔ کانال‌ها، حتی کانال‌های حذف‌شده، قابل پاک‌کردن است.</p>
       </div>
-      <button type="button" class="danger-button" (click)="pendingClearCount = summary?.listingsExtracted ?? 0"
-        [disabled]="actionBusy || loading || !summary?.listingsExtracted">حذف همهٔ آگهی‌ها</button>
+      <button type="button" class="danger-button" (click)="pendingClearCount = summary?.storedListingsIncludingRemovedChannels ?? summary?.listingsExtracted ?? 0"
+        [disabled]="actionBusy || loading || !(summary?.storedListingsIncludingRemovedChannels ?? summary?.listingsExtracted)">حذف همهٔ آگهی‌ها</button>
     </div>
-    <p class="hint" *ngIf="!summary?.listingsExtracted">فعلاً آگهی‌ای برای حذف وجود ندارد.</p>
+    <p class="hint" *ngIf="!(summary?.storedListingsIncludingRemovedChannels ?? summary?.listingsExtracted)">فعلاً آگهی‌ای برای حذف وجود ندارد.</p>
     <div class="cleanup-confirm" *ngIf="pendingClearCount !== null" role="alert">
       <strong>حذف {{ pendingClearCount | number }} آگهی را تأیید می‌کنید؟</strong>
       <p>آگهی‌های فعلی از فهرست و سایت حذف می‌شوند. پیام‌های اصلی تلگرام و تاریخچهٔ قیمت برای پیگیری باقی می‌مانند. پیام‌های جدید می‌توانند آگهی جدید بسازند.</p>
       <div class="cleanup-buttons">
         <button type="button" class="danger-button" (click)="clearListings()" [disabled]="actionBusy">{{ actionBusy ? 'در حال حذف…' : 'بله، حذف همهٔ آگهی‌ها' }}</button>
         <button type="button" class="secondary" (click)="pendingClearCount = null" [disabled]="actionBusy">انصراف</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel cleanup-panel" aria-labelledby="calculation-reset-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="calculation-reset-title">آخرین محاسبه</h2>
+        <p>زمان و وضعیت آخرین دور پردازش را پاک کنید. آگهی‌ها و سابقه قیمت محفوظ می‌مانند؛ محاسبهٔ بعدی با دریافت جدید دوباره نمایش داده می‌شود.</p>
+      </div>
+      <button type="button" class="danger-button" (click)="pendingCalculationReset = true"
+        [disabled]="actionBusy || !timeline?.startedAt">پاک‌کردن آخرین محاسبه</button>
+    </div>
+    <div class="cleanup-confirm" *ngIf="pendingCalculationReset" role="alert">
+      <strong>وضعیت آخرین محاسبه پاک شود؟</strong>
+      <div class="cleanup-buttons">
+        <button type="button" class="danger-button" (click)="clearLastCalculation()" [disabled]="actionBusy">تأیید پاک‌کردن</button>
+        <button type="button" class="secondary" (click)="pendingCalculationReset = false" [disabled]="actionBusy">انصراف</button>
       </div>
     </div>
   </section>
@@ -333,45 +366,6 @@
         بعدی
       </button>
     </nav>
-  </section>
-
-  <section class="panel" *ngIf="summary && summary.newCars != null">
-    <h2>وضعیت آگهی‌های خودرو</h2>
-    <p class="hint">
-      این آمار مربوط به بررسی آگهی‌هاست. دریافت پیام به‌تنهایی به معنی نمایش
-      خودرو در سایت نیست.
-    </p>
-    <div class="metric-grid">
-      <div>
-        <span>خودروهای صفر</span><strong>{{ summary.newCars | number }}</strong>
-      </div>
-      <div>
-        <span>خودروهای کارکرده</span
-        ><strong>{{ summary.usedCars | number }}</strong>
-      </div>
-      <div>
-        <span>مقایسه انجام‌شده</span
-        ><strong>{{ summary.comparedCars | number }}</strong>
-      </div>
-      <div>
-        <span>منتظر بررسی</span
-        ><strong>{{ summary.pendingListings | number }}</strong>
-      </div>
-      <div>
-        <span>قابل انتشار نیست</span
-        ><strong>{{ summary.rejectedListings | number }}</strong>
-      </div>
-      <div>
-        <span>فاقد تصویر</span
-        ><strong>{{ summary.missingImageListings | number }}</strong>
-      </div>
-      <div>
-        <span>شرکت سازنده نامشخص</span
-        ><strong>{{ summary.missingManufacturerListings | number }}</strong>
-      </div>
-      <div><span>پیام‌های غیرآگهی یا شناخته‌نشده</span><strong>{{ summary.ignoredMessages ?? 0 | number }}</strong></div>
-      <div><span>آگهی دارای قیمت با واحد مشخص</span><strong>{{ summary.validPriceListings ?? 0 | number }}</strong></div>
-    </div>
   </section>
 
   <details class="panel advanced">
