@@ -474,13 +474,18 @@
 
   <details class="panel advanced" open>
     <summary>آگهی‌ها و دلیل بررسی</summary>
-    <label for="listing-status">نمایش آگهی‌ها</label>
-    <select id="listing-status" [(ngModel)]="matchFilter" (ngModelChange)="filterObservations()">
-      <option value="">قیمت‌های ثبت‌شده</option>
-      <option value="NeedsReview">نیازمند بررسی</option>
-      <option value="Rejected">ردشده‌ها</option>
-    </select>
-    <p>قیمت‌های ثبت‌شده قابل انتشارند. برای دیدن علت نقص یا رد، فیلتر را تغییر دهید.</p>
+    <div class="observation-toolbar">
+      <div>
+        <label for="listing-status">وضعیت آگهی</label>
+        <select id="listing-status" [(ngModel)]="matchFilter" (ngModelChange)="filterObservations()">
+          <option value="">ثبت‌شده و دارای قیمت</option>
+          <option value="NeedsReview">نیازمند بررسی</option>
+          <option value="Rejected">ردشده</option>
+        </select>
+      </div>
+      <p class="observation-page-info" aria-live="polite">صفحه {{ observationPage + 1 }} · حداکثر ۱۰ آگهی در هر صفحه</p>
+    </div>
+    <p class="observation-intro">برای هر آگهی، نتیجهٔ شناسایی نام و قیمت و علت وضعیت آن در همان ردیف آمده است.</p>
     <p class="inline-warning" *ngIf="optionalDataUnavailable">
       آگهی‌ها فعلاً از سرور دریافت نمی‌شوند. دوباره تلاش کنید.
     </p>
@@ -498,7 +503,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let observation of observations">
+          <tr *ngFor="let observation of visibleObservations">
             <td data-label="پیام اصلی و خودرو">
               <p>{{ observation.manufacturer || 'شرکت نامشخص' }} / {{ observation.model || 'مدل نامشخص' }} / {{ observation.trim || 'تیپ نامشخص' }}</p>
               <p *ngIf="observation.rawCarName">نام در پیام: {{ observation.rawCarName }}</p>
@@ -510,6 +515,7 @@
                 >مشاهده پیام {{ observation.sourceMessageId }} در
                 {{ observation.sourceChannel }}</a
               >
+              <span *ngIf="!observation.sourceUrl" class="muted">{{ observation.sourceChannel }} · پیام {{ observation.sourceMessageId }} · لینک موجود نیست</span>
             </td>
             <td data-label="قیمت آگهی (تومان)">
               {{
@@ -518,10 +524,10 @@
                   : priceUnavailableLabel(observation)
               }}
             </td>
-            <td data-label="نتیجه شناسایی">
-              نام: {{ statusLabel(observation.nameValidationStatus) }}<br />
-              قیمت: {{ statusLabel(observation.priceValidationStatus) }}<br />
-              {{ statusLabel(observation.matchStatus) }}
+            <td data-label="نتیجه شناسایی" class="observation-checks">
+              <span>نام: {{ statusLabel(observation.nameValidationStatus) }}</span>
+              <span>قیمت: {{ statusLabel(observation.priceValidationStatus) }}</span>
+              <strong>{{ statusLabel(observation.matchStatus) }}</strong>
             </td>
             <td data-label="نتیجه مقایسه">{{ statusLabel(observation.comparisonStatus) }}</td>
             <td data-label="میانگین مقایسه (تومان)">
@@ -542,9 +548,9 @@
               {{ observationReason(observation) }}
             </td>
           </tr>
-          <tr *ngIf="!observations.length">
+          <tr *ngIf="!visibleObservations.length">
             <td colspan="7">
-              در این وضعیت آگهی‌ای پیدا نشد.
+              {{ loading ? 'در حال دریافت آگهی‌ها…' : 'در این صفحه آگهی‌ای پیدا نشد. در صورت نیاز به صفحهٔ قبل برگردید.' }}
             </td>
           </tr>
         </tbody>
@@ -557,10 +563,10 @@
         (click)="changeObservationPage(-1)"
       >
         قبلی</button
-      ><span>صفحه {{ observationPage + 1 }}</span
+      ><span aria-live="polite">صفحه {{ observationPage + 1 }}</span
       ><button
         type="button"
-        [disabled]="loading || observations.length < 100"
+        [disabled]="loading || !hasNextObservationPage"
         (click)="changeObservationPage(1)"
       >
         بعدی

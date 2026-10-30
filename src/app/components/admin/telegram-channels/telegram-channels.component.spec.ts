@@ -43,6 +43,20 @@ describe('Telegram channel management', () => {
     ...changes,
   });
 
+  it('shows ten observations per page and advances within a fetched batch', () => {
+    const component = fixture.componentInstance;
+    component.observations = Array.from({ length: 23 }, (_, index) => observation({ id: index + 1 }));
+    expect(component.visibleObservations.map(item => item.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    component.changeObservationPage(1);
+    expect(component.visibleObservations.map(item => item.id)).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+    component.changeObservationPage(1);
+    expect(component.visibleObservations.map(item => item.id)).toEqual([21, 22, 23]);
+    expect(component.hasNextObservationPage).toBe(false);
+    component.loading = true;
+    component.filterObservations();
+    expect(component.observationPage).toBe(0);
+  });
+
   it('explains missing prices instead of reporting a support failure', () => {
     const component = fixture.componentInstance;
     expect(component.statusLabel('NeedsReview')).toBe('اطلاعات آگهی کامل نیست');

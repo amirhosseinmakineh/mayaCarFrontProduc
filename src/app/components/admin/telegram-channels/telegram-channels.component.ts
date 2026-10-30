@@ -45,6 +45,7 @@ export class TelegramChannelsComponent implements OnInit {
   pricePage = 0;
   matchFilter = '';
   observationPage = 0;
+  readonly observationsPerPage = 10;
   channels: TelegramChannel[] = [];
   capability?: TelegramCapability;
   timeline?: TelegramPipelineTimeline;
@@ -96,7 +97,7 @@ export class TelegramChannelsComponent implements OnInit {
         }),
       ),
       observations: this.service
-        .getObservations(this.matchFilter, this.observationPage)
+        .getObservations(this.matchFilter, Math.floor(this.observationPage / 10))
         .pipe(
           catchError(() => {
             this.optionalDataUnavailable = true;
@@ -161,9 +162,22 @@ export class TelegramChannelsComponent implements OnInit {
     this.refresh();
   }
 
+  get visibleObservations(): TelegramObservation[] {
+    const start = (this.observationPage % 10) * this.observationsPerPage;
+    return this.observations.slice(start, start + this.observationsPerPage);
+  }
+
+  get hasNextObservationPage(): boolean {
+    return (this.observationPage % 10 + 1) * this.observationsPerPage < this.observations.length
+      || this.observations.length === 100;
+  }
+
   changeObservationPage(offset: number): void {
-    this.observationPage = Math.max(0, this.observationPage + offset);
-    this.refresh();
+    const next = Math.max(0, this.observationPage + offset);
+    if (next === this.observationPage || (offset > 0 && !this.hasNextObservationPage)) return;
+    const previousBatch = Math.floor(this.observationPage / 10);
+    this.observationPage = next;
+    if (Math.floor(next / 10) !== previousBatch) this.refresh();
   }
 
   importChannels(): void {
