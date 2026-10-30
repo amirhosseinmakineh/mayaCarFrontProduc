@@ -20,6 +20,8 @@ export interface TelegramChannel {
   processedListings: number; failedListings: number;
   needsReviewListings?: number; waitingComparisonListings?: number;
   validPriceListings?: number; ignoredMessages?: number;
+  validNameListings?: number; comparedListings?: number;
+  referencePriceGroups?: number; lastCalculationAt?: string;
 }
 
 export interface TelegramSummary {
@@ -196,6 +198,10 @@ export interface TelegramObservation {
   matchStatus: string;
   matchReason?: string;
   manufacturer?: string;
+  rawCarName?: string;
+  extractionStatus?: string;
+  nameValidationStatus?: string;
+  priceValidationStatus?: string;
   primaryImageUrl?: string;
   comparisonStatus?: string;
   comparisonAveragePrice?: number;

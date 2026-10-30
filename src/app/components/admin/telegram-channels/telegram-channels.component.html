@@ -84,7 +84,7 @@
       <div><span>منتظر بررسی</span><strong>{{ summary.pendingListings | number }}</strong></div>
       <div><span>قابل انتشار نیست</span><strong>{{ summary.rejectedListings | number }}</strong></div>
       <div><span>فاقد تصویر</span><strong>{{ summary.missingImageListings | number }}</strong></div>
-      <div><span>شرکت سازنده نامشخص</span><strong>{{ summary.missingManufacturerListings | number }}</strong></div>
+      <div><span>شرکت سازنده ذکر نشده (مانع قیمت‌گذاری نیست)</span><strong>{{ summary.missingManufacturerListings | number }}</strong></div>
       <div><span>پیام‌های غیرآگهی یا شناخته‌نشده</span><strong>{{ summary.ignoredMessages ?? 0 | number }}</strong></div>
       <div><span>آگهی دارای قیمت با واحد مشخص</span><strong>{{ summary.validPriceListings ?? 0 | number }}</strong></div>
     </div>
@@ -266,8 +266,11 @@
             <dd>{{ c.failedListings | number }}</dd>
           </div>
           <div><dt>قیمت استخراج‌شده</dt><dd>{{ c.validPriceListings ?? 0 | number }}</dd></div>
+          <div><dt>نام خودرو تأییدشده</dt><dd>{{ c.validNameListings ?? 0 | number }}</dd></div>
           <div><dt>اطلاعات ناقص</dt><dd>{{ c.needsReviewListings ?? 0 | number }}</dd></div>
-          <div><dt>منتظر کانال بیشتر</dt><dd>{{ c.waitingComparisonListings ?? 0 | number }}</dd></div>
+          <div><dt>در انتظار محاسبه</dt><dd>{{ c.waitingComparisonListings ?? 0 | number }}</dd></div>
+          <div><dt>آگهی واردشده به میانگین</dt><dd>{{ c.comparedListings ?? 0 | number }}</dd></div>
+          <div><dt>گروه قیمت مرجع</dt><dd>{{ c.referencePriceGroups ?? 0 | number }}</dd></div>
           <div><dt>پیام غیرآگهی/شناخته‌نشده</dt><dd>{{ c.ignoredMessages ?? 0 | number }}</dd></div>
         </dl>
         <div class="timestamps">
@@ -283,7 +286,7 @@
               (asUtc(c.lastSuccessAt) | date: "yyyy/MM/dd HH:mm" : "+0330") ||
                 "هنوز دریافت نشده"
             }}</span
-          >
+          ><span>آخرین محاسبه: {{ (asUtc(c.lastCalculationAt) | date: "yyyy/MM/dd HH:mm" : "+0330") || "هنوز محاسبه نشده" }}</span>
         </div>
         <p class="inline-warning" *ngIf="c.lastError">
           آخرین دریافت با مشکل مواجه شد. شناسه و عمومی‌بودن کانال را بررسی کنید
@@ -470,8 +473,14 @@
   </details>
 
   <details class="panel advanced" open>
-    <summary>آگهی‌های سالم و ثبت‌شده</summary>
-    <p>فقط آگهی‌هایی نمایش داده می‌شوند که مشخصات و قیمت معتبرشان ثبت شده است. اطلاعات ناقص در این فهرست نیست.</p>
+    <summary>آگهی‌ها و دلیل بررسی</summary>
+    <label for="listing-status">نمایش آگهی‌ها</label>
+    <select id="listing-status" [(ngModel)]="matchFilter" (ngModelChange)="filterObservations()">
+      <option value="">قیمت‌های ثبت‌شده</option>
+      <option value="NeedsReview">نیازمند بررسی</option>
+      <option value="Rejected">ردشده‌ها</option>
+    </select>
+    <p>قیمت‌های ثبت‌شده قابل انتشارند. برای دیدن علت نقص یا رد، فیلتر را تغییر دهید.</p>
     <p class="inline-warning" *ngIf="optionalDataUnavailable">
       آگهی‌ها فعلاً از سرور دریافت نمی‌شوند. دوباره تلاش کنید.
     </p>
@@ -492,6 +501,7 @@
           <tr *ngFor="let observation of observations">
             <td data-label="پیام اصلی و خودرو">
               <p>{{ observation.manufacturer || 'شرکت نامشخص' }} / {{ observation.model || 'مدل نامشخص' }} / {{ observation.trim || 'تیپ نامشخص' }}</p>
+              <p *ngIf="observation.rawCarName">نام در پیام: {{ observation.rawCarName }}</p>
               <a
                 *ngIf="observation.sourceUrl"
                 [href]="observation.sourceUrl"
@@ -508,7 +518,11 @@
                   : priceUnavailableLabel(observation)
               }}
             </td>
-            <td data-label="نتیجه شناسایی">{{ statusLabel(observation.matchStatus) }}</td>
+            <td data-label="نتیجه شناسایی">
+              نام: {{ statusLabel(observation.nameValidationStatus) }}<br />
+              قیمت: {{ statusLabel(observation.priceValidationStatus) }}<br />
+              {{ statusLabel(observation.matchStatus) }}
+            </td>
             <td data-label="نتیجه مقایسه">{{ statusLabel(observation.comparisonStatus) }}</td>
             <td data-label="میانگین مقایسه (تومان)">
               {{
@@ -530,7 +544,7 @@
           </tr>
           <tr *ngIf="!observations.length">
             <td colspan="7">
-              هنوز آگهی سالم و ثبت‌شده‌ای وجود ندارد.
+              در این وضعیت آگهی‌ای پیدا نشد.
             </td>
           </tr>
         </tbody>
