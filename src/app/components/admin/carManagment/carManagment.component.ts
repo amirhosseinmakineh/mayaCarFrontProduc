@@ -322,6 +322,7 @@ implements OnInit {
 
   openDelete(car: Car): void {
 
+    this.deleteError = '';
     this.selectedCar.set(car);
 
     this.activeModal.set('delete');
