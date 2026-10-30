@@ -50,6 +50,7 @@ export class TelegramChannelsComponent implements OnInit {
   timeline?: TelegramPipelineTimeline;
   timelineUnavailable = false;
   pendingClearCount: number | null = null;
+  pendingCalculationReset = false;
   summary?: TelegramSummary;
   input = '';
   messageLimit = 500;
@@ -332,6 +333,25 @@ export class TelegramChannelsComponent implements OnInit {
           this.showError(error);
           this.refresh();
         },
+      });
+  }
+
+  clearLastCalculation(): void {
+    if (!this.pendingCalculationReset || this.actionBusy) return;
+    this.actionBusy = true;
+    this.error = '';
+    this.service.clearLastCalculation()
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => {
+        this.actionBusy = false;
+        this.changeDetector.markForCheck();
+      }))
+      .subscribe({
+        next: () => {
+          this.pendingCalculationReset = false;
+          this.success = 'وضعیت آخرین محاسبه پاک شد. آگهی‌ها و سابقه قیمت باقی ماندند.';
+          this.refresh();
+        },
+        error: (error: HttpErrorResponse) => this.showError(error),
       });
   }
 

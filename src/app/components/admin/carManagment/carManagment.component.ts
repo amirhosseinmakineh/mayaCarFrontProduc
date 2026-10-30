@@ -82,6 +82,8 @@ implements OnInit {
 
   selectedCar =
     signal<Car | null>(null);
+  deleteError = '';
+  deletingCar = false;
 
   activeModal =
     signal<ModalMode>(null);
@@ -539,36 +541,23 @@ implements OnInit {
   // ======================
 
   deleteCar(): void {
+    const car = this.selectedCar();
+    if (!car || this.deletingCar) return;
 
-    const car =
-      this.selectedCar();
-
-    if (!car) {
-      return;
-    }
-
-    this.adminService
-      .deleteCar(car.id)
-      .subscribe({
-
-        next: () => {
-
-          this.loadCars();
-
-          this.closeModal();
-
-        },
-
-        error: err => {
-
-          console.error(
-            'Delete car error',
-            err
-          );
-
-        }
-
-      });
+    this.deletingCar = true;
+    this.deleteError = '';
+    this.adminService.deleteCar(car.id).subscribe({
+      next: () => {
+        this.deletingCar = false;
+        this.cars.update(cars => cars.filter(item => item.id !== car.id));
+        this.closeModal();
+        this.loadCars();
+      },
+      error: err => {
+        this.deletingCar = false;
+        this.deleteError = err?.error?.message || 'حذف خودرو انجام نشد. دوباره تلاش کنید.';
+      },
+    });
   }
 
 }

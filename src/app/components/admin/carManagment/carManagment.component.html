@@ -428,14 +428,17 @@
 
       </p>
 
+      <p *ngIf="deleteError" role="alert" class="inline-warning">{{ deleteError }}</p>
+
       <div class="delete-action-modal">
 
         <button
           type="button"
           class="yes-btn"
+          [disabled]="deletingCar"
           (click)="deleteCar()">
 
-          بله
+          {{ deletingCar ? 'در حال حذف…' : 'بله' }}
 
         </button>
 
