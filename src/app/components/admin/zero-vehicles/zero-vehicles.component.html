@@ -15,7 +15,8 @@
     <div class="metrics"><div><span>پیام بررسی‌شده</span><strong>{{ current.scanned | number }}</strong></div><div><span>صفر معتبر</span><strong>{{ current.accepted | number }}</strong></div><div><span>ردشده در این اجرا</span><strong>{{ current.rejected | number }}</strong></div><div><span>پیام تکراری</span><strong>{{ current.duplicates | number }}</strong></div><div><span>آگهی جدید ثبت‌شده</span><strong>{{ current.stored | number }}</strong></div><div><span>گروه قیمت مرتبط</span><strong>{{ current.priceGroups | number }}</strong></div></div>
     <p *ngIf="active" class="hint">درخواست در صف مستقل خودروهای صفر است. وضعیت هر دو ثانیه به‌روز می‌شود.</p>
     <p *ngIf="current.error" role="alert" class="notice error">{{ current.error }}</p>
-    <details *ngIf="rejectionSummary.length"><summary>علت رد پیام‌ها در همین اجرا</summary><ul><li *ngFor="let reason of rejectionSummary">{{ reason.text }}: {{ reason.count | number }}</li></ul></details>
+    <p class="hint" *ngIf="!active && current.scanned > 0 && current.accepted === 0">پیام‌ها از تلگرام دریافت شدند، اما هیچ آگهی‌ای شرایط پذیرش را نداشت. علت‌های رد در ادامه آمده است.</p>
+    <details *ngIf="rejectionSummary.length" [open]="current.accepted === 0 && current.rejected > 0"><summary>علت رد پیام‌ها در همین اجرا</summary><ul><li *ngFor="let reason of rejectionSummary">{{ reason.text }}: {{ reason.count | number }}</li></ul></details>
     <p class="hint">{{ current.pagesFetched }} صفحه از تلگرام دریافت شد<span *ngIf="current.completedAt"> · پایان: {{ asUtc(current.completedAt) | date:'yyyy/MM/dd HH:mm' }}</span></p>
     <button type="button" *ngIf="active" (click)="refreshRun()">بررسی دوباره وضعیت</button>
     <button type="button" *ngIf="current.nextBefore && !active" (click)="continueRun()" [disabled]="importBusy">بررسی پیام‌های قدیمی‌تر همین کانال</button>
