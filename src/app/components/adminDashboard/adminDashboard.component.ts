@@ -28,6 +28,7 @@ export class AdminDashboardComponent implements OnInit {
     | 'model'
     | 'tip'
     | 'order'
+    | 'zeroVehicles'
     | 'telegramChannels' = 'users';
   pageTitle: string = 'مدیریت کاربران';
 
@@ -45,6 +46,11 @@ export class AdminDashboardComponent implements OnInit {
         queryParams: { returnUrl: this.router.url },
       });
       return;
+    }
+
+    if (this.router.url.includes('/zeroVehicles')) {
+      this.activeSection = 'zeroVehicles';
+      this.pageTitle = 'دریافت آگهی‌های صفر';
     }
 
     if (!this.auth.hasRole('Admin')) {
@@ -115,6 +121,12 @@ export class AdminDashboardComponent implements OnInit {
     this.activeSection = 'telegramChannels';
     this.pageTitle = 'مدیریت کانال‌های تلگرام';
     this.router.navigate(['/adminDashboard/telegramChannels']);
+  }
+
+  goToZeroVehicles(): void {
+    this.activeSection = 'zeroVehicles';
+    this.pageTitle = 'دریافت آگهی‌های صفر';
+    this.router.navigate(['/adminDashboard/zeroVehicles']);
   }
 
   logout() {

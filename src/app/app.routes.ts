@@ -1,3 +1,4 @@
+import { ZeroVehiclesComponent } from './components/admin/zero-vehicles/zero-vehicles.component';
 import { Routes } from "@angular/router";
 import { RegisterComponent } from "./components/register/register.component";
 import { LoginComponent } from "./components/login/login.component";
@@ -23,6 +24,7 @@ import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
 import { TelegramChannelsComponent } from "./components/admin/telegram-channels/telegram-channels.component";
 
 export const routes: Routes = [
+  { path: 'admin/dashboard/zero-vehicles', redirectTo: '/adminDashboard/zeroVehicles', pathMatch: 'full' },
   {
     path: 'admin/dashboard/telegram-channels',
     redirectTo: '/adminDashboard/telegramChannels',
@@ -47,7 +49,8 @@ export const routes: Routes = [
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
       {path : 'orderItem',component:OrderItemComponent},
-      {path: 'telegramChannels', component: TelegramChannelsComponent}
+      {path: 'telegramChannels', component: TelegramChannelsComponent},
+      {path: 'zeroVehicles', component: ZeroVehiclesComponent}
     ],
   },
    {path : 'carList',component : CarListComponent, data: { isUsed: false }},
