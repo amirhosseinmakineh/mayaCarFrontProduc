@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, exhaustMap, finalize, tap, timer } from 'rxjs';
-import { ZeroVehiclesService, ZeroCatalog, ZeroImport, ZeroListing, ZeroPage, ZeroPrice } from '../../../services/zero-vehicles.service';
+import { ZeroVehiclesService, ZeroCatalog, ZeroImport, ZeroListing, ZeroPage, ZeroPrice, ZeroChannel, ZeroChannelResult, ZeroIssue } from '../../../services/zero-vehicles.service';
 @Component({
   selector: 'app-zero-vehicles', standalone: true, imports: [CommonModule, FormsModule],
   templateUrl: './zero-vehicles.component.html', styleUrls: ['./zero-vehicles.component.css'],
@@ -27,8 +27,30 @@ export class ZeroVehiclesComponent {
   private listingRequest?: Subscription;
   private priceRequest?: Subscription;
   private memberRequest?: Subscription;
+  channelText = ''; channels: ZeroChannel[] = []; bulkResults: ZeroChannelResult[] = [];
+  channelsBusy = false; deviationPercent = 15; issues?: ZeroPage<ZeroIssue>;
+  loadChannels(): void { this.api.channels().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: x => { this.channels = x; this.changeDetector.markForCheck(); }, error: e => this.fail(e) }); }
+  addChannels(): void {
+    this.channelsBusy = true;
+    this.api.addChannels(this.channelText).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => { this.channelsBusy = false; this.changeDetector.markForCheck(); })).subscribe({ next: x => { this.bulkResults = x; this.loadChannels(); }, error: e => this.fail(e) });
+  }
+  toggleChannel(item: ZeroChannel): void { this.api.toggleChannel(item.id, !item.enabled).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: () => this.loadChannels(), error: e => this.fail(e) }); }
+  deleteChannel(item: ZeroChannel): void { this.api.deleteChannel(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: () => this.loadChannels(), error: e => this.fail(e) }); }
+  importAll(): void {
+    this.channelsBusy = true;
+    this.api.importAll(this.messageLimit).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => { this.channelsBusy = false; this.changeDetector.markForCheck(); })).subscribe({ next: x => { this.bulkResults = x; this.loadHistory(); const first = x.find(y => y.run)?.run; if (first) this.selectRun(first); }, error: e => this.fail(e) });
+  }
+  importChannel(item: ZeroChannel): void { this.channel = item.identifier; this.start(); }
+  saveSettings(): void { this.api.saveSettings(this.deviationPercent).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: () => { this.notice = 'تنظیم ذخیره شد؛ محاسبه دوباره را اجرا کنید.'; this.changeDetector.markForCheck(); }, error: e => this.fail(e) }); }
+  loadIssues(runId: number, page = 0): void { this.api.issues(runId, page).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: x => { this.issues = x; this.changeDetector.markForCheck(); }, error: e => this.fail(e) }); }
+  retryRun(): void { if (this.run) { this.channel = this.run.channel; this.start(this.run.before); } }
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platform)) return;
+    this.loadChannels();
+    this.api.settings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: x => { this.deviationPercent = x.deviationPercent; this.changeDetector.markForCheck(); }, error: e => this.fail(e) });
+    timer(3000, 3000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.history?.items.some(x => ['Queued', 'Processing'].includes(x.status))) { this.loadHistory(); this.loadChannels(); this.loadListings(); this.loadPrices(); }
+    });
     this.loadCatalog(); this.loadListings(); this.loadPrices(); this.loadHistory(true);
   }
   get active(): boolean { return !!this.run && ['Queued', 'Processing'].includes(this.run.status); }
@@ -46,13 +68,13 @@ export class ZeroVehiclesComponent {
     this.channel = this.run.channel; this.messageLimit = this.run.messageLimit; this.start(this.run.nextBefore);
   }
   selectRun(run: ZeroImport): void {
-    this.polling?.unsubscribe(); this.run = run;
+    this.polling?.unsubscribe(); this.run = run; this.issues = undefined; if (!["Queued", "Processing"].includes(run.status)) this.loadIssues(run.id);
     if (!this.active) return;
     this.polling = timer(0, 2000).pipe(exhaustMap(() => this.api.run(run.id)), takeUntilDestroyed(this.destroyRef), tap({ next: () => this.changeDetector.markForCheck() })).subscribe({
       next: result => {
         this.run = result;
         if (!this.active) {
-          this.polling?.unsubscribe(); this.loadListings(); this.loadPrices(); this.loadCatalog(); this.loadHistory();
+          this.polling?.unsubscribe(); this.loadIssues(result.id); this.loadChannels(); this.loadListings(); this.loadPrices(); this.loadCatalog(); this.loadHistory();
         }
       }, error: e => { this.polling?.unsubscribe(); this.fail(e); },
     });
@@ -90,7 +112,7 @@ export class ZeroVehiclesComponent {
   asUtc(value: string): string { return /(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : `${value}Z`; }
   hasNext(data?: ZeroPage<unknown>): boolean { return !!data && (data.page + 1) * data.pageSize < data.total; }
   label(status: string): string {
-    return ({ Queued: 'در صف دریافت', Processing: 'در حال دریافت و بررسی', Completed: 'دریافت کامل شد', Partial: 'دریافت ناقص', Failed: 'دریافت ناموفق', Included: 'در قیمت مرجع محاسبه شد', Pending: 'در انتظار محاسبه', Stale: 'خارج از بازهٔ تازگی', Outlier: 'قیمت غیرعادی؛ خارج از محاسبه', DuplicateContent: 'متن تکراری؛ خارج از محاسبه', Superseded: 'قیمت جدیدتر کانال جایگزین شد', InvalidPrice: 'قیمت خارج از محدوده', Low: 'کم؛ قیمت اولیه', Medium: 'متوسط', High: 'بالاتر' } as Record<string, string>)[status] ?? status;
+    return ({ Queued: 'در صف دریافت', Processing: 'در حال دریافت و بررسی', Completed: 'دریافت کامل شد', Partial: 'دریافت ناقص', Failed: 'دریافت ناموفق', Matched: 'تطبیق مرجع معتبر', Ambiguous: 'نام دارای چند قیمت متفاوت', NotFound: 'قیمت بازار پیدا نشد', SourceUnavailable: 'منبع در دسترس نیست', Unavailable: 'قیمت نهایی در دسترس نیست', ReferenceOnly: 'فقط قیمت Car.ir', Priced: 'قیمت نهایی محاسبه شد', AmbiguousPrice: 'واحد مبلغ مبهم', Included: 'در قیمت نهایی محاسبه شد', Pending: 'در انتظار محاسبه', Stale: 'خارج از بازهٔ تازگی', Outlier: 'قیمت غیرعادی؛ خارج از محاسبه', DuplicateContent: 'متن تکراری؛ خارج از محاسبه', Superseded: 'قیمت جدیدتر کانال جایگزین شد', InvalidPrice: 'قیمت خارج از محدوده', Low: 'کم؛ قیمت اولیه', Medium: 'متوسط', High: 'بالاتر' } as Record<string, string>)[status] ?? status;
   }
   get rejectionSummary(): { text: string; count: number }[] {
     const labels: Record<string, string> = { BUY_REQUEST: 'درخواست خرید؛ آگهی فروش نیست', ALLOCATION_OR_PREORDER: 'حواله، امتیاز خرید یا پیش‌فروش؛ خودرو آمادهٔ فروش نیست', POSITIVE_MILEAGE: 'کارکرد مثبت', ZERO_NOT_CONFIRMED: 'صفر بودن تأیید نشد', CONTRADICTORY_CONDITION: 'وضعیت متناقض', MODEL_UNKNOWN_OR_AMBIGUOUS: 'مدل ناشناخته یا مبهم', TRIM_UNKNOWN_OR_AMBIGUOUS: 'تیپ ناشناخته یا مبهم', PRICE_INVALID: 'قیمت نامعتبر یا مبهم', PRICE_OUT_OF_RANGE: 'قیمت خارج از محدوده', CURRENCY_MISSING: 'واحد پول نامشخص', PUBLICATION_DATE_INVALID: 'تاریخ نامعتبر', MESSAGE_INVALID: 'پیام نامعتبر یا بیش از حد طولانی' };

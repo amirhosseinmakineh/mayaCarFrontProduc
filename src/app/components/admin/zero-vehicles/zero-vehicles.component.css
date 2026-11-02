@@ -270,3 +270,5 @@
                                                                                                                                         .heading>button {
                                                                                                                                           width:100%}
                                                                                                                                         }
+
+textarea { display:block; width:100%; max-width:40rem; box-sizing:border-box; padding:.75rem; border:1px solid #cbd5e1; border-radius:.5rem; font:inherit; }

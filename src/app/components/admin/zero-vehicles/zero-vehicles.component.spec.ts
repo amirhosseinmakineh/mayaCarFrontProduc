@@ -8,7 +8,7 @@ import { environment } from '../../../../environments/environment';
 
 describe('Independent zero vehicle admin', () => {
   const base = `${environment.apiUrl}/admin/zero-vehicles`;
-  const run: ZeroImport = { id: 1, channel: 'zero_channel', status: 'Queued', messageLimit: 50, before: null, nextBefore: null, pagesFetched: 0, stopReason: '', createdAt: '2026-10-31T10:00:00Z', completedAt: null, scanned: 0, accepted: 0, rejected: 0, duplicates: 0, stored: 0, priceGroups: 0, rejectionCounts: '{}', error: null };
+  const run: ZeroImport = { id: 1, channel: 'zero_channel', status: 'Queued', messageLimit: 50, before: null, nextBefore: null, pagesFetched: 0, stopReason: '', createdAt: '2026-10-31T10:00:00Z', completedAt: null, extracted: 0, scanned: 0, accepted: 0, rejected: 0, duplicates: 0, stored: 0, priceGroups: 0, rejectionCounts: '{}', error: null };
   beforeEach(() => TestBed.configureTestingModule({ imports: [ZeroVehiclesComponent], providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), { provide: PLATFORM_ID, useValue: 'server' }] }));
   it('polls a queued import and renders persisted result counts', fakeAsync(() => {
     const fixture = TestBed.createComponent(ZeroVehiclesComponent);
@@ -19,6 +19,8 @@ describe('Independent zero vehicle admin', () => {
     http.expectOne(r => r.url === base + '/imports').flush({ items: [run], total: 1, page: 0, pageSize: 10 });
     tick(0);
     http.expectOne(base + '/imports/1').flush({ ...run, status: 'Completed', scanned: 20, accepted: 4, rejected: 15, duplicates: 1, stored: 3, priceGroups: 2, nextBefore: 10 });
+    http.expectOne(base + '/channels').flush([]);
+    http.expectOne(r => r.url === base + '/imports/1/issues').flush({ items: [], total: 0, page: 0, pageSize: 20 });
     http.expectOne(r => r.url === base + '/listings').flush({ items: [], total: 3, page: 0, pageSize: 10 });
     http.expectOne(r => r.url === base + '/prices').flush({ items: [], total: 2, page: 0, pageSize: 10 });
     http.expectOne(base + '/catalog').flush([]);
