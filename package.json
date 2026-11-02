@@ -8,6 +8,7 @@
 "build": "ng build",
 "watch": "ng build --watch --configuration development",
 "test": "ng test",
+"test:api-proxy": "tsc src/api-proxy.ts --outDir tmp/api-proxy-test --module commonjs --target ES2022 --esModuleInterop --skipLibCheck && node --test tests/api-proxy.test.cjs",
 "serve:ssr:induraFront": "node dist/induraFront/server/server.mjs"
 },
 "dependencies": {
