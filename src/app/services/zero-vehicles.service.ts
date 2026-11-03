@@ -5,23 +5,36 @@ export interface ZeroPage<T> { items: T[]; total: number; page: number; pageSize
 export interface ZeroImport {
   id: number; channel: string; status: string; messageLimit: number; before: number | null;
   nextBefore: number | null; pagesFetched: number; stopReason: string; createdAt: string; completedAt: string | null;
-  scanned: number; accepted: number; rejected: number; duplicates: number; stored: number; priceGroups: number;
+  extracted: number; scanned: number; accepted: number; rejected: number; duplicates: number; stored: number; priceGroups: number;
   rejectionCounts: string; error: string | null;
 }
 export interface ZeroListing {
   id: number; modelId: number; model: string; trimId: number; trim: string; originalName: string;
   priceToman: number; year: number | null; publishedAt: string; receivedAt: string; channel: string;
-  externalMessageId: string; sourceUrl: string | null; pricingStatus: string; referencePrice: number | null;
+  externalMessageId: string; sourceUrl: string | null; pricingStatus: string; referencePrice: number | null; finalPrice: number | null; marketStatus: string;
+  marketName: string | null; marketUrl: string | null; marketPriceAt: string | null; marketFetchedAt: string | null;
+  rejectionReason: string | null; partIndex: number; rawPrice: string;
 }
 export interface ZeroPrice {
   id: number; modelId: number; model: string; trimId: number; trim: string; referencePrice: number;
-  minPrice: number; maxPrice: number; sampleCount: number; sourceCount: number; confidence: string; calculatedAt: string;
+  marketPrice: number; pricingStatus: string; minPrice: number; maxPrice: number; sampleCount: number; sourceCount: number; confidence: string; calculatedAt: string;
 }
 export interface ZeroCatalog { id: number; name: string; trims: { id: number; name: string }[]; }
+export interface ZeroChannel { id: number; identifier: string; enabled: boolean; latestMessageId: number | null; lastImportedAt: string | null; lastError: string | null; }
+export interface ZeroChannelResult { channel: string; run: ZeroImport | null; error: string | null; }
+export interface ZeroIssue { externalMessageId: string; partIndex: number; code: string; rawText: string; }
 @Injectable({ providedIn: 'root' })
 export class ZeroVehiclesService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/admin/zero-vehicles`;
+  channels() { return this.http.get<ZeroChannel[]>(`${this.base}/channels`); }
+  addChannels(identifiers: string) { return this.http.post<ZeroChannelResult[]>(`${this.base}/channels`, { identifiers }); }
+  toggleChannel(id: number, enabled: boolean) { return this.http.patch<void>(`${this.base}/channels/${id}`, { enabled }); }
+  deleteChannel(id: number) { return this.http.delete<void>(`${this.base}/channels/${id}`); }
+  importAll(messageLimit: number) { return this.http.post<ZeroChannelResult[]>(`${this.base}/imports/all`, { messageLimit }); }
+  issues(id: number, page = 0) { return this.http.get<ZeroPage<ZeroIssue>>(`${this.base}/imports/${id}/issues`, { params: { page } }); }
+  settings() { return this.http.get<{ deviationPercent: number }>(`${this.base}/settings`); }
+  saveSettings(deviationPercent: number) { return this.http.put<{ deviationPercent: number }>(`${this.base}/settings`, { deviationPercent }); }
   start(channel: string, messageLimit: number, before: number | null = null) {
     return this.http.post<ZeroImport>(`${this.base}/imports`, { channel, messageLimit, before });
   }

@@ -8,7 +8,7 @@ import { environment } from '../../../../environments/environment';
 
 describe('Independent zero vehicle admin', () => {
   const base = `${environment.apiUrl}/admin/zero-vehicles`;
-  const run: ZeroImport = { id: 1, channel: 'zero_channel', status: 'Queued', messageLimit: 50, before: null, nextBefore: null, pagesFetched: 0, stopReason: '', createdAt: '2026-10-31T10:00:00Z', completedAt: null, scanned: 0, accepted: 0, rejected: 0, duplicates: 0, stored: 0, priceGroups: 0, rejectionCounts: '{}', error: null };
+  const run: ZeroImport = { id: 1, channel: 'zero_channel', status: 'Queued', messageLimit: 50, before: null, nextBefore: null, pagesFetched: 0, stopReason: '', createdAt: '2026-10-31T10:00:00Z', completedAt: null, extracted: 0, scanned: 0, accepted: 0, rejected: 0, duplicates: 0, stored: 0, priceGroups: 0, rejectionCounts: '{}', error: null };
   beforeEach(() => TestBed.configureTestingModule({ imports: [ZeroVehiclesComponent], providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), { provide: PLATFORM_ID, useValue: 'server' }] }));
   it('polls a queued import and renders persisted result counts', fakeAsync(() => {
     const fixture = TestBed.createComponent(ZeroVehiclesComponent);
@@ -19,6 +19,8 @@ describe('Independent zero vehicle admin', () => {
     http.expectOne(r => r.url === base + '/imports').flush({ items: [run], total: 1, page: 0, pageSize: 10 });
     tick(0);
     http.expectOne(base + '/imports/1').flush({ ...run, status: 'Completed', scanned: 20, accepted: 4, rejected: 15, duplicates: 1, stored: 3, priceGroups: 2, nextBefore: 10 });
+    http.expectOne(base + '/channels').flush([]);
+    http.expectOne(r => r.url === base + '/imports/1/issues').flush({ items: [], total: 0, page: 0, pageSize: 20 });
     http.expectOne(r => r.url === base + '/listings').flush({ items: [], total: 3, page: 0, pageSize: 10 });
     http.expectOne(r => r.url === base + '/prices').flush({ items: [], total: 2, page: 0, pageSize: 10 });
     http.expectOne(base + '/catalog').flush([]);
@@ -39,6 +41,38 @@ describe('Independent zero vehicle admin', () => {
     component.filters.trimId = 9; component.modelChanged();
     http.expectOne(r => r.url === base + '/listings' && r.params.get('page') === '0' && !r.params.has('trimId')).flush({ items: [], total: 0, page: 0, pageSize: 10 });
     expect(component.filters.trimId).toBeNull();
+    fixture.destroy(); http.verify();
+  });
+  it('submits bulk identifiers and renders per-channel success and failure', () => {
+    const fixture = TestBed.createComponent(ZeroVehiclesComponent);
+    const component = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    component.channelText = '@channel_one\nhttps://t.me/channel_two\nbad!';
+    component.addChannels();
+    const request = http.expectOne(base + '/channels');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body.identifiers).toBe(component.channelText);
+    request.flush([{ identifier: 'channel_one', error: null }, { identifier: 'channel_two', error: null }, { identifier: 'bad!', error: 'Invalid channel' }]);
+    http.expectOne(base + '/channels').flush([{ id: 1, identifier: 'channel_one', enabled: true }, { id: 2, identifier: 'channel_two', enabled: true }]);
+    fixture.detectChanges();
+    expect(component.channels.length).toBe(2);
+    expect(component.channelsBusy).toBeFalse();
+    expect(fixture.nativeElement.textContent).toContain('Invalid channel');
+    expect(fixture.nativeElement.textContent).toContain('channel_one');
+    fixture.destroy(); http.verify();
+  });
+  it('keeps bulk-import errors visible and releases the busy state', () => {
+    const fixture = TestBed.createComponent(ZeroVehiclesComponent);
+    const component = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    component.messageLimit = 500; component.importAll();
+    const request = http.expectOne(base + '/imports/all');
+    expect(request.request.body.messageLimit).toBe(500);
+    request.flush([{ identifier: 'channel_one', error: 'Already queued' }]);
+    http.expectOne(r => r.url === base + '/imports').flush({ items: [], total: 0, page: 0, pageSize: 10 });
+    fixture.detectChanges();
+    expect(component.channelsBusy).toBeFalse();
+    expect(fixture.nativeElement.textContent).toContain('Already queued');
     fixture.destroy(); http.verify();
   });
 });
