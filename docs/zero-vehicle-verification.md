@@ -1,13 +1,17 @@
-# Zero-vehicle admin verification — 2026-11-02
+# Zero-vehicle admin verification — updated 2026-11-03
 
-Scope: preserve the existing zero-only UI changes, expose saved channels, bulk imports, Car.ir market/reference status and validation issues. No merge or deployment is authorized.
+Previous UI changes are retained. This continuation changes tests and documentation only.
 
 | Check | Status | Evidence |
 |---|---|---|
-| Production build | Passed | `NG_BUILD_MAX_WORKERS=1 npm run build`; bundle generation completed, exit 0 |
-| Browser unit tests | Passed | Chrome Headless 131; `ng test --watch=false --browsers=ChromeHeadless --include=**/zero-vehicles.component.spec.ts`; 2/2 success |
-| Test runner | Passed | Test-only Zone.js polyfills allow existing fakeAsync tests to run; production configuration unchanged |
-| Real browser + live backend workflow | Not Tested | Unit tests mock HTTP; not a deployed integration test |
-| Overall acceptance | Blocked | Original ten-ad fixture unavailable; backend SQL Server migration execution blocked; see backend report |
+| Production build | Passed | `NG_BUILD_MAX_WORKERS=1 npm run build`; bundle generation completed |
+| Chrome Headless tests | Passed | 4/4: existing import polling and pagination plus bulk identifier submission/error rendering and bulk-import busy-state/error handling |
+| Backend ten-ad fixture | Passed | Exact supplied caption: 10 ads, 8 zero, 2 nonzero; replay stores 0 extra rows |
+| Deployed frontend/backend E2E | Not Tested | Browser unit tests mock HTTP; no deployment performed |
+| Overall acceptance | Blocked / Incomplete | Live Telegram unavailable; SQL Server engine startup fails; Car.ir exact-name matching coverage remains limited |
 
-The backend report contains live Car.ir query results, full-suite failures and migration limitations: `CarShow/docs/zero-vehicle-verification.md` on the matching backend branch.
+Run: `CHROME_BIN=/path/to/chrome NG_BUILD_MAX_WORKERS=1 npm test -- --watch=false --browsers=ChromeHeadless --include=**/zero-vehicles.component.spec.ts`.
+
+[Complete backend report and evidence](https://github.com/amirhosseinmakineh/CarShow/blob/fix/zero-carir-pipeline-20261102/docs/zero-vehicle-final-acceptance.md).
+
+Both PRs remain Draft. No merge or deployment.

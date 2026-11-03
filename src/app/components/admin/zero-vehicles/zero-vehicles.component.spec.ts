@@ -43,4 +43,36 @@ describe('Independent zero vehicle admin', () => {
     expect(component.filters.trimId).toBeNull();
     fixture.destroy(); http.verify();
   });
+  it('submits bulk identifiers and renders per-channel success and failure', () => {
+    const fixture = TestBed.createComponent(ZeroVehiclesComponent);
+    const component = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    component.channelText = '@channel_one\nhttps://t.me/channel_two\nbad!';
+    component.addChannels();
+    const request = http.expectOne(base + '/channels');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body.identifiers).toBe(component.channelText);
+    request.flush([{ identifier: 'channel_one', error: null }, { identifier: 'channel_two', error: null }, { identifier: 'bad!', error: 'Invalid channel' }]);
+    http.expectOne(base + '/channels').flush([{ id: 1, identifier: 'channel_one', enabled: true }, { id: 2, identifier: 'channel_two', enabled: true }]);
+    fixture.detectChanges();
+    expect(component.channels.length).toBe(2);
+    expect(component.channelsBusy).toBeFalse();
+    expect(fixture.nativeElement.textContent).toContain('Invalid channel');
+    expect(fixture.nativeElement.textContent).toContain('channel_one');
+    fixture.destroy(); http.verify();
+  });
+  it('keeps bulk-import errors visible and releases the busy state', () => {
+    const fixture = TestBed.createComponent(ZeroVehiclesComponent);
+    const component = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    component.messageLimit = 500; component.importAll();
+    const request = http.expectOne(base + '/imports/all');
+    expect(request.request.body.messageLimit).toBe(500);
+    request.flush([{ identifier: 'channel_one', error: 'Already queued' }]);
+    http.expectOne(r => r.url === base + '/imports').flush({ items: [], total: 0, page: 0, pageSize: 10 });
+    fixture.detectChanges();
+    expect(component.channelsBusy).toBeFalse();
+    expect(fixture.nativeElement.textContent).toContain('Already queued');
+    fixture.destroy(); http.verify();
+  });
 });
