@@ -72,3 +72,17 @@ test('upstream connection failure is 502 rather than an invalid-session response
   assert.equal(response.status, 502);
   assert.equal((await response.json()).code, 'API_PROXY_UNAVAILABLE');
 });
+
+
+test('upstream timeout is 504 with a traceable request ID and keeps the session', async t => {
+  const upstream = await server(() => {});
+  const app = express(); app.use(createApiProxy(upstream.origin, 25));
+  const proxy = await server(app);
+  t.after(async () => { await proxy.close(); await upstream.close(); });
+  const response = await fetch(`${proxy.origin}/api/admin/zero-vehicles/catalog`);
+  assert.equal(response.status, 504);
+  const body = await response.json();
+  assert.equal(body.code, 'API_PROXY_TIMEOUT');
+  assert.equal(body.requestId, response.headers.get('x-request-id'));
+  assert.ok(body.requestId);
+});

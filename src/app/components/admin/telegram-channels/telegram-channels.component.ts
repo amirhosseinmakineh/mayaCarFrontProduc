@@ -1,3 +1,4 @@
+import { apiErrorMessage } from '../../../services/api-error-message';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectorRef,
@@ -23,6 +24,7 @@ import {
   TelegramPipelineTimeline,
   TelegramTimelineStage,
   TelegramSummary,
+  TelegramJobLog,
 } from '../../../services/telegram-channels.service';
 
 @Component({
@@ -38,6 +40,7 @@ export class TelegramChannelsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
 
+  reports: TelegramJobLog[] = []; reportPage = 0; reportsBusy = false;
   pricingState?: TelegramPricingState | null;
   observations: TelegramObservation[] = [];
   dailyPrices: DailyCarPrice[] = [];
@@ -61,6 +64,7 @@ export class TelegramChannelsComponent implements OnInit {
   loading = false;
   submitting = false;
   error = '';
+  editChannelId: number | null = null; editChannelInput = ''; editChannelTitle = '';
   success = '';
   actionBusy = false;
   channelPage = 0;
@@ -77,6 +81,12 @@ export class TelegramChannelsComponent implements OnInit {
     timer(0, 5000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refresh());
+  }
+
+  loadReports(offset = 0): void {
+    this.reportPage = Math.max(0, this.reportPage + offset); this.reportsBusy = true;
+    this.service.getJobs(this.reportPage).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => { this.reportsBusy = false; this.changeDetector.markForCheck(); }))
+      .subscribe({ next: rows => this.reports = rows, error: e => this.showError(e) });
   }
 
   refresh(): void {
@@ -252,6 +262,15 @@ export class TelegramChannelsComponent implements OnInit {
       });
   }
 
+  editChannel(channel: TelegramChannel): void {
+    this.editChannelId = channel.id; this.editChannelInput = channel.publicUrl || channel.identifier; this.editChannelTitle = channel.title;
+  }
+  saveChannel(): void {
+    if (this.editChannelId == null) return;
+    this.performAction(this.service.update(this.editChannelId, this.editChannelInput, this.editChannelTitle), 'اطلاعات منبع مشترک ذخیره شد.');
+    this.editChannelId = null;
+  }
+
   toggle(channel: TelegramChannel): void {
     this.performAction(
       this.service.setEnabled(channel.id, !channel.enabled),
@@ -369,7 +388,7 @@ export class TelegramChannelsComponent implements OnInit {
       });
   }
 
-  private performAction(request: Observable<void>, message: string, onSuccess?: () => void): void {
+  private performAction(request: Observable<unknown>, message: string, onSuccess?: () => void): void {
     if (this.actionBusy) {
       return;
     }
@@ -417,10 +436,7 @@ export class TelegramChannelsComponent implements OnInit {
       return;
     }
 
-    this.error =
-      error.status === 0
-        ? 'ارتباط با سرور برقرار نشد. چند لحظه دیگر دوباره تلاش کنید.'
-        : 'انجام این درخواست ممکن نشد. دوباره تلاش کنید؛ اگر مشکل ادامه داشت با پشتیبانی تماس بگیرید.';
+    this.error = apiErrorMessage(error);
     this.changeDetector.markForCheck();
   }
 

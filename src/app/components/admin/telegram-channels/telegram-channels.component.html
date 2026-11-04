@@ -289,9 +289,15 @@
           ><span>آخرین محاسبه: {{ (asUtc(c.lastCalculationAt) | date: "yyyy/MM/dd HH:mm" : "+0330") || "هنوز محاسبه نشده" }}</span>
         </div>
         <p class="inline-warning" *ngIf="c.lastError">
-          آخرین دریافت با مشکل مواجه شد. شناسه و عمومی‌بودن کانال را بررسی کنید
-          و دوباره تلاش کنید.
+          {{ c.lastError }}
         </p>
+        <button type="button" class="quiet" (click)="editChannel(c)" [disabled]="actionBusy">ویرایش منبع</button>
+        <form *ngIf="editChannelId === c.id" (ngSubmit)="saveChannel()">
+          <label>لینک کانال<input name="editInput" [(ngModel)]="editChannelInput" required dir="ltr"></label>
+          <label>عنوان<input name="editTitle" [(ngModel)]="editChannelTitle" maxlength="512"></label>
+          <p class="hint">با تغییر شناسه، دریافت منبع قبلی متوقف و سوابق آن حفظ می‌شود.</p>
+          <button [disabled]="actionBusy">ذخیره</button><button type="button" (click)="editChannelId = null">انصراف</button>
+        </form>
         <div class="actions">
           <button
             type="button"
@@ -637,3 +643,19 @@
   </details>
 
 </main>
+
+
+<details dir="rtl" class="panel">
+  <summary>گزارش اجرای دریافت و قیمت‌گذاری</summary><button type="button" (click)="loadReports()" [disabled]="reportsBusy">بارگذاری گزارش‌ها</button>
+  <p *ngIf="reportsBusy">در حال دریافت…</p>
+  <article *ngFor="let run of reports" class="channel-card"><h3>اجرای {{ run.id }} · کانال {{ run.channelId }} · {{ run.status }}</h3>
+    <p>شروع: {{ asUtc(run.startedAt ?? run.createdAt) | date:'yyyy/MM/dd HH:mm':'+0330' }} · پایان: {{ asUtc(run.completedAt) | date:'yyyy/MM/dd HH:mm':'+0330' }} · مدت: {{ run.durationSeconds | number:'1.0-1' }} ثانیه</p>
+    <p *ngIf="run.reportVersion">پیام جدید: {{ run.newRawMessages }} · آگهی: {{ run.extractedListings }} · پذیرفته: {{ run.acceptedListings }} · نیازمند بررسی/ردشده: {{ run.rejectedListings }} · گروه قیمت: {{ run.calculatedPriceGroups }}</p>
+    <p *ngIf="!run.reportVersion">شمارش مراحل برای این اجرای قدیمی ثبت نشده است.</p>
+    <p *ngIf="run.reportVersion && !run.pricingCompletedAt">بررسی قیمت این اجرا هنوز پایان نیافته است.</p>
+    <details *ngIf="run.rejectionReasons || run.stageErrors || run.error"><summary>دلایل و خطاهای مراحل</summary><pre>{{ run.rejectionReasons }}
+{{ run.stageErrors }}
+{{ run.error }}</pre></details>
+  </article>
+  <button type="button" (click)="loadReports(-1)" [disabled]="reportsBusy || reportPage === 0">قبلی</button><span>صفحه {{ reportPage + 1 }}</span><button type="button" (click)="loadReports(1)" [disabled]="reportsBusy || reports.length < 50">بعدی</button>
+</details>

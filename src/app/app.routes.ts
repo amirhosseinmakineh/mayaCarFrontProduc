@@ -1,3 +1,4 @@
+import { MarketReviewComponent } from './components/admin/market-review/market-review.component';
 import { ZeroVehiclesComponent } from './components/admin/zero-vehicles/zero-vehicles.component';
 import { Routes } from "@angular/router";
 import { RegisterComponent } from "./components/register/register.component";
@@ -49,6 +50,7 @@ export const routes: Routes = [
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
       {path : 'orderItem',component:OrderItemComponent},
+      {path: 'marketReview', component: MarketReviewComponent},
       {path: 'telegramChannels', component: TelegramChannelsComponent},
       {path: 'zeroVehicles', component: ZeroVehiclesComponent}
     ],

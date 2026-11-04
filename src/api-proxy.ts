@@ -1,10 +1,12 @@
 import type { RequestHandler } from 'express';
 import http from 'node:http';
 import https from 'node:https';
+import { randomUUID } from 'node:crypto';
 
 export const DEFAULT_API_PROXY_TARGET = 'https://api.mayakhodro.com';
 
-export function createApiProxy(backendOrigin = process.env['API_PROXY_TARGET'] || DEFAULT_API_PROXY_TARGET): RequestHandler {
+export function createApiProxy(backendOrigin = process.env['API_PROXY_TARGET'] || DEFAULT_API_PROXY_TARGET,
+  timeoutMilliseconds = 15_000): RequestHandler {
 const proxiedPathPrefixes = ['/api', '/images', '/WeatherForecast'];
 
 // Browser requests stay same-origin. The server connects directly to HTTPS;
@@ -20,6 +22,8 @@ return (req, res, next) => {
     return;
   }
 
+  const requestId = randomUUID();
+  res.setHeader('X-Request-Id', requestId);
   try {
     const headers: Record<string, string> = {};
     for (const [key, value] of Object.entries(req.headers)) {
@@ -54,11 +58,18 @@ return (req, res, next) => {
       },
     );
 
-    request.setTimeout(15_000, () => {
+    let timedOut = false;
+    request.setTimeout(Math.max(1, timeoutMilliseconds), () => {
+      timedOut = true;
       request.destroy(new Error('Backend proxy timeout'));
     });
-    request.on('error', () => {
-      if (!res.headersSent) res.status(502).json({ code: 'API_PROXY_UNAVAILABLE', message: 'ارتباط با سرور برقرار نشد. کمی بعد دوباره تلاش کنید.' });
+    request.on('error', (error: NodeJS.ErrnoException) => {
+      // No tokens, query strings, request bodies or credentials enter diagnostics.
+      console.error(JSON.stringify({ event: 'api_proxy_error', requestId, method: req.method,
+        code: timedOut ? 'UPSTREAM_TIMEOUT' : error.code || 'UPSTREAM_CONNECTION_ERROR' }));
+      if (!res.headersSent) res.status(timedOut ? 504 : 502).json({ requestId,
+        code: timedOut ? 'API_PROXY_TIMEOUT' : 'API_PROXY_UNAVAILABLE',
+        message: timedOut ? 'مهلت پاسخ سرور پایان یافت. دوباره تلاش کنید.' : 'ارتباط با سرور برقرار نشد. کمی بعد دوباره تلاش کنید.' });
       else res.destroy();
     });
     req.on('aborted', () => request.destroy());
