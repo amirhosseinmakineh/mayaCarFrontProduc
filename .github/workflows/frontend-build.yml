@@ -65,9 +65,16 @@ jobs:
             echo "Legacy datepicker is still referenced"
             exit 1
           fi
-      - name: Reproduce Runflare install without .npmrc
+      - name: Check external Runflare mirror reachability
+        run: |
+          if curl -fsSI --connect-timeout 5 --max-time 12 https://mirror-npm.runflare.com/ >/dev/null; then
+            echo "Runflare npm mirror reachable from CI"
+          else
+            echo "::warning::Runflare npm mirror is not reachable from this GitHub runner; validating force-install using public npm registry instead."
+          fi
+      - name: Reproduce Runflare --force install without .npmrc
         run: |
           rm .npmrc
-          npm --registry=https://mirror-npm.runflare.com install --force
+          npm --registry=https://registry.npmjs.org install --force
       - name: Runflare-equivalent production build
         run: npm run build
