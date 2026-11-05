@@ -50,6 +50,7 @@ export class TelegramChannelsComponent implements OnInit {
   observationPage = 0;
   readonly observationsPerPage = 10;
   channels: TelegramChannel[] = [];
+  selectedChannelIds = new Set<number>();
   capability?: TelegramCapability;
   timeline?: TelegramPipelineTimeline;
   timelineUnavailable = false;
@@ -277,6 +278,21 @@ export class TelegramChannelsComponent implements OnInit {
       channel.enabled
         ? 'دریافت آگهی از این کانال متوقف شد.'
         : 'کانال فعال شد؛ دریافت آگهی به‌زودی آغاز می‌شود.',
+    );
+  }
+
+  selectChannel(id: number, selected: boolean): void {
+    if (selected) this.selectedChannelIds.add(id);
+    else this.selectedChannelIds.delete(id);
+  }
+
+  bulkEnabled(enabled: boolean): void {
+    const ids = [...this.selectedChannelIds].filter(id => this.channels.some(channel => channel.id === id));
+    if (!ids.length) return;
+    this.performAction(
+      this.service.setEnabledBulk(ids, enabled),
+      `${ids.length} منبع برای ${enabled ? 'فعال‌سازی' : 'توقف'} ثبت شد.`,
+      () => this.selectedChannelIds.clear(),
     );
   }
 

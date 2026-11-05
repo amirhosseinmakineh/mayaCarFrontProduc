@@ -172,6 +172,10 @@ export class TelegramChannelsService {
     return this.http.patch<void>(`${this.baseUrl}/${id}/enabled`, enabled);
   }
 
+  setEnabledBulk(channelIds: number[], enabled: boolean): Observable<{ updated: number }> {
+    return this.http.patch<{ updated: number }>(`${this.baseUrl}/enabled/bulk`, { channelIds, enabled });
+  }
+
   update(id: number, input: string, title: string): Observable<TelegramChannel> {
     return this.http.put<TelegramChannel>(`${this.baseUrl}/${id}`, { input, title });
   }

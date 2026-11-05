@@ -224,10 +224,16 @@
     <div *ngIf="channels.length && !filteredChannelCount" class="empty">
       کانالی با این نام پیدا نشد. عبارت جست‌وجو را تغییر دهید.
     </div>
+    <div class="actions" *ngIf="channels.length" aria-label="عملیات گروهی منابع">
+      <span>{{ selectedChannelIds.size }} منبع انتخاب شده</span>
+      <button type="button" class="secondary" [disabled]="actionBusy || !selectedChannelIds.size" (click)="bulkEnabled(true)">فعال‌سازی انتخاب‌شده‌ها</button>
+      <button type="button" class="quiet" [disabled]="actionBusy || !selectedChannelIds.size" (click)="bulkEnabled(false)">توقف انتخاب‌شده‌ها</button>
+    </div>
     <div class="channel-list">
       <article class="channel-card" *ngFor="let c of visibleChannels">
         <div class="channel-top">
           <div>
+            <label><input type="checkbox" [checked]="selectedChannelIds.has(c.id)" [disabled]="actionBusy" (change)="selectChannel(c.id, $any($event.target).checked)" /> انتخاب منبع</label>
             <h3>{{ c.title || c.username || c.identifier }}</h3>
             <a
               [href]="c.publicUrl"
