@@ -1,3 +1,4 @@
+import { apiErrorMessage } from '../../../services/api-error-message';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, DestroyRef, PLATFORM_ID, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -100,7 +101,7 @@ export class ZeroVehiclesComponent {
   recalculate(): void {
     this.recalculateBusy = true; this.error = ''; this.notice = '';
     this.api.recalculate().pipe(takeUntilDestroyed(this.destroyRef), tap({ next: () => this.changeDetector.markForCheck() }), finalize(() => this.recalculateBusy = false)).subscribe({ next: result => {
-      this.notice = `${result.groups} گروه قیمت معتبر محاسبه شد.`; this.selectedPrice = undefined; this.members = undefined; this.loadPrices(); this.loadListings();
+      this.notice = result.workerEnabled === false ? 'درخواست ثبت شد؛ پردازشگر بک‌اند غیرفعال است و باید فعال شود.' : result.queued ? 'درخواست محاسبه ثبت شد. پردازش در بک‌اند ادامه دارد؛ تا یک دقیقه دیگر فهرست را دوباره بارگذاری کنید.' : `${result.groups} گروه قیمت معتبر محاسبه شد.`; this.selectedPrice = undefined; this.members = undefined; this.loadPrices(); this.loadListings();
     }, error: e => this.fail(e) });
   }
   showMembers(price: ZeroPrice, page = 0): void {
@@ -120,6 +121,6 @@ export class ZeroVehiclesComponent {
   }
   private fail(error: HttpErrorResponse): void {
     this.changeDetector.markForCheck();
-    this.error = error.error?.message ?? (error.status === 401 || error.status === 403 ? 'با حساب ادمین وارد شوید.' : 'دریافت پاسخ از سرور ممکن نشد. دوباره تلاش کنید.');
+    this.error = apiErrorMessage(error);
   }
 }

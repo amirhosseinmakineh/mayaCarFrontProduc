@@ -3,12 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 export interface ZeroPage<T> { items: T[]; total: number; page: number; pageSize: number; }
 export interface ZeroImport {
+  startedAt?: string | null; durationSeconds?: number | null;
   id: number; channel: string; status: string; messageLimit: number; before: number | null;
   nextBefore: number | null; pagesFetched: number; stopReason: string; createdAt: string; completedAt: string | null;
   extracted: number; scanned: number; accepted: number; rejected: number; duplicates: number; stored: number; priceGroups: number;
   rejectionCounts: string; error: string | null;
 }
 export interface ZeroListing {
+  rawCarName?: string | null;
   id: number; modelId: number; model: string; trimId: number; trim: string; originalName: string;
   priceToman: number; year: number | null; publishedAt: string; receivedAt: string; channel: string;
   externalMessageId: string; sourceUrl: string | null; pricingStatus: string; referencePrice: number | null; finalPrice: number | null; marketStatus: string;
@@ -16,13 +18,14 @@ export interface ZeroListing {
   rejectionReason: string | null; partIndex: number; rawPrice: string;
 }
 export interface ZeroPrice {
+  year?: number | null; yearCalendar?: string | null; priceDay?: string | null;
   id: number; modelId: number; model: string; trimId: number; trim: string; referencePrice: number;
   marketPrice: number; pricingStatus: string; minPrice: number; maxPrice: number; sampleCount: number; sourceCount: number; confidence: string; calculatedAt: string;
 }
 export interface ZeroCatalog { id: number; name: string; trims: { id: number; name: string }[]; }
 export interface ZeroChannel { id: number; identifier: string; enabled: boolean; latestMessageId: number | null; lastImportedAt: string | null; lastError: string | null; }
 export interface ZeroChannelResult { channel: string; run: ZeroImport | null; error: string | null; }
-export interface ZeroIssue { externalMessageId: string; partIndex: number; code: string; rawText: string; }
+export interface ZeroIssue { publishedAt?: string | null; resolvedAt?: string | null; resolvedListingId?: number | null; externalMessageId: string; partIndex: number; code: string; rawText: string; }
 @Injectable({ providedIn: 'root' })
 export class ZeroVehiclesService {
   private readonly http = inject(HttpClient);
@@ -50,5 +53,5 @@ export class ZeroVehiclesService {
   detail(id: number) { return this.http.get<{ listing: ZeroListing; rawText: string }>(`${this.base}/listings/${id}`); }
   prices(search = '', page = 0) { return this.http.get<ZeroPage<ZeroPrice>>(`${this.base}/prices`, { params: { search, page, pageSize: 10 } }); }
   members(id: number, page = 0) { return this.http.get<ZeroPage<ZeroListing>>(`${this.base}/prices/${id}/listings`, { params: { page, pageSize: 10 } }); }
-  recalculate() { return this.http.post<{ groups: number }>(`${this.base}/prices/recalculate`, {}); }
+  recalculate() { return this.http.post<{ groups: number; queued?: boolean; workerEnabled?: boolean }>(`${this.base}/prices/recalculate`, {}); }
 }

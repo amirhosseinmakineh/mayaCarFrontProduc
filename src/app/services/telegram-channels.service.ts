@@ -40,6 +40,9 @@ export interface TelegramSummary {
 }
 
 export interface TelegramJobLog {
+  startedAt?: string; newRawMessages?: number; extractedListings?: number; acceptedListings?: number;
+  rejectedListings?: number; calculatedPriceGroups?: number; durationSeconds?: number;
+  pricingCompletedAt?: string; rejectionReasons?: string; stageErrors?: string; reportVersion?: number;
   id: number;
   channelId: number;
   status: string;
@@ -157,8 +160,8 @@ export class TelegramChannelsService {
     return this.http.get<TelegramCapability>(`${this.baseUrl}/capabilities`);
   }
 
-  getJobs(): Observable<TelegramJobLog[]> {
-    return this.http.get<TelegramJobLog[]>(`${this.baseUrl}/jobs`);
+  getJobs(page = 0): Observable<TelegramJobLog[]> {
+    return this.http.get<TelegramJobLog[]>(`${this.baseUrl}/jobs?page=${page}`);
   }
 
   import(input: string): Observable<ImportResult> {
@@ -167,6 +170,14 @@ export class TelegramChannelsService {
 
   setEnabled(id: number, enabled: boolean): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/${id}/enabled`, enabled);
+  }
+
+  setEnabledBulk(channelIds: number[], enabled: boolean): Observable<{ updated: number }> {
+    return this.http.patch<{ updated: number }>(`${this.baseUrl}/enabled/bulk`, { channelIds, enabled });
+  }
+
+  update(id: number, input: string, title: string): Observable<TelegramChannel> {
+    return this.http.put<TelegramChannel>(`${this.baseUrl}/${id}`, { input, title });
   }
 
   retry(id: number): Observable<void> {

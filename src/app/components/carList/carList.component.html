@@ -91,7 +91,7 @@
             <strong class="unavailable" *ngIf="getMarketPrice(car) <= 0">اعلام نشده</strong>
           </div>
           <div class="price-line" *ngIf="(car.priceSampleCount ?? 0) > 0">
-            <span>{{ car.priceSampleCount === 1 ? 'قیمت یک کانال' : 'میانگین قیمت کانال‌ها' }}</span>
+            <span>{{ car.priceSampleCount === 1 ? 'قیمت اولیه یک کانال؛ اطمینان پایین' : 'میانگین قیمت کانال‌ها' }}</span>
             <strong>{{ car.priceSampleCount | number }} کانال</strong>
           </div>
           <div class="price-line factory">
