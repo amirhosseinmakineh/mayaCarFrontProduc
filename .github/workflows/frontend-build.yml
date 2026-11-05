@@ -50,3 +50,24 @@ jobs:
           fi
       - name: Proxy tests
         run: npm run test:api-proxy
+
+  runflare-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify removed package is unused
+        run: |
+          if grep -RInE "ngx-persian-datepicker|NgxPersianDatepicker" src; then
+            echo "Legacy datepicker is still referenced"
+            exit 1
+          fi
+      - name: Reproduce Runflare install without .npmrc
+        run: |
+          rm .npmrc
+          npm --registry=https://mirror-npm.runflare.com install --force
+      - name: Runflare-equivalent production build
+        run: npm run build
