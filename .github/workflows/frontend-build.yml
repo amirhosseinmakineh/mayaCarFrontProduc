@@ -1,0 +1,52 @@
+name: Frontend build and proxy checks
+on:
+  push:
+    branches:
+      - main
+      - fix/runflare-build-20261105
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Angular production build
+        run: npm run build
+      - name: SSR server smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=3100 HOST=127.0.0.1 npm start >/tmp/mayacar-ssr.log 2>&1 &
+          pid=$!
+          trap 'kill $pid 2>/dev/null || true' EXIT
+          ok=0
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3100/favicon.ico >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
+            if ! kill -0 "$pid" 2>/dev/null; then
+              cat /tmp/mayacar-ssr.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "$ok" != 1 ]; then
+            cat /tmp/mayacar-ssr.log
+            exit 1
+          fi
+      - name: Proxy tests
+        run: npm run test:api-proxy
