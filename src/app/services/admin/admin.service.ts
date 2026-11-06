@@ -1,4 +1,3 @@
-import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
 import { Observable } from "rxjs";
@@ -29,6 +28,7 @@ import { OrderItem } from "../../models/orderItem/orderItem";
   providedIn: 'root'
 })
 export class AdminService {
+  //private readonly baseUrl = 'https://api.mayakhodro.com/api';
   private readonly baseUrl = environment.apiUrl;
   private client = inject(HttpClient);
 
@@ -54,10 +54,8 @@ export class AdminService {
     return this.client.get<Role[]>(`${this.baseUrl}/role`);
   }
 
-  getCars(isUsed = false): Observable<Car[]> {
-    return this.client.get<Car[]>(`${this.baseUrl}/car`, {
-      params: { isUsed }
-    });
+  getCars(): Observable<Car[]> {
+    return this.client.get<Car[]>(`${this.baseUrl}/car`);
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
@@ -159,3 +157,4 @@ confirmOrderItem(orderItemId : number) : Observable<Result<string>>{
   return this.client.get<Result<string>>(`${this.baseUrl}/OrderItem/ConfirmOrderItem`,{params})
 }
 }
+import { environment } from '../../../environments/environment';

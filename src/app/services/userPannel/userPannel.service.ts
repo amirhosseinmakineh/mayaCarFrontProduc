@@ -1,4 +1,3 @@
-import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -10,6 +9,7 @@ import { Result } from '../../models/result';
   providedIn: 'root'
 })
 export class UserPannelService {
+  //private readonly baseUrl = 'https://api.mayakhodro.com/api';
   private readonly baseUrl = environment.apiUrl;
   private client = inject(HttpClient);
 constructor() { }
@@ -22,3 +22,4 @@ getOrderItems(orderId: number): Observable<Result<OrderItem[]>> {
   return this.client.get<Result<OrderItem[]>>(`${this.baseUrl}/OrderItem`, { params });
 }
 }
+import { environment } from '../../../environments/environment';
