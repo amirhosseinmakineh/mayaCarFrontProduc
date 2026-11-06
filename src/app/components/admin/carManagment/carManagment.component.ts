@@ -1,4 +1,3 @@
-import { environment } from '../../../../environments/environment';
 import {
   Component,
   OnInit,
@@ -7,7 +6,6 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { AdminService }
@@ -62,13 +60,12 @@ implements OnInit {
   private adminService =
     inject(AdminService);
 
-  private route = inject(ActivatedRoute);
-
   // ======================
   // CONSTANTS
   // ======================
 
-  imageBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
+  //imageBaseUrl ='http://localhost:8080';
+   imageBaseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/';
 
   // ======================
   // SIGNALS
@@ -82,8 +79,6 @@ implements OnInit {
 
   selectedCar =
     signal<Car | null>(null);
-  deleteError = '';
-  deletingCar = false;
 
   activeModal =
     signal<ModalMode>(null);
@@ -95,9 +90,6 @@ implements OnInit {
   // FILE
   // ======================
 
-  isUsed = false;
-  vehicleLabel = 'ماشین‌های صفر';
-
   selectedFile: File | null = null;
 
   imagePreview:
@@ -108,9 +100,9 @@ implements OnInit {
   // ======================
 
   ngOnInit(): void {
-    this.isUsed = this.route.snapshot.data['isUsed'] === true;
-    this.vehicleLabel = this.isUsed ? 'ماشین‌های دست‌دوم' : 'ماشین‌های صفر';
+
     this.loadInitialData();
+
   }
 
   // ======================
@@ -141,8 +133,7 @@ implements OnInit {
       price: 0,
 
       imageName: '',
-      description: '',
-      isUsed: this.isUsed
+      description: ''
 
     };
   }
@@ -153,7 +144,7 @@ implements OnInit {
 
   loadCars(): void {
 
-    this.adminService.getCars(this.isUsed).subscribe({
+    this.adminService.getCars().subscribe({
 
       next: res => {
         this.cars.set(res);
@@ -309,9 +300,7 @@ implements OnInit {
         car.imageName || '',
 
       description:
-        car.description || '',
-
-      isUsed: this.isUsed
+        car.description || ''
 
     });
 
@@ -322,7 +311,6 @@ implements OnInit {
 
   openDelete(car: Car): void {
 
-    this.deleteError = '';
     this.selectedCar.set(car);
 
     this.activeModal.set('delete');
@@ -413,11 +401,6 @@ implements OnInit {
     formData.append(
       'Name',
       dto.name
-    );
-
-    formData.append(
-      'IsUsed',
-      this.isUsed.toString()
     );
 
     formData.append(
@@ -542,23 +525,36 @@ implements OnInit {
   // ======================
 
   deleteCar(): void {
-    const car = this.selectedCar();
-    if (!car || this.deletingCar) return;
 
-    this.deletingCar = true;
-    this.deleteError = '';
-    this.adminService.deleteCar(car.id).subscribe({
-      next: () => {
-        this.deletingCar = false;
-        this.cars.update(cars => cars.filter(item => item.id !== car.id));
-        this.closeModal();
-        this.loadCars();
-      },
-      error: err => {
-        this.deletingCar = false;
-        this.deleteError = err?.error?.message || 'حذف خودرو انجام نشد. دوباره تلاش کنید.';
-      },
-    });
+    const car =
+      this.selectedCar();
+
+    if (!car) {
+      return;
+    }
+
+    this.adminService
+      .deleteCar(car.id)
+      .subscribe({
+
+        next: () => {
+
+          this.loadCars();
+
+          this.closeModal();
+
+        },
+
+        error: err => {
+
+          console.error(
+            'Delete car error',
+            err
+          );
+
+        }
+
+      });
   }
 
 }

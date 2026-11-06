@@ -48,7 +48,6 @@
 
     <!-- NAVIGATION -->
     <div class="sidebar-nav">
-      <a class="nav-item" routerLink="/adminDashboard/marketReview">بررسی قیمت و کاتالوگ خودرو</a>
 
       <!-- USERS -->
       <div class="nav-item"
@@ -93,26 +92,6 @@
           مدیریت ماشین‌ها
         </span>
 
-      </div>
-
-      <!-- USED CARS -->
-      <div class="nav-item"
-           [class.active]="activeSection==='usedCars'"
-           (click)="goToSection('usedCars')">
-
-        <svg width="20"
-             height="20"
-             stroke="currentColor"
-             fill="none"
-             stroke-width="2">
-          <path d="M3 13l2-5h14l2 5"></path>
-          <circle cx="7.5" cy="17.5" r="2.5"></circle>
-          <circle cx="16.5" cy="17.5" r="2.5"></circle>
-        </svg>
-
-        <span *ngIf="isSidebarOpen">
-          مدیریت ماشین‌های دست‌دوم
-        </span>
       </div>
 
       <!-- CATEGORY -->
@@ -230,14 +209,7 @@
 
       </div>
 
-          <div class="nav-item" [class.active]="activeSection==='telegramChannels'" (click)="goToTelegramChannels()">
-        <span *ngIf="isSidebarOpen">کانال‌های تلگرام</span>
-      </div>
-      <button type="button" class="nav-item" [class.active]="activeSection==='zeroVehicles'" (click)="goToZeroVehicles()" title="دریافت آگهی‌های صفر" aria-label="دریافت آگهی‌های صفر">
-        <span aria-hidden="true">۰</span><span *ngIf="isSidebarOpen">دریافت آگهی‌های صفر</span>
-      </button>
-
-  </div>
+    </div>
 
   </aside>
 

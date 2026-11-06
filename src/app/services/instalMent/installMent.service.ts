@@ -1,4 +1,3 @@
-import { environment } from '../../../environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -8,6 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class InstallmentService {
 
+  //private readonly baseUrl = 'https://api.mayakhodro.com/';
   private readonly baseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
   constructor(private http: HttpClient) {}
 
@@ -22,3 +22,4 @@ export class InstallmentService {
     );
   }
 }
+import { environment } from '../../../environments/environment';

@@ -1,23 +1,23 @@
 /* tslint:disable:no-unused-variable */
-import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 
-import { MobileNavComponent } from './mobileNavComponent.component';
+import { MobileNavComponentComponent } from './mobileNavComponent.component';
 
-describe('MobileNavComponent', () => {
-  let component: MobileNavComponent;
-  let fixture: ComponentFixture<MobileNavComponent>;
+describe('MobileNavComponentComponent', () => {
+  let component: MobileNavComponentComponent;
+  let fixture: ComponentFixture<MobileNavComponentComponent>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ MobileNavComponent ]
+      declarations: [ MobileNavComponentComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MobileNavComponent);
+    fixture = TestBed.createComponent(MobileNavComponentComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -1,5 +1,3 @@
-import { MarketReviewComponent } from './components/admin/market-review/market-review.component';
-import { ZeroVehiclesComponent } from './components/admin/zero-vehicles/zero-vehicles.component';
 import { Routes } from "@angular/router";
 import { RegisterComponent } from "./components/register/register.component";
 import { LoginComponent } from "./components/login/login.component";
@@ -22,15 +20,8 @@ import { Component } from "@angular/core";
 import { CardetailComponent } from "./components/cardetail/cardetail.component";
 import { AboutUsComponent } from "./pages/about-us/about-us.component";
 import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
-import { TelegramChannelsComponent } from "./components/admin/telegram-channels/telegram-channels.component";
 
 export const routes: Routes = [
-  { path: 'admin/dashboard/zero-vehicles', redirectTo: '/adminDashboard/zeroVehicles', pathMatch: 'full' },
-  {
-    path: 'admin/dashboard/telegram-channels',
-    redirectTo: '/adminDashboard/telegramChannels',
-    pathMatch: 'full'
-  },
   { path: 'register', component: RegisterComponent },
   { path: '', component: HomeComponent },
   { path: 'about-us', component: AboutUsComponent },
@@ -42,21 +33,16 @@ export const routes: Routes = [
     children: [
       { path: 'userManagment', component: UserManagementComponent },
       { path: '', redirectTo: 'userManagment', pathMatch: 'full' },
-      {path : 'carManagement',component:CarManagmentComponent, data: { isUsed: false }},
-      {path : 'usedCarManagement',component:CarManagmentComponent, data: { isUsed: true }},
+      {path : 'carManagement',component:CarManagmentComponent},
       {path:'category',component : CategoryComponent},
       {path : 'company',component : CompanyComponent},
       {path : 'model',component:CarModelComponent},
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
-      {path : 'orderItem',component:OrderItemComponent},
-      {path: 'marketReview', component: MarketReviewComponent},
-      {path: 'telegramChannels', component: TelegramChannelsComponent},
-      {path: 'zeroVehicles', component: ZeroVehiclesComponent}
+      {path : 'orderItem',component:OrderItemComponent}
     ],
   },
-   {path : 'carList',component : CarListComponent, data: { isUsed: false }},
-  {path : 'usedCarList',component : CarListComponent, data: { isUsed: true }},
+   {path : 'carList',component : CarListComponent},
   { path: '', redirectTo: '/adminDashboard', pathMatch: 'full' },
     {path:'userPannel', component:UserPannelComponent},
     {path:'installment',component:InstallmentComponent},
