@@ -2,8 +2,8 @@
   <section class="cars-hero">
     <div>
       <span class="eyebrow">CARSHOW MARKET</span>
-      <h1>قیمت و مشخصات خودرو</h1>
-      <p>خودروی موردنظرتان را پیدا کنید و جزئیات کامل، قیمت کارخانه و بازار را ببینید.</p>
+      <h1>{{ isNewCarsPage ? 'خودروهای صفر' : 'قیمت و مشخصات خودرو' }}</h1>
+      <p>{{ isNewCarsPage ? 'خودروهای صفر را بر اساس برند، مدل و بازه قیمت پیدا کنید.' : 'خودروی موردنظرتان را پیدا کنید و جزئیات کامل، قیمت کارخانه و بازار را ببینید.' }}</p>
     </div>
     <div class="hero-mark" aria-hidden="true">✦</div>
   </section>
@@ -31,6 +31,16 @@
       </label>
 
       <label class="filter-field">
+        <span>مدل خودرو</span>
+        <select [ngModel]="carFilter().modelId || ''" (ngModelChange)="updateModel($event)">
+          <option value="">همه مدل‌ها</option>
+          <option *ngFor="let model of modelList(); trackBy: trackByModel" [value]="model.id">
+            {{ model.name }}
+          </option>
+        </select>
+      </label>
+
+      <label class="filter-field">
         <span>حداقل قیمت بازار <small>(تومان)</small></span>
         <input type="number" inputmode="numeric" placeholder="مثلاً ۵۰۰۰۰۰۰۰۰"
           [ngModel]="carFilter().minPrice" (ngModelChange)="updateMinPrice($event)">
@@ -52,7 +62,7 @@
   <section class="results-head">
     <div>
       <span class="results-kicker">موجودی خودروها</span>
-      <h2>جدیدترین قیمت‌ها</h2>
+      <h2>{{ isNewCarsPage ? 'لیست خودروهای صفر' : 'جدیدترین قیمت‌ها' }}</h2>
     </div>
     <span class="results-count" *ngIf="!isLoading()">{{ cars().length }} خودرو</span>
   </section>
@@ -103,7 +113,7 @@
   <section class="empty-state" *ngIf="!isLoading() && cars().length === 0">
     <div class="empty-icon">⌕</div>
     <h3>خودرویی با این فیلتر پیدا نشد</h3>
-    <p>فیلترها را تغییر دهید یا فهرست کامل خودروها را ببینید.</p>
+    <p>فیلترها را تغییر دهید یا فهرست خودروها را ببینید.</p>
     <button type="button" class="reset-btn primary" (click)="resetFilter()">نمایش همه خودروها</button>
   </section>
 </main>

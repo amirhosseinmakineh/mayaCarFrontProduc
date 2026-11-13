@@ -43,6 +43,7 @@ export const routes: Routes = [
     ],
   },
    {path : 'carList',component : CarListComponent},
+  { path: 'newCars', component: CarListComponent },
   { path: '', redirectTo: '/adminDashboard', pathMatch: 'full' },
     {path:'userPannel', component:UserPannelComponent},
     {path:'installment',component:InstallmentComponent},

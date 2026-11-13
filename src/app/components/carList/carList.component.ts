@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
 import { Car } from '../../models/car/car';
 import { CarFilter } from '../../models/car/carFilter';
 import { Company } from '../../models/company/companyName';
+import { CarModel } from '../../models/carModel/carmodel';
 import { CarService } from '../../services/car/car.service';
 
 @Component({
@@ -18,22 +19,28 @@ import { CarService } from '../../services/car/car.service';
 })
 export class CarListComponent implements OnInit {
   private readonly carService = inject(CarService);
+  private readonly router = inject(Router);
 
   cars = signal<Car[]>([]);
   companyList = signal<Company[]>([]);
+  modelList = signal<CarModel[]>([]);
   isLoading = signal(false);
+  isNewCarsPage = false;
   isFilterOpen = false;
 
   carFilter = signal<CarFilter>({
     minPrice: undefined,
     maxPrice: undefined,
     company: '',
+    modelId: undefined,
     pageSize: 12,
     pageNumber: 0
   });
 
   ngOnInit(): void {
+    this.isNewCarsPage = this.router.url.startsWith('/newCars');
     this.loadCompanies();
+    this.loadModels();
     this.applyFilter();
   }
 
@@ -44,9 +51,20 @@ export class CarListComponent implements OnInit {
     });
   }
 
+  loadModels(): void {
+    this.carService.getAllModels().subscribe({
+      next: (res) => this.modelList.set(res?.data || res || []),
+      error: () => this.modelList.set([])
+    });
+  }
+
   applyFilter(): void {
     this.isLoading.set(true);
-    this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
+    const request = this.isNewCarsPage
+      ? this.carService.getNewCarsWithFilter(this.carFilter())
+      : this.carService.getAllCarsWithFilter(this.carFilter());
+
+    request.subscribe({
       next: (res) => {
         this.cars.set(res?.data || res || []);
         this.isLoading.set(false);
@@ -63,10 +81,18 @@ export class CarListComponent implements OnInit {
       minPrice: undefined,
       maxPrice: undefined,
       company: '',
+      modelId: undefined,
       pageSize: 12,
       pageNumber: 0
     });
     this.applyFilter();
+  }
+
+  updateModel(value: string | number): void {
+    this.carFilter.update(filter => ({
+      ...filter,
+      modelId: value === '' ? undefined : Number(value)
+    }));
   }
 
   updateCompany(value: string): void {
@@ -119,6 +145,10 @@ export class CarListComponent implements OnInit {
 
   hasActiveFilter(): boolean {
     const filter = this.carFilter();
-    return Boolean(filter.company || filter.minPrice != null || filter.maxPrice != null);
+    return Boolean(filter.company || filter.modelId != null || filter.minPrice != null || filter.maxPrice != null);
+  }
+
+  trackByModel(index: number, item: CarModel): number {
+    return item.id;
   }
 }
