@@ -145,7 +145,7 @@ interface ScanStatus {
 })
 export class TelegramManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiUrl.replace(/\\/$/, '') + '/admin/telegram';
+  private readonly baseUrl = (environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl) + '/admin/telegram';
   loading = false;
   starting = false;
   error = '';
