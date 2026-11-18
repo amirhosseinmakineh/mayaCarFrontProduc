@@ -152,7 +152,7 @@ export class TelegramManagementComponent implements OnInit {
   scan: ScanStatus | null = null;
   results: ScanResults | null = null;
   tab: 'overview' | 'approved' | 'rejected' | 'channels' = 'overview';
-  readonly tabs = [
+  readonly tabs: ReadonlyArray<{ id: 'overview' | 'approved' | 'rejected' | 'channels'; label: string }> = [
     { id: 'overview', label: 'نمای کلی' },
     { id: 'approved', label: 'مراجع تأییدشده' },
     { id: 'rejected', label: 'قیمت‌های ردشده' },
