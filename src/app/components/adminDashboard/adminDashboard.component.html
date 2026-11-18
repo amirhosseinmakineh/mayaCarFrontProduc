@@ -186,6 +186,14 @@
 
       </div>
 
+      <!-- TELEGRAM -->
+      <div class="nav-item" [class.active]="activeSection==='telegram'" (click)="goToSection('telegram')">
+        <svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24">
+          <path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path>
+        </svg>
+        <span *ngIf="isSidebarOpen">مدیریت تلگرام</span>
+      </div>
+
       <!-- ORDER -->
       <div class="nav-item"
            [class.active]="activeSection==='order'"
