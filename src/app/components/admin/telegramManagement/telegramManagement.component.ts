@@ -4,7 +4,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 
 interface ScanReference {
-  Name: string; Year: string; AdvertisementCount: number;
+  Name: string; CarName?: string; CompanyName?: string; ModelName?: string; TipName?: string; Year: string; AdvertisementCount: number;
   ReferencePriceBillion: number; ComparedPricesBillion: number[];
 }
 interface RejectedReference {
@@ -94,8 +94,8 @@ interface ScanStatus {
       <h2>قیمت‌های مرجع تولیدشده <span>({{ references.length }})</span></h2>
       <p *ngIf="!results">جزئیات مراجع در پاسخ API موجود نیست.</p>
       <p *ngIf="results && !references.length">مرجع قیمتی در این گزارش ثبت نشده است.</p>
-      <div class="table-wrap" *ngIf="references.length"><table><thead><tr><th>خودرو</th><th>سال</th><th>تعداد آگهی</th><th>قیمت مرجع (میلیارد تومان)</th><th>قیمت‌های مقایسه‌شده</th></tr></thead>
-        <tbody><tr *ngFor="let item of references"><td>{{ item.Name }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ item.ComparedPricesBillion.join('، ') }}</td></tr></tbody></table></div>
+      <div class="table-wrap" *ngIf="references.length"><table><thead><tr><th>شرکت</th><th>نام خودرو</th><th>مدل</th><th>تیپ</th><th>سال</th><th>تعداد آگهی</th><th>قیمت مرجع (میلیارد تومان)</th><th>قیمت‌های مقایسه‌شده</th></tr></thead>
+        <tbody><tr *ngFor="let item of references"><td>{{ item.CompanyName || '—' }}</td><td>{{ item.CarName || item.Name }}</td><td>{{ item.ModelName || '—' }}</td><td>{{ item.TipName || '—' }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ item.ComparedPricesBillion.join('، ') }}</td></tr></tbody></table></div>
     </div>
 
     <div class="panel" *ngIf="tab === 'rejected'">
