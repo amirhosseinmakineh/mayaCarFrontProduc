@@ -16,7 +16,7 @@ export class AdminDashboardComponent implements OnInit {
 
   private router = inject(Router);
   private toastr = inject(ToastrService);
-  private  auth = inject(AuthService)
+  private auth = inject(AuthService);
 
   isSidebarOpen: boolean = false;
   activeSection: 'users' | 'cars'| 'category' | 'company' | 'model' | 'tip' | 'order' | 'telegram' = 'users';
@@ -24,46 +24,20 @@ export class AdminDashboardComponent implements OnInit {
 
   constructor() {}
 
-ngOnInit(): void {
-  const token = localStorage.getItem('token');
-
-  if (!token) {
-    this.router.navigate(['/login']);
-    return;
-  }
-
-  try {
-const base64 = token.split('.')[1]
-  .replace(/-/g, '+')
-  .replace(/_/g, '/');
-
-const payload = JSON.parse(atob(base64));
-
-
-    if (payload.role !== 'Admin') {
-
-      this.toastr.error(
-        'شما دسترسی ورود به پنل ادمین را ندارید',
-        'عدم دسترسی'
-      );
-
+  ngOnInit(): void {
+    if (!this.auth.getToken()) {
       this.router.navigate(['/login']);
       return;
     }
 
-    console.log('Admin Access Granted');
-
-  } catch (error) {
-
-    this.toastr.error(
-      'توکن نامعتبر است',
-      'خطا'
-    );
-
-    this.router.navigate(['/login']);
+    if (!this.auth.hasRole('Admin')) {
+      this.toastr.error(
+        'شما دسترسی ورود به پنل ادمین را ندارید',
+        'عدم دسترسی'
+      );
+      this.router.navigate(['/login']);
+    }
   }
-}
-
 
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
