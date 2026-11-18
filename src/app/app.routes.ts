@@ -1,4 +1,5 @@
 import { Routes } from "@angular/router";
+import { CatalogComponent } from "./components/admin/catalog/catalog.component";
 import { TelegramManagementComponent } from "./components/admin/telegramManagement/telegramManagement.component";
 import { RegisterComponent } from "./components/register/register.component";
 import { LoginComponent } from "./components/login/login.component";
@@ -35,6 +36,7 @@ export const routes: Routes = [
       { path: 'userManagment', component: UserManagementComponent },
       { path: '', redirectTo: 'userManagment', pathMatch: 'full' },
       {path : 'carManagement',component:CarManagmentComponent},
+      {path: 'catalog', component: CatalogComponent},
       {path:'category',component : CategoryComponent},
       {path : 'company',component : CompanyComponent},
       {path : 'model',component:CarModelComponent},
