@@ -144,7 +144,7 @@ interface ScanStatus {
 })
 export class TelegramManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/telegram-cars/scan';
+  private readonly baseUrl = '/api/admin/telegram';
   loading = false;
   starting = false;
   error = '';
@@ -193,7 +193,7 @@ export class TelegramManagementComponent implements OnInit {
   startScan(): void {
     if (this.isRunning || this.starting || !confirm('اسکن دستی تلگرام شروع شود؟')) return;
     this.starting = true; this.error = '';
-    this.http.post(this.baseUrl, {}).subscribe({
+    this.http.post(this.baseUrl + '/scan', {}).subscribe({
       next: () => { this.starting = false; this.refresh(); },
       error: (err: HttpErrorResponse) => {
         this.starting = false;
