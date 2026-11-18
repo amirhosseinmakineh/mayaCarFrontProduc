@@ -19,7 +19,7 @@ export class AdminDashboardComponent implements OnInit {
   private auth = inject(AuthService);
 
   isSidebarOpen: boolean = false;
-  activeSection: 'users' | 'cars'| 'category' | 'company' | 'model' | 'tip' | 'order' | 'telegram' = 'users';
+  activeSection: 'users' | 'cars'| 'category' | 'company' | 'model' | 'tip' | 'order' | 'telegram' | 'catalog' = 'users';
   pageTitle: string = 'مدیریت کاربران';
 
   constructor() {}
@@ -43,7 +43,7 @@ export class AdminDashboardComponent implements OnInit {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
- goToSection(section: 'users'| 'cars'|'category' | 'company' | 'model' | 'tip' | 'order' | 'telegram') {
+ goToSection(section: 'users'| 'cars'|'category' | 'company' | 'model' | 'tip' | 'order' | 'telegram' | 'catalog') {
 
   this.activeSection = section;
   switch (section) {
@@ -75,6 +75,10 @@ export class AdminDashboardComponent implements OnInit {
   case 'tip':
     this.pageTitle = 'مدیریت تیپ‌ها';
     this.router.navigate(['/adminDashboard/tip']);
+    break;
+  case 'catalog':
+    this.pageTitle = 'کاتالوگ خودروهای دیتابیس';
+    this.router.navigate(['/adminDashboard/catalog']);
     break;
   case 'telegram':
     this.pageTitle = 'مدیریت اسکن تلگرام';
