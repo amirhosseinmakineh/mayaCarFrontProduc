@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
+import { environment } from '../../../../environments/environment';
 
 interface ScanReference {
   Name: string; Year: string; AdvertisementCount: number;
@@ -144,7 +145,7 @@ interface ScanStatus {
 })
 export class TelegramManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/admin/telegram';
+  private readonly baseUrl = environment.apiUrl.replace(/\\/$/, '') + '/admin/telegram';
   loading = false;
   starting = false;
   error = '';
