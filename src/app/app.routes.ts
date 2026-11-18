@@ -1,4 +1,5 @@
 import { Routes } from "@angular/router";
+import { TelegramManagementComponent } from "./components/admin/telegramManagement/telegramManagement.component";
 import { RegisterComponent } from "./components/register/register.component";
 import { LoginComponent } from "./components/login/login.component";
 import { AdminDashboardComponent } from "./components/adminDashboard/adminDashboard.component";
@@ -39,6 +40,7 @@ export const routes: Routes = [
       {path : 'model',component:CarModelComponent},
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
+      {path: 'telegram', component: TelegramManagementComponent},
       {path : 'orderItem',component:OrderItemComponent}
     ],
   },
