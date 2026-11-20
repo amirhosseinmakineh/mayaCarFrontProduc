@@ -56,6 +56,14 @@ implements OnInit {
   // SIGNALS
   // =========================
 
+  search = signal('');
+  page = signal(0);
+  readonly pageSize = 15;
+  filtered = computed(() => this.tips().filter(item => item.name.toLocaleLowerCase().includes(this.search().trim().toLocaleLowerCase())));
+  visible = computed(() => this.filtered().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  get totalPages(): number { return Math.max(1, Math.ceil(this.filtered().length / this.pageSize)); }
+  changePage(delta: number): void { this.page.set(Math.min(this.totalPages - 1, Math.max(0, this.page() + delta))); }
+
   tips =
     signal<Tip[]>([]);
 
