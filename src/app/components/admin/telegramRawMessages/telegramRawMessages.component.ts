@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription, retry, timer, timeout } from 'rxjs';
@@ -162,6 +162,7 @@ interface MessagePage {
 })
 export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly url = environment.apiUrl.replace(/\/$/, '') + '/admin/telegram/messages';
   messages: RawTelegramMessage[] = [];
@@ -194,11 +195,13 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   }
   runManual(): void {
     this.refreshPending = true; this.refreshError = '';
+    this.cdr.markForCheck();
     this.http.post<{status: string}>(this.url + '/refresh', {}).pipe(timeout(15000)).subscribe({
-      next: () => { this.refreshPending = false; this.refreshRunning = true; this.refreshStatus = 'در صف اجرا'; this.loadStatus(); },
+      next: () => { this.refreshPending = false; this.refreshRunning = true; this.refreshStatus = 'در صف اجرا'; this.cdr.markForCheck(); this.loadStatus(); },
       error: err => {
         this.refreshPending = false;
         this.refreshError = err.status === 409 ? 'دریافت قبلی هنوز در حال اجراست.' : 'شروع دریافت دستی ناموفق بود.';
+        this.cdr.markForCheck();
         this.loadStatus();
       }
     });
@@ -213,8 +216,9 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
           this.refreshError = result.lastError ?? '';
           // Manual Telegram collection only updates the database and its status.
           // Reading archived messages is intentionally a separate user action.
+          this.cdr.markForCheck();
         },
-        error: () => { this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; }
+        error: () => { this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; this.cdr.markForCheck(); }
       });
   }
   trackById(_index: number, item: RawTelegramMessage): number { return item.id; }
@@ -232,19 +236,22 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   loadChannels(): void {
     this.channelsRequest?.unsubscribe();
     this.channelsLoading = true; this.channelsError = '';
+    this.cdr.markForCheck();
     this.channelsRequest = this.http.get<ArchiveChannel[]>(this.url + '/channels').pipe(timeout(20000)).subscribe({
       next: data => {
         this.channels = Array.isArray(data) ? data : [];
         this.allMessagesCount = this.channels.reduce((sum, c) => sum + Number(c.messageCount || 0), 0);
         this.channelsLoading = false;
+        this.cdr.markForCheck();
       },
-      error: () => { this.channelsLoading = false; this.channelsError = 'دریافت لیست کانال‌ها ناموفق بود.'; }
+      error: () => { this.channelsLoading = false; this.channelsError = 'دریافت لیست کانال‌ها ناموفق بود.'; this.cdr.markForCheck(); }
     });
   }
   load(): void {
     this.messagesRequest?.unsubscribe();
     this.loading = true; this.error = '';
     this.messages = [];
+    this.cdr.markForCheck();
     let params = new HttpParams().set('page', this.page).set('pageSize', this.pageSize);
     if (this.search.trim()) params = params.set('search', this.search.trim());
     if (this.selectedChannelUsername) params = params.set('channelUsername', this.selectedChannelUsername);
@@ -262,12 +269,14 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
         this.totalCount = Number(response?.totalCount ?? 0);
         this.selected = this.messages.find(m => m.id === this.selected?.id) ?? this.messages[0] ?? null;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: err => {
         this.messages = []; this.selected = null; this.totalCount = 0; this.loading = false;
         this.error = err.status === 401 || err.status === 403
           ? 'برای مشاهده آرشیو باید با حساب مدیر وارد شوید.'
           : err.name === 'TimeoutError' ? 'زمان پاسخ API بیشتر از ۱۵ ثانیه شد. دوباره تلاش کنید.' : 'دریافت آرشیو پیام‌ها ممکن نشد. اتصال سرور و API آرشیو را بررسی کنید.';
+        this.cdr.markForCheck();
       }
     });
   }
