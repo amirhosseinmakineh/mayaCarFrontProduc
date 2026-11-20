@@ -65,7 +65,7 @@ implements OnInit {
   // CONSTANTS
   // ======================
 
-  imageBaseUrl = environment.apiUrl.replace(/\\/api\\/?$/, '');
+  imageBaseUrl = environment.apiUrl.endsWith('/api') ? environment.apiUrl.slice(0, -4) : environment.apiUrl;
 
   // ======================
   // SIGNALS
@@ -94,7 +94,7 @@ implements OnInit {
 
   imageUrl(image?: string): string {
     if (!image) return '/assets/images/car-placeholder.svg';
-    return /^https?:\\/\\//i.test(image) ? image : `${this.imageBaseUrl}${image.startsWith('/') ? '' : '/'}${image}`;
+    return image.startsWith('http://') || image.startsWith('https://') ? image : `${this.imageBaseUrl}${image.startsWith('/') ? '' : '/'}${image}`;
   }
 
   // ======================
