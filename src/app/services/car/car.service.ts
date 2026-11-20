@@ -7,6 +7,16 @@ import { Company } from '../../models/company/companyName';
 import { Result } from '../../models/result';
 import { environment } from '../../../environments/environment';
 
+export interface CarReferencePage {
+  items: Car[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  approvedReferenceCount: number;
+  missingCatalogMatches: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,7 +27,7 @@ export class CarService {
   private readonly baseUrl = environment.apiUrl;
   constructor() { }
 
-  getAllCarsWithFilter(filter: CarFilter): Observable<any> {
+  getAllCarsWithFilter(filter: CarFilter): Observable<CarReferencePage> {
 
     let params = new HttpParams();
 
@@ -36,7 +46,7 @@ export class CarService {
     if (filter.pageNumber != null)
       params = params.set('pageNumber', filter.pageNumber.toString());
 
-    return this.http.get<Car[]>(`${this.baseUrl}/car`, { params });
+    return this.http.get<CarReferencePage>(`${this.baseUrl}/car/references`, { params });
   }
 getAllCompanies(): Observable<any> {
   return this.http.get(this.baseUrl + '/Company');
