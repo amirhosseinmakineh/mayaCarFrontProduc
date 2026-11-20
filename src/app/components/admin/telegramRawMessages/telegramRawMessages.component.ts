@@ -81,7 +81,7 @@ interface MessagePage {
             <button class="channel-item" *ngFor="let ch of filteredChannels; trackBy: trackByChannel"
               [class.active]="selectedChannelUsername === ch.channelUsername"
               (click)="selectChannel(ch.channelUsername)">
-              <span class="channel-title">{{ ch.channelName || ch.channelUsername }}<small dir="ltr">@{{ ch.channelUsername }}</small></span>
+              <span class="channel-title">{{ ch.channelName || ch.channelUsername }}<small dir="ltr">&#64;{{ ch.channelUsername }}</small></span>
               <b>{{ ch.messageCount | number:'1.0-0' }}</b>
             </button>
           </div>
