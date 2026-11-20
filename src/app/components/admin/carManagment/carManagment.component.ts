@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import {
   Component,
   OnInit,
@@ -64,8 +65,7 @@ implements OnInit {
   // CONSTANTS
   // ======================
 
-  //imageBaseUrl ='http://localhost:8080';
-   imageBaseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/';
+  imageBaseUrl = environment.apiUrl.replace(/\\/api\\/?$/, '');
 
   // ======================
   // SIGNALS
@@ -85,6 +85,17 @@ implements OnInit {
 
   dto =
     signal<CreateCar>(this.createEmptyDto());
+
+  private lookupId(items: Array<{ id: number; name: string }>, value: string | number | undefined): number {
+    if (value == null) return 0;
+    const byId = items.find(item => item.id === Number(value));
+    return byId?.id ?? items.find(item => item.name === String(value))?.id ?? 0;
+  }
+
+  imageUrl(image?: string): string {
+    if (!image) return '/assets/images/car-placeholder.svg';
+    return /^https?:\\/\\//i.test(image) ? image : `${this.imageBaseUrl}${image.startsWith('/') ? '' : '/'}${image}`;
+  }
 
   // ======================
   // FILE
@@ -275,17 +286,13 @@ implements OnInit {
 
     this.dto.set({
 
-      carModelName:
-        Number(car.carModeName) || 0,
+      carModelName: this.lookupId(this.carModels(), car.carModeName),
 
-      categoryName:
-        Number(car.categoryName) || 0,
+      categoryName: this.lookupId(this.categories(), car.categoryName),
 
-      tipName:
-        Number(car.tipName) || 0,
+      tipName: this.lookupId(this.tips(), car.tipName),
 
-      companyName:
-        Number(car.company) || 0,
+      companyName: this.lookupId(this.companies(), car.companyName || car.company),
 
       name:
         car.name || '',
@@ -368,6 +375,11 @@ implements OnInit {
 
   saveCar(): void {
 
+    const value = this.dto();
+    if (!value.name.trim() || !value.carModelName || !value.tipName || !value.companyName) {
+      alert('نام، شرکت، مدل و تیپ خودرو الزامی است.');
+      return;
+    }
     const formData =
       this.buildFormData();
 
