@@ -17,6 +17,13 @@
 
   </div>
 
+  <div class="admin-search-pager" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0">
+    <input type="search" aria-label="جست‌وجو" placeholder="جست‌وجوی نام…" [ngModel]="search()" (ngModelChange)="search.set($event); page.set(0)" style="padding:9px;min-width:200px;max-width:100%;border:1px solid #ddd;border-radius:8px">
+    <span>{{ filtered().length }} مورد</span>
+    <button type="button" (click)="changePage(-1)" [disabled]="page() === 0">قبلی</button>
+    <span>صفحه {{ page() + 1 }} از {{ totalPages }}</span>
+    <button type="button" (click)="changePage(1)" [disabled]="page() + 1 >= totalPages">بعدی</button>
+  </div>
   <div class="table-wrapper">
 
   <table class="custom-table">
@@ -36,7 +43,7 @@
     <tbody>
 
       <tr
-        *ngFor="let company of companies(); trackBy: trackByCompany">
+        *ngFor="let company of visible(); trackBy: trackByCompany">
 
         <td data-label="نام">
 

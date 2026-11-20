@@ -66,6 +66,14 @@ export class OrderComponent implements OnInit {
   // SIGNALS
   // =========================
 
+  search = signal('');
+  page = signal(0);
+  readonly pageSize = 15;
+  filtered = computed(() => this.orders().filter(item => [item.userName,item.carName,item.roleName,item.createOrderDate].some(value => String(value ?? '').toLocaleLowerCase().includes(this.search().trim().toLocaleLowerCase()))));
+  visible = computed(() => this.filtered().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
+  get totalPages(): number { return Math.max(1, Math.ceil(this.filtered().length / this.pageSize)); }
+  changePage(delta: number): void { this.page.set(Math.min(this.totalPages - 1, Math.max(0, this.page() + delta))); }
+
   orders = signal<Order[]>([]);
   users = signal<User[]>([]);
   cars = signal<Car[]>([]);
