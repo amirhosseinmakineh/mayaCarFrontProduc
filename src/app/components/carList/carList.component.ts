@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
 import { Car } from '../../models/car/car';
@@ -16,12 +17,17 @@ import { CarService } from '../../services/car/car.service';
   standalone: true,
   imports: [FormsModule, CommonModule, RouterLink, ThousandSeparatorPipe]
 })
-export class CarListComponent implements OnInit {
+export class CarListComponent implements OnInit, OnDestroy {
   private readonly carService = inject(CarService);
 
   cars = signal<Car[]>([]);
   companyList = signal<Company[]>([]);
   isLoading = signal(false);
+  error = signal('');
+  private request?: Subscription;
+  private requestVersion = 0;
+  readonly pageSize = 12;
+  hasNextPage = signal(false);
   isFilterOpen = false;
 
   carFilter = signal<CarFilter>({
@@ -45,18 +51,41 @@ export class CarListComponent implements OnInit {
   }
 
   applyFilter(): void {
+    this.request?.unsubscribe();
+    const version = ++this.requestVersion;
+    this.error.set('');
     this.isLoading.set(true);
-    this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
+    this.request = this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
       next: (res) => {
-        this.cars.set(res?.data || res || []);
+        if (version !== this.requestVersion) return;
+        const rows: Car[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.cars.set(rows);
+        this.hasNextPage.set(rows.length === this.pageSize);
         this.isLoading.set(false);
       },
       error: () => {
+        if (version !== this.requestVersion) return;
+        this.error.set('دریافت خودروها ناموفق بود. دوباره تلاش کنید.');
         this.cars.set([]);
+        this.hasNextPage.set(false);
         this.isLoading.set(false);
       }
     });
   }
+
+  changePage(delta: number): void {
+    const next = this.carFilter().pageNumber! + delta;
+    if (next < 0 || (delta > 0 && !this.hasNextPage())) return;
+    this.carFilter.update(f => ({ ...f, pageNumber: next }));
+    this.applyFilter();
+  }
+
+  submitFilters(): void {
+    this.carFilter.update(f => ({ ...f, pageNumber: 0 }));
+    this.applyFilter();
+  }
+
+  ngOnDestroy(): void { this.request?.unsubscribe(); }
 
   resetFilter(): void {
     this.carFilter.set({
@@ -113,8 +142,8 @@ export class CarListComponent implements OnInit {
     return item.id;
   }
 
-  trackByCar(index: number, item: Car): number {
-    return item.id;
+  trackByCar(index: number, item: Car): string {
+    return `${item.id}:${item.startDate ?? ''}`;
   }
 
   hasActiveFilter(): boolean {
