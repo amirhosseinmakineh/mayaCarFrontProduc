@@ -57,7 +57,7 @@ private readonly cdr =
   // ================= IMAGE =================
 
   //imageBaseUrl = 'http://localhost:8080';
-  imageBaseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
+  imageBaseUrl = environment.apiUrl.endsWith('/api') ? environment.apiUrl.slice(0, -4) : environment.apiUrl;
 
   // ================= INIT =================
 
