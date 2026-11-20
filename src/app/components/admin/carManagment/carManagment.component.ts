@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 
 import { AdminService }
@@ -59,6 +60,8 @@ implements OnInit {
 
   private adminService =
     inject(AdminService);
+  private readonly toastr = inject(ToastrService);
+  saving = false;
 
   // ======================
   // CONSTANTS
@@ -388,8 +391,14 @@ implements OnInit {
 
   saveCar(): void {
 
-    const formData =
-      this.buildFormData();
+    if (this.saving) return;
+    const dto = this.dto();
+    if (!dto.name?.trim() || !dto.carModelName || !dto.categoryName || !dto.tipName || !dto.companyName) {
+      this.toastr.error('نام، مدل، دسته‌بندی، تیپ و شرکت الزامی هستند.');
+      return;
+    }
+    const formData = this.buildFormData();
+    this.saving = true;
 
     if (
       this.activeModal() === 'create'
@@ -478,17 +487,16 @@ implements OnInit {
       .subscribe({
 
         next: () => {
-
+          this.saving = false;
+          this.toastr.success('خودرو ذخیره شد');
           this.afterSave();
 
         },
 
         error: err => {
 
-          console.error(
-            'Create car error',
-            err
-          );
+          this.saving = false;
+          this.toastr.error('خطا در ایجاد خودرو');
 
         }
 
@@ -503,6 +511,7 @@ implements OnInit {
       this.selectedCar();
 
     if (!car) {
+      this.saving = false;
       return;
     }
 
@@ -522,10 +531,8 @@ implements OnInit {
 
         error: err => {
 
-          console.error(
-            'Update car error',
-            err
-          );
+          this.saving = false;
+          this.toastr.error('خطا در ویرایش خودرو');
 
         }
 
@@ -567,10 +574,7 @@ implements OnInit {
 
         error: err => {
 
-          console.error(
-            'Delete car error',
-            err
-          );
+          this.toastr.error('خطا در حذف خودرو');
 
         }
 

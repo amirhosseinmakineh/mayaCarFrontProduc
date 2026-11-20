@@ -227,6 +227,13 @@ export class OrderComponent implements OnInit {
   createOrder(): void {
 
     const dto = this.createDto();
+    if (!this.selectedUserId() || !this.selectedCarId() || !dto.createOrderDate ||
+        Number(dto.orderItem.carPrice) <= 0 || Number(dto.orderItem.prePayment) < 0 ||
+        Number(dto.orderItem.prePayment) > Number(dto.orderItem.carPrice) ||
+        Number(dto.orderItem.time) <= 0) {
+      this.toastr.error('اطلاعات خریدار، خودرو، تاریخ و مبالغ اقساط را بررسی کنید.');
+      return;
+    }
 
     dto.userId =
       this.selectedUserId();

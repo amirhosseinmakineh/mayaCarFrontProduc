@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 
 import { ThousandSeparatorPipe } from '../../../../pipes/ThousandSeparatorPipe.pipe';
@@ -16,7 +17,7 @@ import { CarService } from '../../services/car/car.service';
   standalone: true,
   imports: [FormsModule, CommonModule, RouterLink, ThousandSeparatorPipe]
 })
-export class CarListComponent implements OnInit {
+export class CarListComponent implements OnInit, OnDestroy {
   private readonly carService = inject(CarService);
 
   cars = signal<Car[]>([]);
@@ -25,6 +26,8 @@ export class CarListComponent implements OnInit {
   isFilterOpen = false;
   error = signal('');
   private requestId = 0;
+  private carsRequest?: Subscription;
+  ngOnDestroy(): void { this.carsRequest?.unsubscribe(); }
   get hasNextPage(): boolean { return this.cars().length === (this.carFilter().pageSize ?? 12); }
   get currentPage(): number { return (this.carFilter().pageNumber ?? 0) + 1; }
   changePage(direction: number): void {
@@ -62,7 +65,8 @@ export class CarListComponent implements OnInit {
     const requestId = ++this.requestId;
     this.error.set('');
     this.isLoading.set(true);
-    this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
+    this.carsRequest?.unsubscribe();
+    this.carsRequest = this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
       next: (res) => {
         if (requestId !== this.requestId) return;
         this.cars.set(res?.data || res || []);
@@ -132,8 +136,8 @@ export class CarListComponent implements OnInit {
     return item.id;
   }
 
-  trackByCar(index: number, item: Car): number {
-    return `${item.id}:${item.startDate ?? ''}` as unknown as number;
+  trackByCar(index: number, item: Car): string {
+    return `${item.id}:${item.startDate ?? ''}`;
   }
 
   hasActiveFilter(): boolean {
