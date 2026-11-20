@@ -68,7 +68,7 @@
 
             <img
               class="car-image"
-              [src]="imageBaseUrl + item.imageName"
+              [src]="imageUrl(item.imageName)"
               width="130px"
               height="130px"
               alt="car"
@@ -204,7 +204,7 @@
           </p>
 
           <img
-            [src]="dto().imageName"
+            [src]="imageUrl(dto().imageName)"
             width="140"
             height="100"
             style="object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
