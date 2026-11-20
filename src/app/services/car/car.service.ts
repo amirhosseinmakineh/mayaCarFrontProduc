@@ -7,9 +7,6 @@ import { Company } from '../../models/company/companyName';
 import { Result } from '../../models/result';
 import { environment } from '../../../environments/environment';
 
-@Injectable({
-  providedIn: 'root'
-})
 export interface CarReferencePage {
   items: Car[];
   totalCount: number;
@@ -20,6 +17,9 @@ export interface CarReferencePage {
   missingCatalogMatches: number;
 }
 
+@Injectable({
+  providedIn: 'root'
+})
 export class CarService {
 
   private readonly http = inject(HttpClient);
