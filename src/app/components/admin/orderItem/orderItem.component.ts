@@ -1,6 +1,8 @@
 import {
   Component,
   Input,
+  OnChanges,
+  SimpleChanges,
   OnInit,
   inject,
   signal
