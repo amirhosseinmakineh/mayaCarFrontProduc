@@ -76,7 +76,7 @@
             <h3>{{ car.name }}</h3>
             <p>{{ getModel(car) }}</p>
           </div>
-          <span class="tip-badge" *ngIf="car.tipName">{{ car.tipName }}</span>
+          <span class="tip-badge" *ngIf="car.tipName">{{ car.tipName }} <span *ngIf="car.startDate">· مدل {{ car.startDate }}</span></span>
         </div>
 
         <div class="price-list">
