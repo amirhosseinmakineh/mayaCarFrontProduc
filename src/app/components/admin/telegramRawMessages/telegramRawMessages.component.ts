@@ -44,6 +44,18 @@ interface MessagePage {
         وضعیت جمع‌آوری: <strong>{{ refreshStatus }}</strong>
         <span *ngIf="refreshError" class="alert">{{ refreshError }}</span>
       </div>
+      <div class="archive-diagnostics" *ngIf="archiveDiagnostics">
+        <span>کانال موفق: <b>{{ archiveDiagnostics.successfulChannels }}</b></span>
+        <span>کانال ناموفق: <b>{{ archiveDiagnostics.failedChannels }}</b></span>
+        <span>پیام دریافت‌شده: <b>{{ archiveDiagnostics.receivedMessages }}</b></span>
+        <span>پیام ذخیره‌شده: <b>{{ archiveDiagnostics.savedMessages }}</b></span>
+        <details *ngIf="archiveDiagnostics.channelErrors && (archiveDiagnostics.channelErrors | keyvalue).length">
+          <summary>جزئیات خطای کانال‌ها</summary>
+          <div *ngFor="let item of archiveDiagnostics.channelErrors | keyvalue">
+            <b dir="ltr">{{ item.key }}</b>: {{ item.value }}
+          </div>
+        </details>
+      </div>
       <div class="filters">
         <label>جست‌وجوی متن یا شناسه<input [(ngModel)]="search" (keyup.enter)="applyFilters()" placeholder="متن پیام یا شناسه…" /></label>
         <label>کانال<input [(ngModel)]="channel" (keyup.enter)="applyFilters()" placeholder="نام یا یوزرنیم کانال" /></label>
@@ -95,6 +107,8 @@ interface MessagePage {
 .manual-actions{display:flex;flex-wrap:wrap;gap:9px}.heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
     .eyebrow{font-size:12px;color:#977226;font-weight:700}.heading h1{font-size:26px;margin:7px 0}.heading p{color:#766d5c;line-height:1.9;margin:0}
     button,input{font:inherit}button{cursor:pointer}.refresh,.apply,.clear,.pagination button,.detail-header button{border:1px solid #e6d9bf;border-radius:11px;padding:11px 15px;background:white;color:#6e5423;font-weight:700}
+.archive-diagnostics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:14px;background:#fff;border:1px solid #ede4d4;border-radius:12px}
+    .archive-diagnostics span{font-size:13px}.archive-diagnostics details{width:100%;overflow-wrap:anywhere;font-size:12px;line-height:2}
     .filters{background:white;border:1px solid #ede4d4;border-radius:18px;padding:17px;display:flex;align-items:end;gap:12px;flex-wrap:wrap}
     .filters label{font-size:12px;font-weight:700;display:flex;flex-direction:column;gap:7px;flex:1 1 160px}
     .filters input{min-width:0;padding:12px;border:1px solid #dedbd4;border-radius:10px;outline:none}
@@ -126,6 +140,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   page = 1; pageSize = 25; totalCount = 0;
   loading = false; error = '';
   refreshPending = false; refreshRunning = false; refreshStatus = 'نامشخص'; refreshError = '';
+  archiveDiagnostics: {successfulChannels:number; failedChannels:number; receivedMessages:number; savedMessages:number; channelErrors:Record<string,string>} | null = null;
   private statusInterval?: ReturnType<typeof setInterval>;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
   ngOnInit(): void {
@@ -146,9 +161,10 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     });
   }
   loadStatus(): void {
-    this.http.get<{status: string; lastError?: string}>(this.url + '/status')
+    this.http.get<{status: string; lastError?: string; successfulChannels:number; failedChannels:number; receivedMessages:number; savedMessages:number; channelErrors:Record<string,string>}>(this.url + '/status')
       .pipe(timeout(10000)).subscribe({
         next: result => {
+          this.archiveDiagnostics = result;
           const wasRunning = this.refreshRunning;
           this.refreshRunning = result.status === 'Running' || result.status === 'Queued';
           this.refreshStatus = ({Idle:'آماده',Queued:'در صف اجرا',Running:'در حال دریافت',Completed:'تکمیل‌شده',Failed:'ناموفق'} as Record<string,string>)[result.status] ?? result.status;
