@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface CatalogCar {
@@ -107,6 +108,8 @@ export class CatalogComponent implements OnInit {
   search = '';
   page = 0;
   readonly pageSize = 50;
+  private pending?: Subscription;
+  private requestSequence = 0;
 
   get totalPages(): number {
     return Math.max(1, Math.ceil((this.data?.filteredCount ?? 0) / this.pageSize));
@@ -124,16 +127,18 @@ export class CatalogComponent implements OnInit {
   }
 
   load(): void {
-    if (this.loading) return;
+    this.pending?.unsubscribe();
+    const sequence = ++this.requestSequence;
     this.loading = true;
     this.error = '';
     const params = new HttpParams()
       .set('pageNumber', this.page)
       .set('pageSize', this.pageSize)
       .set('search', this.search.trim());
-    this.http.get<CatalogResponse>(`${environment.apiUrl}/admin/catalog`, { params }).subscribe({
-      next: result => { this.data = result; this.loading = false; },
+    this.pending = this.http.get<CatalogResponse>(`${environment.apiUrl}/admin/catalog`, { params }).subscribe({
+      next: result => { if (sequence !== this.requestSequence) return; this.data = result; this.loading = false; },
       error: (err: HttpErrorResponse) => {
+        if (sequence !== this.requestSequence) return;
         this.loading = false;
         this.error = err.status === 403 ? 'دسترسی به کاتالوگ مجاز نیست.'
           : err.status === 401 ? 'برای مشاهده کاتالوگ دوباره وارد حساب مدیر شوید.'
