@@ -7,6 +7,7 @@ import { environment } from '../../../../environments/environment';
 
 interface CatalogCar {
   id: number;
+  imageName?: string;
   name: string;
   companyId: number | null;
   company: string | null;
@@ -50,24 +51,33 @@ interface CatalogResponse {
       <div class="panel">
         <div class="toolbar">
           <form (ngSubmit)="searchCars()">
-            <input name="search" [(ngModel)]="search" placeholder="جست‌وجوی نام خودرو، مدل، تیپ یا شرکت" aria-label="جست‌وجوی کاتالوگ">
+            <input name="search" [(ngModel)]="search" placeholder="جست‌وجو با شناسه، نام، مدل، تیپ یا شرکت" aria-label="جست‌وجوی کاتالوگ">
             <button type="submit" [disabled]="loading">جست‌وجو</button>
           </form>
           <span>{{ data?.filteredCount ?? 0 }} خودرو</span>
         </div>
         <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+        <p *ngIf="imageMessage" role="status">{{ imageMessage }}</p>
         <p *ngIf="loading" class="empty">در حال بارگذاری کاتالوگ…</p>
         <div class="table-wrap" *ngIf="!loading">
           <table>
-            <thead><tr><th>شناسه</th><th>نام خودرو</th><th>شرکت</th><th>مدل</th><th>تیپ</th><th>وضعیت مقایسه</th></tr></thead>
+            <thead><tr><th>شناسه</th><th>نام خودرو</th><th>شرکت</th><th>مدل</th><th>تیپ</th><th>وضعیت مقایسه</th><th>عکس خودرو</th></tr></thead>
             <tbody>
               <tr *ngFor="let car of data?.items">
                 <td>{{ car.id }}</td><td>{{ car.name || '—' }}</td>
                 <td>{{ car.company || 'ثبت نشده' }}</td><td>{{ car.model || 'ثبت نشده' }}</td>
                 <td>{{ car.tip || 'ثبت نشده' }}</td>
                 <td><span class="pill" [class.warn]="!car.eligibleForTelegramComparison">{{ car.eligibleForTelegramComparison ? 'قابل مقایسه' : 'مدل یا تیپ ناقص' }}</span></td>
+                <td>
+                  <a *ngIf="car.imageName" [href]="imageUrl(car.imageName)" target="_blank" rel="noopener">مشاهده عکس</a>
+                  <label>
+                    تغییر عکس
+                    <input type="file" accept="image/jpeg,image/png,image/webp"
+                      [disabled]="uploadingId !== null" (change)="uploadImage(car, $event)">
+                  </label>
+                </td>
               </tr>
-              <tr *ngIf="!data?.items?.length"><td colspan="6" class="empty">خودرویی برای نمایش وجود ندارد.</td></tr>
+              <tr *ngIf="!data?.items?.length"><td colspan="7" class="empty">خودرویی برای نمایش وجود ندارد.</td></tr>
             </tbody>
           </table>
         </div>
@@ -104,6 +114,8 @@ export class CatalogComponent implements OnInit {
   private readonly http = inject(HttpClient);
   data: CatalogResponse | null = null;
   loading = false;
+  uploadingId: number | null = null;
+  imageMessage = '';
   error = '';
   search = '';
   page = 0;
@@ -124,6 +136,33 @@ export class CatalogComponent implements OnInit {
     if (next < 0 || next >= this.totalPages) return;
     this.page = next;
     this.load();
+  }
+
+  imageUrl(path: string): string {
+    return /^https?:\/\//i.test(path) ? path : `https://api.mayakhodro.com/${path.replace(/^\//, '')}`;
+  }
+
+  uploadImage(car: CatalogCar, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.uploadingId !== null) return;
+
+    const form = new FormData();
+    form.append('image', file);
+    this.uploadingId = car.id;
+    this.imageMessage = '';
+    this.http.put<{ imageName: string }>(`${environment.apiUrl}/car/${car.id}/image`, form).subscribe({
+      next: ({ imageName }) => {
+        car.imageName = imageName;
+        this.uploadingId = null;
+        this.imageMessage = `عکس خودرو ${car.name} ذخیره شد.`;
+      },
+      error: () => {
+        this.uploadingId = null;
+        this.imageMessage = `ذخیرهٔ عکس خودرو ${car.name} ناموفق بود.`;
+      }
+    });
   }
 
   load(): void {
