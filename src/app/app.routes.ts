@@ -18,7 +18,6 @@ import { UserManagementComponent } from "./components/admin/userManagement/userM
 import { CarManagmentComponent } from './components/admin/carManagment/carManagment.component';
 import { HomeComponent } from "./pages/home/home.component";
 import { CategoryComponent } from "./components/admin/category/category.component";
-import { Company } from './models/company/companyName';
 import { CompanyComponent } from "./components/admin/company/company.component";
 import { CarModelComponent } from "./components/admin/carModel/carModel.component";
 import { TipComponent } from "./components/admin/tip/tip.component";
@@ -27,8 +26,6 @@ import { OrderItemComponent } from "./components/admin/orderItem/orderItem.compo
 import { CarListComponent } from "./components/carList/carList.component";
 import { UserPannelComponent } from "./components/userPannel/userPannel/userPannel.component";
 import { InstallmentComponent } from "./components/installment/installment.component";
-import path from "path";
-import { Component } from "@angular/core";
 import { CardetailComponent } from "./components/cardetail/cardetail.component";
 import { AboutUsComponent } from "./pages/about-us/about-us.component";
 import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
@@ -60,7 +57,6 @@ export const routes: Routes = [
     ],
   },
    {path : 'carList',component : CarListComponent},
-  { path: '', redirectTo: '/adminDashboard', pathMatch: 'full' },
     {path:'userPannel', component:UserPannelComponent},
     {path:'installment',component:InstallmentComponent},
   { path: 'carDetail/:carId', component: CardetailComponent },
