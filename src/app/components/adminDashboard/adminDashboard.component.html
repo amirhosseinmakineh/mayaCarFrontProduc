@@ -205,6 +205,14 @@
         <span *ngIf="isSidebarOpen">مدیریت تلگرام</span>
       </div>
 
+      <!-- RAW TELEGRAM MESSAGES -->
+      <div class="nav-item" [class.active]="activeSection==='telegramMessages'" (click)="goToSection('telegramMessages')">
+        <svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10M7 13h10M7 17h6"></path>
+        </svg>
+        <span *ngIf="isSidebarOpen">آرشیو پیام‌های تلگرام</span>
+      </div>
+
       <!-- ORDER -->
       <div class="nav-item"
            [class.active]="activeSection==='order'"
