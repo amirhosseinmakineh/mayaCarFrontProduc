@@ -9,6 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth/auth-service';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -54,6 +55,7 @@ implements OnInit {
 
   private readonly router =
     inject(Router);
+  private readonly auth = inject(AuthService);
 
   // =========================
   // SIGNALS
@@ -89,8 +91,7 @@ implements OnInit {
 
   private initializeUser(): void {
 
-    const token =
-      localStorage.getItem('token');
+    const token = this.auth.getToken();
 
     if (!token) {
 
@@ -107,9 +108,7 @@ implements OnInit {
       this.userId =
         payload?.Id || '';
 
-      this.isAdmin.set(
-        payload?.role !== 'Customer'
-      );
+      this.isAdmin.set(this.auth.hasRole('Admin'));
 
     } catch {
 
