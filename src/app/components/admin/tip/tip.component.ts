@@ -2,7 +2,8 @@ import {
   Component,
   OnInit,
   inject,
-  signal
+  signal,
+  computed
 } from '@angular/core';
 
 import { CommonModule }
