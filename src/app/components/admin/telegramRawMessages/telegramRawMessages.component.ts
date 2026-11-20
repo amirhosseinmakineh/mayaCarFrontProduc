@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { timeout } from 'rxjs';
+import { retry, timer, timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface RawTelegramMessage {
@@ -133,6 +134,7 @@ interface MessagePage {
 })
 export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly url = environment.apiUrl.replace(/\/$/, '') + '/admin/telegram/messages';
   messages: RawTelegramMessage[] = [];
   selected: RawTelegramMessage | null = null;
@@ -144,6 +146,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private statusInterval?: ReturnType<typeof setInterval>;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
   ngOnInit(): void {
+    if (!this.isBrowser) return;
     this.load();
     this.loadStatus();
     this.statusInterval = setInterval(() => this.loadStatus(), 3000);
@@ -182,9 +185,16 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     if (this.channel.trim()) params = params.set('channel', this.channel.trim());
     if (this.fromDate) params = params.set('fromDate', this.fromDate);
     if (this.toDate) params = params.set('toDate', this.toDate);
-    this.http.get<MessagePage>(this.url, { params }).pipe(timeout(15000)).subscribe({
+    this.http.get<MessagePage>(this.url, { params }).pipe(
+      timeout(20000),
+      retry({ count: 2, delay: (error, attempt) => {
+        if (error.status && ![0, 408, 429, 502, 503, 504].includes(error.status)) throw error;
+        return timer(attempt * 1000);
+      } })
+    ).subscribe({
       next: response => {
-        this.messages = response.items ?? []; this.totalCount = response.totalCount ?? 0;
+        this.messages = Array.isArray(response?.items) ? response.items : [];
+        this.totalCount = Number(response?.totalCount ?? 0);
         this.selected = this.messages.find(m => m.id === this.selected?.id) ?? this.messages[0] ?? null;
         this.loading = false;
       },
