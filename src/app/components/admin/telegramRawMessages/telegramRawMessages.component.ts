@@ -37,9 +37,9 @@ interface MessagePage {
           <p>نمایش کامل متن و مشخصات پیام‌های دریافت‌شده؛ مستقل از اسکن و مقایسه قیمت خودرو</p></div>
         <div class="manual-actions">
           <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
-            {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت دستی پیام‌ها' }}
+            {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت از تلگرام' }}
           </button>
-          <button class="refresh" (click)="loadChannels(); load()" [disabled]="loading">↻ بروزرسانی لیست</button>
+          <button class="refresh" (click)="loadChannels(); load()" [disabled]="loading">↻ نمایش اطلاعات دیتابیس</button>
         </div>
       </header>
       <div class="summary" aria-live="polite">
@@ -202,11 +202,11 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
       .pipe(timeout(10000)).subscribe({
         next: result => {
           this.archiveDiagnostics = result;
-          const wasRunning = this.refreshRunning;
           this.refreshRunning = result.status === 'Running' || result.status === 'Queued';
           this.refreshStatus = ({Idle:'آماده',Queued:'در صف اجرا',Running:'در حال دریافت',Completed:'تکمیل‌شده',Failed:'ناموفق'} as Record<string,string>)[result.status] ?? result.status;
           this.refreshError = result.lastError ?? '';
-          if (wasRunning && !this.refreshRunning && result.status === 'Completed') { this.loadChannels(); this.load(); }
+          // Manual Telegram collection only updates the database and its status.
+          // Reading archived messages is intentionally a separate user action.
         },
         error: () => { this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; }
       });
