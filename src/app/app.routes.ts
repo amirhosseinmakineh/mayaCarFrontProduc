@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
 import { CatalogComponent } from "./components/admin/catalog/catalog.component";
+import { TelegramRawMessagesComponent } from "./components/admin/telegramRawMessages/telegramRawMessages.component";
 import { TelegramManagementComponent } from "./components/admin/telegramManagement/telegramManagement.component";
 import { RegisterComponent } from "./components/register/register.component";
 import { LoginComponent } from "./components/login/login.component";
@@ -43,6 +44,7 @@ export const routes: Routes = [
       {path : 'tip', component:TipComponent},
       {path : 'order',component:OrderComponent},
       {path: 'telegram', component: TelegramManagementComponent},
+      {path: 'telegram-messages', component: TelegramRawMessagesComponent},
       {path : 'orderItem',component:OrderItemComponent}
     ],
   },
