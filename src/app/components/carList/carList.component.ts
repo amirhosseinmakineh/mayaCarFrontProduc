@@ -23,6 +23,20 @@ export class CarListComponent implements OnInit {
   companyList = signal<Company[]>([]);
   isLoading = signal(false);
   isFilterOpen = false;
+  error = signal('');
+  private requestId = 0;
+  get hasNextPage(): boolean { return this.cars().length === (this.carFilter().pageSize ?? 12); }
+  get currentPage(): number { return (this.carFilter().pageNumber ?? 0) + 1; }
+  changePage(direction: number): void {
+    const page = Math.max(0, (this.carFilter().pageNumber ?? 0) + direction);
+    if (direction > 0 && !this.hasNextPage) return;
+    this.carFilter.update(f => ({ ...f, pageNumber: page }));
+    this.applyFilter();
+  }
+  applyNewFilter(): void {
+    this.carFilter.update(f => ({ ...f, pageNumber: 0 }));
+    this.applyFilter();
+  }
 
   carFilter = signal<CarFilter>({
     minPrice: undefined,
@@ -45,13 +59,18 @@ export class CarListComponent implements OnInit {
   }
 
   applyFilter(): void {
+    const requestId = ++this.requestId;
+    this.error.set('');
     this.isLoading.set(true);
     this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
       next: (res) => {
+        if (requestId !== this.requestId) return;
         this.cars.set(res?.data || res || []);
         this.isLoading.set(false);
       },
       error: () => {
+        if (requestId !== this.requestId) return;
+        this.error.set('دریافت لیست خودروها ناموفق بود. دوباره تلاش کنید.');
         this.cars.set([]);
         this.isLoading.set(false);
       }
@@ -114,7 +133,7 @@ export class CarListComponent implements OnInit {
   }
 
   trackByCar(index: number, item: Car): number {
-    return item.id;
+    return `${item.id}:${item.startDate ?? ''}` as unknown as number;
   }
 
   hasActiveFilter(): boolean {

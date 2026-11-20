@@ -64,8 +64,27 @@ implements OnInit {
   // CONSTANTS
   // ======================
 
-  //imageBaseUrl ='http://localhost:8080';
-   imageBaseUrl = 'https://mayakhoddrobackend-mayacar.runflare.run/';
+  imageBaseUrl = 'https://api.mayakhodro.com/';
+  getImageUrl(path?: string): string {
+    if (!path) return '/assets/images/car-placeholder.svg';
+    return /^https?:\/\//i.test(path) ? path : `${this.imageBaseUrl}${path.replace(/^\//, '')}`;
+  }
+  search = '';
+  page = 0;
+  readonly pageSize = 20;
+  get filteredCars(): Car[] {
+    const q = this.search.trim().toLocaleLowerCase();
+    return q ? this.cars().filter(c => [c.name,c.carModeName,c.tipName,c.companyName,c.company]
+      .some(v => String(v ?? '').toLocaleLowerCase().includes(q))) : this.cars();
+  }
+  get visibleCars(): Car[] { return this.filteredCars.slice(this.page * this.pageSize, (this.page + 1) * this.pageSize); }
+  get totalPages(): number { return Math.max(1, Math.ceil(this.filteredCars.length / this.pageSize)); }
+  changePage(delta: number): void { this.page = Math.max(0, Math.min(this.totalPages - 1, this.page + delta)); }
+  trackByCar(_index: number, car: Car): number { return car.id; }
+  private lookupId(value: string | number | undefined, items: {id:number;name:string}[]): number {
+    const match = items.find(i => i.name === String(value) || i.id === Number(value));
+    return match?.id ?? 0;
+  }
 
   // ======================
   // SIGNALS
@@ -148,6 +167,7 @@ implements OnInit {
 
       next: res => {
         this.cars.set(res);
+        this.page = Math.min(this.page, this.totalPages - 1);
       },
 
       error: err => {
@@ -276,16 +296,16 @@ implements OnInit {
     this.dto.set({
 
       carModelName:
-        Number(car.carModeName) || 0,
+        this.lookupId(car.carModeName, this.carModels()),
 
       categoryName:
-        Number(car.categoryName) || 0,
+        this.lookupId(car.categoryName, this.categories()),
 
       tipName:
-        Number(car.tipName) || 0,
+        this.lookupId(car.tipName, this.tips()),
 
       companyName:
-        Number(car.company) || 0,
+        this.lookupId(car.companyName || car.company, this.companies()),
 
       name:
         car.name || '',

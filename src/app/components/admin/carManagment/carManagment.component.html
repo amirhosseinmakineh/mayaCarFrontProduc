@@ -21,6 +21,7 @@
 
   </div>
 
+  <label>جست‌وجوی خودرو <input name="carSearch" [(ngModel)]="search" (ngModelChange)="page=0" placeholder="نام، شرکت، مدل یا تیپ"></label>
   <div class="table-wrapper">
 
     <table class="data-grid">
@@ -46,7 +47,7 @@
 
       <tbody>
 
-        <tr *ngFor="let item of cars()">
+        <tr *ngFor="let item of visibleCars; trackBy: trackByCar">
 
           <td data-label="اسم ماشین">{{ item.name }}</td>
 
@@ -68,7 +69,7 @@
 
             <img
               class="car-image"
-              [src]="imageBaseUrl + item.imageName"
+              [src]="getImageUrl(item.imageName)"
               width="130px"
               height="130px"
               alt="car"
@@ -135,7 +136,11 @@
     </table>
 
   </div>
-
+  <nav style="display:flex;justify-content:center;gap:12px;margin:16px" *ngIf="totalPages > 1">
+    <button type="button" (click)="changePage(-1)" [disabled]="page===0">قبلی</button>
+    <span>صفحه {{ page+1 }} از {{ totalPages }}</span>
+    <button type="button" (click)="changePage(1)" [disabled]="page+1>=totalPages">بعدی</button>
+  </nav>
 </div>
 
 <!-- CREATE / EDIT MODAL -->
@@ -204,7 +209,7 @@
           </p>
 
           <img
-            [src]="dto().imageName"
+            [src]="getImageUrl(dto().imageName)"
             width="140"
             height="100"
             style="object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
@@ -254,7 +259,7 @@
 
             <option
               *ngFor="let item of carModels()"
-              [value]="item.id">
+              [ngValue]="item.id">
 
               {{ item.name }}
 

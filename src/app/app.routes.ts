@@ -1,4 +1,13 @@
-import { Routes } from "@angular/router";
+import { Routes, CanActivateFn, Router } from "@angular/router";
+import { inject } from "@angular/core";
+import { AuthService } from "./services/auth/auth-service";
+
+export const adminGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.getToken() && auth.hasRole("Admin")
+    ? true : router.createUrlTree(["/login"], { queryParams: { returnUrl: state.url } });
+};
 import { CatalogComponent } from "./components/admin/catalog/catalog.component";
 import { TelegramRawMessagesComponent } from "./components/admin/telegramRawMessages/telegramRawMessages.component";
 import { TelegramManagementComponent } from "./components/admin/telegramManagement/telegramManagement.component";
@@ -32,6 +41,8 @@ export const routes: Routes = [
   {path : 'login',component : LoginComponent},
    {
     path: 'adminDashboard',
+    canActivate: [adminGuard],
+    canActivateChild: [adminGuard],
     component: AdminDashboardComponent,
     children: [
       { path: 'userManagment', component: UserManagementComponent },
