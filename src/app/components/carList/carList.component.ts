@@ -25,10 +25,14 @@ export class CarListComponent implements OnInit, OnDestroy {
   isLoading = signal(false);
   isFilterOpen = false;
   error = signal('');
+  totalCount = signal(0);
+  totalPages = signal(0);
+  approvedReferenceCount = signal(0);
+  missingCatalogMatches = signal(0);
   private requestId = 0;
   private carsRequest?: Subscription;
   ngOnDestroy(): void { this.carsRequest?.unsubscribe(); }
-  get hasNextPage(): boolean { return this.cars().length === (this.carFilter().pageSize ?? 12); }
+  get hasNextPage(): boolean { return this.currentPage < this.totalPages(); }
   get currentPage(): number { return (this.carFilter().pageNumber ?? 0) + 1; }
   changePage(direction: number): void {
     const page = Math.max(0, (this.carFilter().pageNumber ?? 0) + direction);
@@ -69,13 +73,19 @@ export class CarListComponent implements OnInit, OnDestroy {
     this.carsRequest = this.carService.getAllCarsWithFilter(this.carFilter()).subscribe({
       next: (res) => {
         if (requestId !== this.requestId) return;
-        this.cars.set(res?.data || res || []);
+        this.cars.set(res.items ?? []);
+        this.totalCount.set(res.totalCount ?? 0);
+        this.totalPages.set(res.totalPages ?? 0);
+        this.approvedReferenceCount.set(res.approvedReferenceCount ?? 0);
+        this.missingCatalogMatches.set(res.missingCatalogMatches ?? 0);
         this.isLoading.set(false);
       },
       error: () => {
         if (requestId !== this.requestId) return;
         this.error.set('دریافت لیست خودروها ناموفق بود. دوباره تلاش کنید.');
         this.cars.set([]);
+        this.totalCount.set(0);
+        this.totalPages.set(0);
         this.isLoading.set(false);
       }
     });
