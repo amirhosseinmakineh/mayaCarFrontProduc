@@ -19,6 +19,7 @@ interface RawTelegramMessage {
   collectedAt?: string | null;
   metadata?: Record<string, unknown> | null;
 }
+interface ArchiveChannel { channelUsername: string; channelName: string | null; messageCount: number; }
 interface MessagePage {
   items: RawTelegramMessage[];
   totalCount: number;
@@ -38,7 +39,7 @@ interface MessagePage {
           <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
             {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت دستی پیام‌ها' }}
           </button>
-          <button class="refresh" (click)="load()" [disabled]="loading">↻ بروزرسانی لیست</button>
+          <button class="refresh" (click)="loadChannels(); load()" [disabled]="loading">↻ بروزرسانی لیست</button>
         </div>
       </header>
       <div class="summary" aria-live="polite">
@@ -59,7 +60,7 @@ interface MessagePage {
       </div>
       <div class="filters">
         <label>جست‌وجوی متن یا شناسه<input [(ngModel)]="search" (keyup.enter)="applyFilters()" placeholder="متن پیام یا شناسه…" /></label>
-        <label>کانال<input [(ngModel)]="channel" (keyup.enter)="applyFilters()" placeholder="نام یا یوزرنیم کانال" /></label>
+
         <label>از تاریخ<input type="date" [(ngModel)]="fromDate" /></label>
         <label>تا تاریخ<input type="date" [(ngModel)]="toDate" /></label>
         <button class="apply" (click)="applyFilters()">اعمال فیلتر</button>
@@ -67,35 +68,48 @@ interface MessagePage {
       </div>
       <div class="summary"><strong>{{ totalCount | number:'1.0-0' }}</strong> پیام ثبت‌شده
         <span>صفحه {{ page }} از {{ totalPages }}</span></div>
-      <div *ngIf="error" class="alert" role="alert">{{ error }} <button (click)="load()">تلاش دوباره</button></div>
-      <div *ngIf="loading" class="empty">در حال دریافت پیام‌ها…</div>
-      <div *ngIf="!loading && !error && !messages.length" class="empty">پیامی با این فیلترها پیدا نشد.</div>
-      <div class="layout" *ngIf="!loading && messages.length">
-        <div class="messages">
-          <button class="message" *ngFor="let item of messages; trackBy: trackById"
-            [class.active]="selected?.id === item.id" (click)="selected = item">
-            <span class="message-top"><b>{{ item.channelName || item.channelUsername || 'کانال نامشخص' }}</b>
-              <time>{{ formatDate(item.publishedAt) }}</time></span>
-            <span class="preview">{{ item.text || 'پیام بدون متن' }}</span>
-            <small>شناسه پیام: {{ item.telegramMessageId }} <span *ngIf="item.senderName"> · {{ item.senderName }}</span></small>
+      <div class="channel-layout">
+        <aside class="channel-sidebar" aria-label="کانال‌های تلگرام">
+          <div class="channel-heading"><h2>کانال‌های تلگرام</h2><button class="refresh" (click)="loadChannels()" [disabled]="channelsLoading">↻</button></div>
+          <label class="channel-search">جست‌وجوی کانال<input [(ngModel)]="channelSearch" placeholder="نام یا شناسه کانال…" /></label>
+          <button class="channel-item" [class.active]="!selectedChannelUsername" (click)="selectChannel(null)">
+            <span>همه کانال‌ها</span><b>{{ allMessagesCount | number:'1.0-0' }}</b>
           </button>
-        </div>
-        <article class="details" *ngIf="selected as item">
-          <div class="detail-header"><h2>جزئیات کامل پیام</h2><button (click)="copyText(item.text)">کپی متن</button></div>
-          <dl>
-            <div><dt>کانال</dt><dd>{{ item.channelName || '—' }}</dd></div>
-            <div><dt>شناسه کانال</dt><dd dir="ltr">{{ item.channelId || '—' }}</dd></div>
-            <div><dt>نام کاربری کانال</dt><dd dir="ltr">{{ item.channelUsername || '—' }}</dd></div>
-            <div><dt>ارسال‌کننده</dt><dd>{{ item.senderName || '—' }}</dd></div>
-            <div><dt>شناسه پیام</dt><dd>{{ item.telegramMessageId }}</dd></div>
-            <div><dt>تاریخ انتشار</dt><dd>{{ formatDate(item.publishedAt) }}</dd></div>
-            <div><dt>زمان دریافت</dt><dd>{{ formatDate(item.collectedAt) }}</dd></div>
-          </dl>
-          <h3>متن اصلی و بدون تغییر</h3><div class="raw-text" dir="auto">{{ item.text || 'پیام بدون متن' }}</div>
-          <a *ngIf="safeMessageUrl(item.messageUrl) as url" [href]="url" target="_blank" rel="noopener noreferrer">مشاهده پیام در تلگرام ↗</a>
-          <ng-container *ngIf="item.metadata"><h3>سایر جزئیات ذخیره‌شده</h3>
-            <pre class="metadata" dir="ltr">{{ item.metadata | json }}</pre></ng-container>
-        </article>
+          <div *ngIf="channelsLoading" class="empty">در حال دریافت کانال‌ها…</div>
+          <div *ngIf="channelsError" class="alert">{{ channelsError }} <button (click)="loadChannels()">تلاش مجدد</button></div>
+          <div class="channel-scroll">
+            <button class="channel-item" *ngFor="let ch of filteredChannels; trackBy: trackByChannel"
+              [class.active]="selectedChannelUsername === ch.channelUsername"
+              (click)="selectChannel(ch.channelUsername)">
+              <span class="channel-title">{{ ch.channelName || ch.channelUsername }}<small dir="ltr">@{{ ch.channelUsername }}</small></span>
+              <b>{{ ch.messageCount | number:'1.0-0' }}</b>
+            </button>
+          </div>
+          <div *ngIf="!channelsLoading && !channelsError && !filteredChannels.length" class="empty">کانالی پیدا نشد.</div>
+        </aside>
+        <main class="channel-content">
+          <div class="channel-content-header">
+            <h2>{{ selectedChannelName }}</h2>
+            <span>{{ totalCount | number:'1.0-0' }} پیام</span>
+          </div>
+          <div *ngIf="error" class="alert" role="alert">{{ error }} <button (click)="load()">تلاش دوباره</button></div>
+          <div *ngIf="loading" class="empty">در حال دریافت پیام‌ها…</div>
+          <div *ngIf="!loading && !error && !messages.length" class="empty">پیامی با این فیلترها پیدا نشد.</div>
+          <div class="message-cards" *ngIf="!loading && messages.length">
+            <article class="message-card" *ngFor="let item of messages; trackBy: trackById">
+              <div class="message-top">
+                <b>{{ item.channelName || item.channelUsername || 'کانال نامشخص' }}</b>
+                <time>{{ formatDate(item.publishedAt) }}</time>
+              </div>
+              <div class="raw-text" dir="auto">{{ item.text || 'پیام بدون متن' }}</div>
+              <div class="message-footer">
+                <small>شناسه پیام: {{ item.telegramMessageId }}</small>
+                <a *ngIf="safeMessageUrl(item.messageUrl) as url" [href]="url" target="_blank" rel="noopener noreferrer">مشاهده در تلگرام ↗</a>
+                <button class="refresh" (click)="copyText(item.text)">کپی متن</button>
+              </div>
+            </article>
+          </div>
+        </main>
       </div>
       <footer class="pagination" *ngIf="totalCount > pageSize">
         <button (click)="changePage(page-1)" [disabled]="page <= 1 || loading">صفحه قبل</button>
@@ -128,6 +142,20 @@ interface MessagePage {
     .metadata{overflow:auto;background:#f8f7f4;border-radius:10px;padding:14px;font-size:12px}.details a{display:inline-block;margin-top:14px;color:#946b19}
     .empty,.alert{background:white;padding:32px;text-align:center;border-radius:15px}.alert{color:#a72f2f}.alert button{margin-right:10px}
     .pagination{display:flex;justify-content:center;align-items:center;gap:15px;margin:20px}.pagination button:disabled{opacity:.45;cursor:not-allowed}
+    .channel-layout{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:16px;align-items:start;direction:rtl}
+    .channel-sidebar,.channel-content{min-width:0;background:#fff;border:1px solid #eae1d1;border-radius:17px;padding:14px}
+    .channel-sidebar{position:sticky;top:12px}.channel-heading,.channel-content-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+    .channel-heading h2,.channel-content-header h2{font-size:17px;margin:0}
+    .channel-search{display:flex;flex-direction:column;gap:6px;font-size:12px;margin-bottom:12px}
+    .channel-search input{min-width:0;padding:11px;border:1px solid #dedbd4;border-radius:10px}
+    .channel-scroll{max-height:62vh;overflow:auto}
+    .channel-item{width:100%;border:0;border-bottom:1px solid #f0ece4;background:#fff;padding:12px 10px;text-align:right;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#352d20}
+    .channel-item:hover,.channel-item.active{background:#fcf6e9}.channel-item.active{box-shadow:inset -4px 0 #a98127}
+    .channel-item b{font-size:12px;color:#8a692c}.channel-title{overflow-wrap:anywhere}.channel-title small{display:block;text-align:right;font-size:11px;color:#8b7f6b;margin-top:4px}
+    .message-cards{display:flex;flex-direction:column;gap:12px}.message-card{padding:16px;border:1px solid #eae1d1;border-radius:12px}
+    .message-card .raw-text{max-height:none;margin-top:12px}.message-footer{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .message-footer a{color:#946b19}.message-footer small{margin-left:auto}
+    @media(max-width:850px){.channel-layout{grid-template-columns:1fr}.channel-sidebar{position:static}.channel-scroll{max-height:240px}}
     @media(max-width:850px){.layout{grid-template-columns:1fr}.messages{max-height:340px}.details{padding:16px}}
     @media(max-width:500px){.heading h1{font-size:21px}.filters label{flex:1 1 100%}.filters button{flex:1}dl{grid-template-columns:1fr}.message-top{flex-wrap:wrap}}
   `]
@@ -137,8 +165,13 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly url = environment.apiUrl.replace(/\/$/, '') + '/admin/telegram/messages';
   messages: RawTelegramMessage[] = [];
+  channels: ArchiveChannel[] = [];
+  selectedChannelUsername: string | null = null;
+  channelSearch = ''; channelsLoading = false; channelsError = ''; allMessagesCount = 0;
+  get filteredChannels(): ArchiveChannel[] { const q = this.channelSearch.trim().toLocaleLowerCase(); return q ? this.channels.filter(c => (c.channelName || '').toLocaleLowerCase().includes(q) || c.channelUsername.toLocaleLowerCase().includes(q)) : this.channels; }
+  get selectedChannelName(): string { return this.selectedChannelUsername ? (this.channels.find(c => c.channelUsername === this.selectedChannelUsername)?.channelName || this.selectedChannelUsername) : 'پیام‌های همه کانال‌ها'; }
   selected: RawTelegramMessage | null = null;
-  search = ''; channel = ''; fromDate = ''; toDate = '';
+  search = ''; fromDate = ''; toDate = '';
   page = 1; pageSize = 25; totalCount = 0;
   loading = false; error = '';
   refreshPending = false; refreshRunning = false; refreshStatus = 'نامشخص'; refreshError = '';
@@ -147,6 +180,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
   ngOnInit(): void {
     if (!this.isBrowser) return;
+    this.loadChannels();
     this.load();
     this.loadStatus();
     this.statusInterval = setInterval(() => this.loadStatus(), 3000);
@@ -172,17 +206,35 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
           this.refreshRunning = result.status === 'Running' || result.status === 'Queued';
           this.refreshStatus = ({Idle:'آماده',Queued:'در صف اجرا',Running:'در حال دریافت',Completed:'تکمیل‌شده',Failed:'ناموفق'} as Record<string,string>)[result.status] ?? result.status;
           this.refreshError = result.lastError ?? '';
-          if (wasRunning && !this.refreshRunning && result.status === 'Completed') this.load();
+          if (wasRunning && !this.refreshRunning && result.status === 'Completed') { this.loadChannels(); this.load(); }
         },
         error: () => { this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; }
       });
   }
   trackById(_index: number, item: RawTelegramMessage): number { return item.id; }
+  trackByChannel(_index: number, item: ArchiveChannel): string { return item.channelUsername; }
+  selectChannel(username: string | null): void {
+    if (this.selectedChannelUsername === username) return;
+    this.selectedChannelUsername = username;
+    this.page = 1;
+    this.load();
+  }
+  loadChannels(): void {
+    this.channelsLoading = true; this.channelsError = '';
+    this.http.get<ArchiveChannel[]>(this.url + '/channels').pipe(timeout(20000)).subscribe({
+      next: data => {
+        this.channels = Array.isArray(data) ? data : [];
+        this.allMessagesCount = this.channels.reduce((sum, c) => sum + Number(c.messageCount || 0), 0);
+        this.channelsLoading = false;
+      },
+      error: () => { this.channelsLoading = false; this.channelsError = 'دریافت لیست کانال‌ها ناموفق بود.'; }
+    });
+  }
   load(): void {
     this.loading = true; this.error = '';
     let params = new HttpParams().set('page', this.page).set('pageSize', this.pageSize);
     if (this.search.trim()) params = params.set('search', this.search.trim());
-    if (this.channel.trim()) params = params.set('channel', this.channel.trim());
+    if (this.selectedChannelUsername) params = params.set('channelUsername', this.selectedChannelUsername);
     if (this.fromDate) params = params.set('fromDate', this.fromDate);
     if (this.toDate) params = params.set('toDate', this.toDate);
     this.http.get<MessagePage>(this.url, { params }).pipe(
@@ -207,7 +259,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     });
   }
   applyFilters(): void { this.page = 1; this.load(); }
-  reset(): void { this.search = ''; this.channel = ''; this.fromDate = ''; this.toDate = ''; this.applyFilters(); }
+  reset(): void { this.search = ''; this.fromDate = ''; this.toDate = ''; this.applyFilters(); }
   changePage(next: number): void { if (next < 1 || next > this.totalPages) return; this.page = next; this.load(); }
   formatDate(value?: string | null): string { return value ? new Date(value).toLocaleString('fa-IR', {dateStyle:'medium',timeStyle:'short'}) : '—'; }
   safeMessageUrl(value?: string | null): string | null {
