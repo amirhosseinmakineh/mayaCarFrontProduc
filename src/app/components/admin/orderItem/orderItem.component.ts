@@ -34,7 +34,7 @@ from '../../../../../pipes/ThousandSeparatorPipe.pipe';
   ]
 })
 export class OrderItemComponent
-implements OnInit {
+implements OnInit, OnChanges {
 
   // =========================
   // INPUT
@@ -76,6 +76,10 @@ implements OnInit {
   // =========================
   // LIFE CYCLE
   // =========================
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['orderId'] && !changes['orderId'].firstChange) this.loadOrderItems();
+  }
 
   ngOnInit(): void {
 
@@ -171,10 +175,8 @@ implements OnInit {
 
         next: res => {
 
-          this.toastr.success(
-            res.message
-          );
-
+          if (res && !res.isSuccess) { this.toastr.error(res.message); return; }
+          this.toastr.success(res.message);
           this.loadOrderItems();
 
         },
