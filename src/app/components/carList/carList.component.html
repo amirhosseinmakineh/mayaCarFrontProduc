@@ -42,7 +42,7 @@
           [ngModel]="carFilter().maxPrice" (ngModelChange)="updateMaxPrice($event)">
       </label>
 
-      <button class="apply-btn" type="button" (click)="applyFilter()">
+      <button class="apply-btn" type="button" (click)="applyNewFilter()">
         <span>اعمال فیلتر</span>
         <span aria-hidden="true">←</span>
       </button>
@@ -54,7 +54,7 @@
       <span class="results-kicker">موجودی خودروها</span>
       <h2>جدیدترین قیمت‌ها</h2>
     </div>
-    <span class="results-count" *ngIf="!isLoading()">{{ cars().length }} خودرو</span>
+    <span class="results-count" *ngIf="!isLoading()">{{ cars().length }} خودرو در صفحه {{ currentPage }}</span>
   </section>
 
   <div class="loading-state" *ngIf="isLoading()" role="status">
@@ -100,7 +100,13 @@
     </article>
   </section>
 
-  <section class="empty-state" *ngIf="!isLoading() && cars().length === 0">
+  <p *ngIf="error()" role="alert" style="color:#b42318">{{ error() }} <button type="button" (click)="applyFilter()">تلاش مجدد</button></p>
+  <nav *ngIf="!isLoading() && !error() && (currentPage > 1 || hasNextPage)" aria-label="صفحه‌بندی خودروها" style="display:flex;gap:12px;justify-content:center;margin:24px 0">
+    <button type="button" (click)="changePage(-1)" [disabled]="currentPage === 1">صفحه قبل</button>
+    <span>صفحه {{ currentPage }}</span>
+    <button type="button" (click)="changePage(1)" [disabled]="!hasNextPage">صفحه بعد</button>
+  </nav>
+  <section class="empty-state" *ngIf="!isLoading() && !error() && cars().length === 0">
     <div class="empty-icon">⌕</div>
     <h3>خودرویی با این فیلتر پیدا نشد</h3>
     <p>فیلترها را تغییر دهید یا فهرست کامل خودروها را ببینید.</p>
