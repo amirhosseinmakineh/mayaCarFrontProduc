@@ -1,4 +1,5 @@
 import { Routes } from "@angular/router";
+import { adminGuard } from "./guards/admin.guard";
 import { CatalogComponent } from "./components/admin/catalog/catalog.component";
 import { TelegramRawMessagesComponent } from "./components/admin/telegramRawMessages/telegramRawMessages.component";
 import { TelegramManagementComponent } from "./components/admin/telegramManagement/telegramManagement.component";
@@ -33,6 +34,8 @@ export const routes: Routes = [
    {
     path: 'adminDashboard',
     component: AdminDashboardComponent,
+    canActivate: [adminGuard],
+    canActivateChild: [adminGuard],
     children: [
       { path: 'userManagment', component: UserManagementComponent },
       { path: '', redirectTo: 'userManagment', pathMatch: 'full' },
@@ -49,7 +52,6 @@ export const routes: Routes = [
     ],
   },
    {path : 'carList',component : CarListComponent},
-  { path: '', redirectTo: '/adminDashboard', pathMatch: 'full' },
     {path:'userPannel', component:UserPannelComponent},
     {path:'installment',component:InstallmentComponent},
   { path: 'carDetail/:carId', component: CardetailComponent },
