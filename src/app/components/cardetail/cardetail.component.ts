@@ -56,8 +56,7 @@ private readonly cdr =
   // ================= IMAGE =================
 
   //imageBaseUrl = 'http://localhost:8080';
-  imageBaseUrl =
-    'https://mayakhoddrobackend-mayacar.runflare.run/';
+  imageBaseUrl = 'https://api.mayakhodro.com/';
 
   // ================= INIT =================
 
@@ -73,7 +72,6 @@ private readonly cdr =
         const carId =
           Number(id);
 
-        console.log('CAR ID =>', carId);
 
         if (!carId || isNaN(carId)) {
 
@@ -114,9 +112,7 @@ private readonly cdr =
       .subscribe({
 
         next: (res: any) => {
-          debugger;
 
-          console.log('API RESPONSE =>', res);
 
           if (res?.data) {
 
@@ -129,7 +125,6 @@ private readonly cdr =
 
           }
 
-          console.log('CAR =>', this.car);
           debugger;
           this.isLoading = false;
           this.cdr.detectChanges();
@@ -148,7 +143,6 @@ private readonly cdr =
 
         complete: () => {
 
-          console.log('REQUEST COMPLETED');
 
         }
 
