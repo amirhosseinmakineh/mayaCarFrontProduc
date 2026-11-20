@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { retry, timer, timeout } from 'rxjs';
+import { Subscription, retry, timer, timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface RawTelegramMessage {
@@ -39,7 +39,7 @@ interface MessagePage {
           <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
             {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت از تلگرام' }}
           </button>
-          <button class="refresh" (click)="loadChannels(); load()" [disabled]="loading">↻ نمایش اطلاعات دیتابیس</button>
+          <button class="refresh" (click)="reloadDatabase()">↻ نمایش اطلاعات دیتابیس</button>
         </div>
       </header>
       <div class="summary" aria-live="polite">
@@ -172,11 +172,13 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   get selectedChannelName(): string { return this.selectedChannelUsername ? (this.channels.find(c => c.channelUsername === this.selectedChannelUsername)?.channelName || this.selectedChannelUsername) : 'پیام‌های همه کانال‌ها'; }
   selected: RawTelegramMessage | null = null;
   search = ''; fromDate = ''; toDate = '';
-  page = 1; pageSize = 25; totalCount = 0;
+  page = 1; pageSize = 10; totalCount = 0;
   loading = false; error = '';
   refreshPending = false; refreshRunning = false; refreshStatus = 'نامشخص'; refreshError = '';
   archiveDiagnostics: {successfulChannels:number; failedChannels:number; receivedMessages:number; savedMessages:number; channelErrors:Record<string,string>} | null = null;
   private statusInterval?: ReturnType<typeof setInterval>;
+  private messagesRequest?: Subscription;
+  private channelsRequest?: Subscription;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
   ngOnInit(): void {
     if (!this.isBrowser) return;
@@ -185,7 +187,11 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     this.loadStatus();
     this.statusInterval = setInterval(() => this.loadStatus(), 3000);
   }
-  ngOnDestroy(): void { if (this.statusInterval) clearInterval(this.statusInterval); }
+  ngOnDestroy(): void {
+    if (this.statusInterval) clearInterval(this.statusInterval);
+    this.messagesRequest?.unsubscribe();
+    this.channelsRequest?.unsubscribe();
+  }
   runManual(): void {
     this.refreshPending = true; this.refreshError = '';
     this.http.post<{status: string}>(this.url + '/refresh', {}).pipe(timeout(15000)).subscribe({
@@ -213,15 +219,20 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   }
   trackById(_index: number, item: RawTelegramMessage): number { return item.id; }
   trackByChannel(_index: number, item: ArchiveChannel): string { return item.channelUsername; }
+  reloadDatabase(): void {
+    this.page = 1;
+    this.loadChannels();
+    this.load();
+  }
   selectChannel(username: string | null): void {
-    if (this.selectedChannelUsername === username) return;
     this.selectedChannelUsername = username;
     this.page = 1;
     this.load();
   }
   loadChannels(): void {
+    this.channelsRequest?.unsubscribe();
     this.channelsLoading = true; this.channelsError = '';
-    this.http.get<ArchiveChannel[]>(this.url + '/channels').pipe(timeout(20000)).subscribe({
+    this.channelsRequest = this.http.get<ArchiveChannel[]>(this.url + '/channels').pipe(timeout(20000)).subscribe({
       next: data => {
         this.channels = Array.isArray(data) ? data : [];
         this.allMessagesCount = this.channels.reduce((sum, c) => sum + Number(c.messageCount || 0), 0);
@@ -231,13 +242,15 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     });
   }
   load(): void {
+    this.messagesRequest?.unsubscribe();
     this.loading = true; this.error = '';
+    this.messages = [];
     let params = new HttpParams().set('page', this.page).set('pageSize', this.pageSize);
     if (this.search.trim()) params = params.set('search', this.search.trim());
     if (this.selectedChannelUsername) params = params.set('channelUsername', this.selectedChannelUsername);
     if (this.fromDate) params = params.set('fromDate', this.fromDate);
     if (this.toDate) params = params.set('toDate', this.toDate);
-    this.http.get<MessagePage>(this.url, { params }).pipe(
+    this.messagesRequest = this.http.get<MessagePage>(this.url, { params }).pipe(
       timeout(20000),
       retry({ count: 2, delay: (error, attempt) => {
         if (error.status && ![0, 408, 429, 502, 503, 504].includes(error.status)) throw error;
