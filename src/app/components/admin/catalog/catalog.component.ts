@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -112,6 +112,7 @@ interface CatalogResponse {
 })
 export class CatalogComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   data: CatalogResponse | null = null;
   loading = false;
   uploadingId: number | null = null;
@@ -157,10 +158,12 @@ export class CatalogComponent implements OnInit {
         car.imageName = imageName;
         this.uploadingId = null;
         this.imageMessage = `عکس خودرو ${car.name} ذخیره شد.`;
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.uploadingId = null;
         this.imageMessage = `ذخیرهٔ عکس خودرو ${car.name} ناموفق بود.`;
+        this.changeDetector.markForCheck();
       }
     });
   }
@@ -175,13 +178,19 @@ export class CatalogComponent implements OnInit {
       .set('pageSize', this.pageSize)
       .set('search', this.search.trim());
     this.pending = this.http.get<CatalogResponse>(`${environment.apiUrl}/admin/catalog`, { params }).subscribe({
-      next: result => { if (sequence !== this.requestSequence) return; this.data = result; this.loading = false; },
+      next: result => {
+        if (sequence !== this.requestSequence) return;
+        this.data = result;
+        this.loading = false;
+        this.changeDetector.markForCheck();
+      },
       error: (err: HttpErrorResponse) => {
         if (sequence !== this.requestSequence) return;
         this.loading = false;
         this.error = err.status === 403 ? 'دسترسی به کاتالوگ مجاز نیست.'
           : err.status === 401 ? 'برای مشاهده کاتالوگ دوباره وارد حساب مدیر شوید.'
           : 'دریافت اطلاعات کاتالوگ ناموفق بود. لطفاً دوباره تلاش کنید.';
+        this.changeDetector.markForCheck();
       }
     });
   }
