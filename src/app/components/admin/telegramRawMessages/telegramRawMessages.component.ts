@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface RawTelegramMessage {
@@ -32,8 +33,17 @@ interface MessagePage {
       <header class="heading">
         <div><span class="eyebrow">آرشیو مستقل پیام‌ها</span><h1>پیام‌های خام تلگرام</h1>
           <p>نمایش کامل متن و مشخصات پیام‌های دریافت‌شده؛ مستقل از اسکن و مقایسه قیمت خودرو</p></div>
-        <button class="refresh" (click)="load()" [disabled]="loading">↻ بروزرسانی</button>
+        <div class="manual-actions">
+          <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
+            {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت دستی پیام‌ها' }}
+          </button>
+          <button class="refresh" (click)="load()" [disabled]="loading">↻ بروزرسانی لیست</button>
+        </div>
       </header>
+      <div class="summary" aria-live="polite">
+        وضعیت جمع‌آوری: <strong>{{ refreshStatus }}</strong>
+        <span *ngIf="refreshError" class="alert">{{ refreshError }}</span>
+      </div>
       <div class="filters">
         <label>جست‌وجوی متن یا شناسه<input [(ngModel)]="search" (keyup.enter)="applyFilters()" placeholder="متن پیام یا شناسه…" /></label>
         <label>کانال<input [(ngModel)]="channel" (keyup.enter)="applyFilters()" placeholder="نام یا یوزرنیم کانال" /></label>
@@ -82,7 +92,7 @@ interface MessagePage {
     </section>`,
   styles: [`
     :host{display:block;min-width:0;color:#352d20}.archive{max-width:1500px;margin:auto;padding:8px}
-    .heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.manual-actions{display:flex;flex-wrap:wrap;gap:9px}.heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
     .eyebrow{font-size:12px;color:#977226;font-weight:700}.heading h1{font-size:26px;margin:7px 0}.heading p{color:#766d5c;line-height:1.9;margin:0}
     button,input{font:inherit}button{cursor:pointer}.refresh,.apply,.clear,.pagination button,.detail-header button{border:1px solid #e6d9bf;border-radius:11px;padding:11px 15px;background:white;color:#6e5423;font-weight:700}
     .filters{background:white;border:1px solid #ede4d4;border-radius:18px;padding:17px;display:flex;align-items:end;gap:12px;flex-wrap:wrap}
@@ -107,7 +117,7 @@ interface MessagePage {
     @media(max-width:500px){.heading h1{font-size:21px}.filters label{flex:1 1 100%}.filters button{flex:1}dl{grid-template-columns:1fr}.message-top{flex-wrap:wrap}}
   `]
 })
-export class TelegramRawMessagesComponent implements OnInit {
+export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly url = environment.apiUrl.replace(/\/$/, '') + '/admin/telegram/messages';
   messages: RawTelegramMessage[] = [];
@@ -115,8 +125,39 @@ export class TelegramRawMessagesComponent implements OnInit {
   search = ''; channel = ''; fromDate = ''; toDate = '';
   page = 1; pageSize = 25; totalCount = 0;
   loading = false; error = '';
+  refreshPending = false; refreshRunning = false; refreshStatus = 'نامشخص'; refreshError = '';
+  private statusInterval?: ReturnType<typeof setInterval>;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    this.loadStatus();
+    this.statusInterval = setInterval(() => this.loadStatus(), 3000);
+  }
+  ngOnDestroy(): void { if (this.statusInterval) clearInterval(this.statusInterval); }
+  runManual(): void {
+    this.refreshPending = true; this.refreshError = '';
+    this.http.post<{status: string}>(this.url + '/refresh', {}).pipe(timeout(15000)).subscribe({
+      next: () => { this.refreshPending = false; this.refreshRunning = true; this.refreshStatus = 'در صف اجرا'; this.loadStatus(); },
+      error: err => {
+        this.refreshPending = false;
+        this.refreshError = err.status === 409 ? 'دریافت قبلی هنوز در حال اجراست.' : 'شروع دریافت دستی ناموفق بود.';
+        this.loadStatus();
+      }
+    });
+  }
+  loadStatus(): void {
+    this.http.get<{status: string; lastError?: string}>(this.url + '/status')
+      .pipe(timeout(10000)).subscribe({
+        next: result => {
+          const wasRunning = this.refreshRunning;
+          this.refreshRunning = result.status === 'Running' || result.status === 'Queued';
+          this.refreshStatus = ({Idle:'آماده',Queued:'در صف اجرا',Running:'در حال دریافت',Completed:'تکمیل‌شده',Failed:'ناموفق'} as Record<string,string>)[result.status] ?? result.status;
+          this.refreshError = result.lastError ?? '';
+          if (wasRunning && !this.refreshRunning && result.status === 'Completed') this.load();
+        },
+        error: () => { this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; }
+      });
+  }
   trackById(_index: number, item: RawTelegramMessage): number { return item.id; }
   load(): void {
     this.loading = true; this.error = '';
@@ -125,7 +166,7 @@ export class TelegramRawMessagesComponent implements OnInit {
     if (this.channel.trim()) params = params.set('channel', this.channel.trim());
     if (this.fromDate) params = params.set('fromDate', this.fromDate);
     if (this.toDate) params = params.set('toDate', this.toDate);
-    this.http.get<MessagePage>(this.url, { params }).subscribe({
+    this.http.get<MessagePage>(this.url, { params }).pipe(timeout(15000)).subscribe({
       next: response => {
         this.messages = response.items ?? []; this.totalCount = response.totalCount ?? 0;
         this.selected = this.messages.find(m => m.id === this.selected?.id) ?? this.messages[0] ?? null;
@@ -135,7 +176,7 @@ export class TelegramRawMessagesComponent implements OnInit {
         this.messages = []; this.selected = null; this.totalCount = 0; this.loading = false;
         this.error = err.status === 401 || err.status === 403
           ? 'برای مشاهده آرشیو باید با حساب مدیر وارد شوید.'
-          : 'دریافت آرشیو پیام‌ها ممکن نشد. اتصال سرور و API آرشیو را بررسی کنید.';
+          : err.name === 'TimeoutError' ? 'زمان پاسخ API بیشتر از ۱۵ ثانیه شد. دوباره تلاش کنید.' : 'دریافت آرشیو پیام‌ها ممکن نشد. اتصال سرور و API آرشیو را بررسی کنید.';
       }
     });
   }
