@@ -5,7 +5,6 @@ import { Car } from "../../models/car/car";
 import { CreateCar } from "../../models/car/createCar";
 import { UpdateCar } from "../../models/car/updateCar";
 import { CarModel } from "../../models/carModel/carmodel";
-import { Category } from "../../models/category/category";
 import { Company } from "../../models/company/companyName";
 import { Role } from "../../models/role/role";
 import { Tip } from "../../models/tip/tip";
@@ -14,8 +13,6 @@ import { UpdateUser } from "../../models/user/updateUser";
 import { User } from "../../models/user/user";
 import { CreateCarModel } from "../../models/carModel/createCarModel";
 import { EditCarModel } from "../../models/carModel/editCarModel";
-import { CreateCategory } from "../../models/category/createCategory";
-import { EditCategory } from "../../models/category/editCategory";
 import { CreateCompany } from "../../models/company/createCompany";
 import { EditCompany } from "../../models/company/editCompany";
 import { CreateTip } from "../../models/tip/createTip";
@@ -90,21 +87,9 @@ deleteModel(id: number): Observable<Result<void>> {
 
 
 
-getCategories(): Observable<Result<Category[]>> {
-  return this.client.get<Result<Category[]>>(`${this.baseUrl}/Category`);
-}
 
-createCategory(dto: CreateCategory): Observable<Result<void>> {
-  return this.client.post<Result<void>>(`${this.baseUrl}/Category/CreateCategory`, dto);
-}
 
-updateCategory(dto: EditCategory): Observable<Result<void>> {
-  return this.client.post<Result<void>>(`${this.baseUrl}/Category/UpdateCategory`, dto);
-}
 
-deleteCategory(id: number): Observable<Result<void>> {
-  return this.client.get<Result<void>>(`${this.baseUrl}/Category/DeleteCategory/${id}`);
-}
 
 
 

@@ -105,30 +105,6 @@
         <span *ngIf="isSidebarOpen">کاتالوگ خودروها</span>
       </div>
 
-      <!-- CATEGORY -->
-      <div class="nav-item"
-           [class.active]="activeSection==='category'"
-           (click)="goToSection('category')">
-
-        <svg width="20"
-             height="20"
-             stroke="currentColor"
-             fill="none"
-             stroke-width="2">
-
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-
-        </svg>
-
-        <span *ngIf="isSidebarOpen">
-          مدیریت دسته‌بندی
-        </span>
-
-      </div>
-
       <!-- COMPANY -->
       <div class="nav-item"
            [class.active]="activeSection==='company'"
