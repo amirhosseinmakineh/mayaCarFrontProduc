@@ -1,6 +1,5 @@
 export interface Car {
   id: number;
-  categoryName?: string | number;
   tipName?: string;
   carModeName?: string;
   company?: string;

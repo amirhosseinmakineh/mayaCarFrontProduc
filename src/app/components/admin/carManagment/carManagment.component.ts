@@ -24,8 +24,6 @@ from '../../../models/tip/tip';
 import { CarModel }
 from '../../../models/carModel/carmodel';
 
-import { Category }
-from '../../../models/category/category';
 
 import { Company }
 from '../../../models/company/companyName';
@@ -95,7 +93,6 @@ implements OnInit {
 
   cars = signal<Car[]>([]);
   carModels = signal<CarModel[]>([]);
-  categories = signal<Category[]>([]);
   companies = signal<Company[]>([]);
   tips = signal<Tip[]>([]);
 
@@ -135,7 +132,6 @@ implements OnInit {
 
     this.loadCars();
     this.loadCarModels();
-    this.loadCategories();
     this.loadCompanies();
     this.loadTips();
 
@@ -146,7 +142,6 @@ implements OnInit {
     return {
 
       carModelName: 0,
-      categoryName: 0,
       tipName: 0,
       companyName: 0,
 
@@ -206,28 +201,6 @@ implements OnInit {
       });
   }
 
-  loadCategories(): void {
-
-    this.adminService.getCategories()
-      .subscribe({
-
-        next: res => {
-
-          if (res.isSuccess) {
-            this.categories.set(res.data);
-          }
-
-        },
-
-        error: err => {
-          console.error(
-            'Load categories error',
-            err
-          );
-        }
-
-      });
-  }
 
   loadCompanies(): void {
 
@@ -301,8 +274,6 @@ implements OnInit {
       carModelName:
         this.lookupId(car.carModeName, this.carModels()),
 
-      categoryName:
-        this.lookupId(car.categoryName, this.categories()),
 
       tipName:
         this.lookupId(car.tipName, this.tips()),
@@ -393,8 +364,8 @@ implements OnInit {
 
     if (this.saving) return;
     const dto = this.dto();
-    if (!dto.name?.trim() || !dto.carModelName || !dto.categoryName || !dto.tipName || !dto.companyName) {
-      this.toastr.error('نام، مدل، دسته‌بندی، تیپ و شرکت الزامی هستند.');
+    if (!dto.name?.trim() || !dto.carModelName || !dto.tipName || !dto.companyName) {
+      this.toastr.error('نام، مدل، تیپ و شرکت الزامی هستند.');
       return;
     }
     const formData = this.buildFormData();
@@ -437,10 +408,6 @@ implements OnInit {
       dto.carModelName.toString()
     );
 
-    formData.append(
-      'CategoryId',
-      dto.categoryName.toString()
-    );
 
     formData.append(
       'TipId',

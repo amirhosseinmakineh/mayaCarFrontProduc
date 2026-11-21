@@ -32,7 +32,6 @@
 
           <th>اسم ماشین</th>
           <th>مدل</th>
-          <th>دسته بندی</th>
           <th>تیپ</th>
           <th>شرکت</th>
           <th>سال تولید</th>
@@ -53,7 +52,6 @@
 
           <td data-label="مدل">{{ item.carModeName }}</td>
 
-          <td data-label="دسته بندی">{{ item.categoryName }}</td>
 
           <td data-label="تیپ">{{ item.tipName }}</td>
 
@@ -260,28 +258,6 @@
             <option
               *ngFor="let item of carModels()"
               [ngValue]="item.id">
-
-              {{ item.name }}
-
-            </option>
-
-          </select>
-
-        </div>
-
-        <!-- CATEGORY -->
-
-        <div class="form-group">
-
-          <label>انتخاب دسته بندی :</label>
-
-          <select
-            [(ngModel)]="dto().categoryName"
-            name="categoryName">
-
-            <option
-              *ngFor="let item of categories()"
-              [value]="item.id">
 
               {{ item.name }}
 

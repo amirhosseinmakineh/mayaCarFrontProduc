@@ -1,5 +1,4 @@
 export interface CreateCar{
-categoryName : number,
 tipName : number,
 carModelName : number,
 companyName : number,

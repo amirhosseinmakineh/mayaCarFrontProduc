@@ -17,7 +17,6 @@ import { AdminDashboardComponent } from "./components/adminDashboard/adminDashbo
 import { UserManagementComponent } from "./components/admin/userManagement/userManagement.component";
 import { CarManagmentComponent } from './components/admin/carManagment/carManagment.component';
 import { HomeComponent } from "./pages/home/home.component";
-import { CategoryComponent } from "./components/admin/category/category.component";
 import { CompanyComponent } from "./components/admin/company/company.component";
 import { CarModelComponent } from "./components/admin/carModel/carModel.component";
 import { TipComponent } from "./components/admin/tip/tip.component";
@@ -46,7 +45,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'userManagment', pathMatch: 'full' },
       {path : 'carManagement',component:CarManagmentComponent},
       {path: 'catalog', component: CatalogComponent},
-      {path:'category',component : CategoryComponent},
       {path : 'company',component : CompanyComponent},
       {path : 'model',component:CarModelComponent},
       {path : 'tip', component:TipComponent},
