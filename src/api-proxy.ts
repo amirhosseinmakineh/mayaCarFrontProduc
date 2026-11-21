@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 export const DEFAULT_API_PROXY_TARGET = 'https://api.mayakhodro.com';
 
 export function createApiProxy(backendOrigin = process.env['API_PROXY_TARGET'] || DEFAULT_API_PROXY_TARGET,
-  timeoutMilliseconds = 15_000): RequestHandler {
+  timeoutMilliseconds = 60_000): RequestHandler {
 const proxiedPathPrefixes = ['/api', '/images', '/WeatherForecast'];
 
 // Browser requests stay same-origin. The server connects directly to HTTPS;
