@@ -377,7 +377,7 @@ implements OnInit {
     if (!car || !this.selectedFile || this.saving) return;
     this.saving = true;
     this.adminService.updateVehicleImage(car.id, this.selectedFile)
-      .pipe(timeout(30000), finalize(() => this.saving = false))
+      .pipe(timeout(70000), finalize(() => this.saving = false))
       .subscribe({
         next: result => {
           if (!result?.imageName) {
