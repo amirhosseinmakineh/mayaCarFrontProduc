@@ -360,6 +360,24 @@ implements OnInit {
   // SAVE
   // ======================
 
+  saveImage(): void {
+    const car = this.selectedCar();
+    if (!car || !this.selectedFile || this.saving) return;
+
+    this.saving = true;
+    this.adminService.updateVehicleImage(car.id, this.selectedFile).subscribe({
+      next: () => {
+        this.saving = false;
+        this.toastr.success('عکس خودرو ذخیره شد.');
+        this.afterSave();
+      },
+      error: () => {
+        this.saving = false;
+        this.toastr.error('ذخیره عکس خودرو ناموفق بود.');
+      }
+    });
+  }
+
   saveCar(): void {
 
     if (this.saving) return;
