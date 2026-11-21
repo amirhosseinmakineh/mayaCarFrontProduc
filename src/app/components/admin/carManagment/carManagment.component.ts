@@ -1,3 +1,5 @@
+import { finalize, timeout } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import {
   Component,
   OnInit,
@@ -60,6 +62,9 @@ implements OnInit {
     inject(AdminService);
   private readonly toastr = inject(ToastrService);
   saving = false;
+  private carsRequest?: Subscription;
+  totalCars = 0;
+  loadingCars = false;
 
   // ======================
   // CONSTANTS
@@ -73,14 +78,13 @@ implements OnInit {
   search = '';
   page = 0;
   readonly pageSize = 20;
-  get filteredCars(): Car[] {
-    const q = this.search.trim().toLocaleLowerCase();
-    return q ? this.cars().filter(c => [c.name,c.carModeName,c.tipName,c.companyName,c.company]
-      .some(v => String(v ?? '').toLocaleLowerCase().includes(q))) : this.cars();
+  get visibleCars(): Car[] { return this.cars(); }
+  get totalPages(): number { return Math.max(1, Math.ceil(this.totalCars / this.pageSize)); }
+  changePage(delta: number): void {
+    const next = Math.max(0, Math.min(this.totalPages - 1, this.page + delta));
+    if (next !== this.page) { this.page = next; this.loadCars(); }
   }
-  get visibleCars(): Car[] { return this.filteredCars.slice(this.page * this.pageSize, (this.page + 1) * this.pageSize); }
-  get totalPages(): number { return Math.max(1, Math.ceil(this.filteredCars.length / this.pageSize)); }
-  changePage(delta: number): void { this.page = Math.max(0, Math.min(this.totalPages - 1, this.page + delta)); }
+  onSearchChanged(): void { this.page = 0; this.loadCars(); }
   trackByCar(_index: number, car: Car): number { return car.id; }
   private lookupId(value: string | number | undefined, items: {id:number;name:string}[]): number {
     const match = items.find(i => i.name === String(value) || i.id === Number(value));
@@ -160,22 +164,30 @@ implements OnInit {
   // ======================
 
   loadCars(): void {
-
-    this.adminService.getCars().subscribe({
-
-      next: res => {
-        this.cars.set(res);
-        this.page = Math.min(this.page, this.totalPages - 1);
-      },
-
-      error: err => {
-        console.error(
-          'Load cars error',
-          err
-        );
-      }
-
-    });
+    this.carsRequest?.unsubscribe();
+    this.loadingCars = true;
+    this.carsRequest = this.adminService.getCars(this.search, this.page, this.pageSize)
+      .pipe(finalize(() => this.loadingCars = false))
+      .subscribe({
+        next: res => {
+          this.totalCars = res.filteredCount;
+          this.cars.set(res.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            imageName: item.imageName,
+            description: item.description,
+            company: item.company,
+            companyName: item.company,
+            carModeName: item.model,
+            tipName: item.tip,
+            startDate: item.startDate,
+            price: item.marketPrice,
+            marketPrice: item.marketPrice,
+            factoryPrice: item.factoryPrice
+          })));
+        },
+        error: () => this.toastr.error('دریافت فهرست خودروها ناموفق بود.')
+      });
   }
 
   loadCarModels(): void {
@@ -363,19 +375,26 @@ implements OnInit {
   saveImage(): void {
     const car = this.selectedCar();
     if (!car || !this.selectedFile || this.saving) return;
-
     this.saving = true;
-    this.adminService.updateVehicleImage(car.id, this.selectedFile).subscribe({
-      next: () => {
-        this.saving = false;
-        this.toastr.success('عکس خودرو ذخیره شد.');
-        this.afterSave();
-      },
-      error: () => {
-        this.saving = false;
-        this.toastr.error('ذخیره عکس خودرو ناموفق بود.');
-      }
-    });
+    this.adminService.updateVehicleImage(car.id, this.selectedFile)
+      .pipe(timeout(30000), finalize(() => this.saving = false))
+      .subscribe({
+        next: result => {
+          if (!result?.imageName) {
+            this.toastr.error('پاسخ سرور فاقد آدرس عکس است.');
+            return;
+          }
+          this.toastr.success('عکس خودرو ذخیره شد.');
+          this.afterSave();
+        },
+        error: err => {
+          const message = err?.status === 413 ? 'حجم فایل بیش از حد مجاز است.'
+            : err?.status === 401 || err?.status === 403 ? 'دسترسی شما منقضی شده یا مجاز نیست.'
+            : err?.name === 'TimeoutError' ? 'زمان پاسخ سرور تمام شد؛ دوباره تلاش کنید.'
+            : 'آپلود عکس ناموفق بود. دوباره تلاش کنید.';
+          this.toastr.error(message);
+        }
+      });
   }
 
   saveCar(): void {
@@ -509,7 +528,7 @@ implements OnInit {
       .subscribe({
 
         next: () => {
-
+          this.saving = false;
           this.afterSave();
 
         },
