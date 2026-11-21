@@ -21,6 +21,15 @@ import { Result } from "../../models/result";
 import { CreateOrder, Order } from '../../models/order/order';
 import { OrderItem } from "../../models/orderItem/orderItem";
 
+export interface AdminCarPage {
+  items: Array<{
+    id: number; name: string; imageName: string; description: string;
+    company: string; model: string; tip: string; startDate: string;
+    marketPrice: number; factoryPrice: number;
+  }>;
+  filteredCount: number; pageNumber: number; pageSize: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -51,8 +60,10 @@ export class AdminService {
     return this.client.get<Role[]>(`${this.baseUrl}/role`);
   }
 
-  getCars(): Observable<Car[]> {
-    return this.client.get<Car[]>(`${this.baseUrl}/car`);
+  getCars(search = '', pageNumber = 0, pageSize = 20): Observable<AdminCarPage> {
+    let params = new HttpParams().set('pageNumber', pageNumber).set('pageSize', pageSize);
+    if (search.trim()) params = params.set('search', search.trim());
+    return this.client.get<AdminCarPage>(`${this.baseUrl}/admin/catalog`, { params });
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
