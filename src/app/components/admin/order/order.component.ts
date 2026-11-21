@@ -201,11 +201,11 @@ export class OrderComponent implements OnInit {
 
   loadCars(): void {
 
-    this.service.getCars().subscribe({
+    this.service.getCars('', 0, 100).subscribe({
 
       next: res => {
 
-        this.cars.set(res || []);
+        this.cars.set(res.items || []);
 
       },
 
