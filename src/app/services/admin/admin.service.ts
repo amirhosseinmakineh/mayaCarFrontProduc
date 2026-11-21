@@ -65,6 +65,12 @@ export class AdminService {
     return this.client.patch<void>(`${this.baseUrl}/car`, dto);
   }
 
+  updateVehicleImage(id: number, file: File): Observable<{ imageName: string }> {
+    const data = new FormData();
+    data.append('image', file);
+    return this.client.put<{ imageName: string }>(`${this.baseUrl}/car/${id}/image`, data);
+  }
+
   deleteCar(id: number): Observable<void> {
     return this.client.delete<void>(`${this.baseUrl}/car/${id}`);
   }
