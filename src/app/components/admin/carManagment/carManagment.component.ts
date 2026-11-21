@@ -77,7 +77,7 @@ implements OnInit {
   }
   search = '';
   page = 0;
-  readonly pageSize = 20;
+  readonly pageSize = 10;
   get visibleCars(): Car[] { return this.cars(); }
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCars / this.pageSize)); }
   changePage(delta: number): void {
