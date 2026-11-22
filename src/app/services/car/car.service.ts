@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError, timeout, TimeoutError } from 'rxjs';
 import { Car } from '../../models/car/car';
 import { CarFilter } from '../../models/car/carFilter';
 import { Company } from '../../models/company/companyName';
@@ -46,7 +46,20 @@ export class CarService {
     if (filter.pageNumber != null)
       params = params.set('pageNumber', filter.pageNumber.toString());
 
-    return this.http.get<CarReferencePage>(`${this.baseUrl}/car/references`, { params });
+    const proxyUrl = `${this.baseUrl}/car/references`;
+    const directUrl = `${environment.publicCatalogApiUrl}/car/references`;
+    const initialRequest = this.http.get<CarReferencePage>(directUrl, { params });
+    if (directUrl === proxyUrl) return initialRequest;
+
+    return initialRequest.pipe(
+      timeout({ first: 6_000 }),
+      catchError((error: unknown) => {
+        const unavailable = error instanceof HttpErrorResponse
+          && (error.status === 0 || error.status >= 500);
+        if (!unavailable && !(error instanceof TimeoutError)) return throwError(() => error);
+        return this.http.get<CarReferencePage>(proxyUrl, { params });
+      }),
+    );
   }
 getAllCompanies(): Observable<any> {
   return this.http.get(this.baseUrl + '/Company');
