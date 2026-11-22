@@ -82,13 +82,13 @@ export class AdminService {
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  createCar(dto: CreateCar | FormData): Observable<void> {
-    return this.client.post<void>(`${this.baseUrl}/car`, dto);
+  createCar(dto: CreateCar | FormData): Observable<Result<unknown>> {
+    return this.client.post<Result<unknown>>(`${this.baseUrl}/car`, dto);
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  updateCar(dto: UpdateCar | FormData): Observable<void> {
-    return this.client.patch<void>(`${this.baseUrl}/car`, dto);
+  updateCar(dto: UpdateCar | FormData): Observable<Result<unknown>> {
+    return this.client.patch<Result<unknown>>(`${this.baseUrl}/car`, dto);
   }
 
   getCatalogModelImages(): Observable<CatalogModelImage[]> {
