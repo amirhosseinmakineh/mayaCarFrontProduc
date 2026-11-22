@@ -54,6 +54,29 @@ describe('authInterceptor HTTP behavior', () => {
     request.flush({});
   });
 
+  it('authenticates direct catalog uploads and preserves multipart headers', () => {
+    const base = environment.catalogImageUploadApiUrl;
+    for (const suffix of ['72373', 'cars/78639']) {
+      const url = `${base}/admin/catalog/model-images/${suffix}`;
+      const body = new FormData();
+      body.append('image', new Blob(['image'], { type: 'image/png' }), 'car.png');
+      http.put(url, body, { headers: { 'X-Request-Id': 'test-request' } }).subscribe();
+
+      const request = requests.expectOne(url);
+      expect(request.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+      expect(request.request.headers.get('X-Request-Id')).toBe('test-request');
+      expect(request.request.headers.has('Content-Type')).toBeFalse();
+      expect(request.request.body).toBe(body);
+      request.flush({});
+    }
+
+    const external = 'https://external.example/api/admin/catalog/model-images/cars/78639';
+    http.put(external, new FormData()).subscribe();
+    const request = requests.expectOne(external);
+    expect(request.request.headers.has('Authorization')).toBeFalse();
+    request.flush({});
+  });
+
   it('clears a rejected session and requests login on 401', () => {
     const url = `${environment.apiUrl}/admin/telegram-channels/capabilities`;
     http.get(url).subscribe({ error: () => undefined });
