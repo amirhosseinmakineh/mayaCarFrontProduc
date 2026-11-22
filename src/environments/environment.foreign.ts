@@ -7,4 +7,5 @@ const apiUrl = typeof window === 'undefined'
 export const environment = {
   production: true,
   apiUrl,
+  catalogImageUploadApiUrl: 'https://api.mayakhodro.com/api',
 };

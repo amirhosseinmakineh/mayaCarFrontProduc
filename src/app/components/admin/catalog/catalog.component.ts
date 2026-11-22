@@ -189,16 +189,18 @@ export class CatalogComponent implements OnInit {
     const file = input.files?.[0]; input.value = '';
     if (!file || !this.selectedModelId || this.uploadingId !== null) return;
     const modelId = this.selectedModelId;
-    const form = new FormData(); form.append('image', file);
+    const form = new FormData();
+    form.append('image', file);
+    const requestId = crypto.randomUUID();
     this.uploadingId = -modelId;
-    this.http.put<{imageName: string; updatedCars: number}>(`${environment.apiUrl}/admin/catalog/model-images/${modelId}`, form).subscribe({
+    this.http.put<{imageName: string; updatedCars: number}>(`${environment.catalogImageUploadApiUrl}/admin/catalog/model-images/${modelId}`, form, { headers: { 'X-Request-Id': requestId } }).subscribe({
       next: result => {
         this.uploadingId = null;
         this.imageMessage = `عکس مدل ذخیره شد و ${result.updatedCars} خودروی مرجع به‌روزرسانی شد.`;
         this.loadModels(); this.loadModelCars(); this.load(); this.changeDetector.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
-        this.uploadingId = null; this.imageMessage = this.uploadError(err);
+        this.uploadingId = null; this.imageMessage = this.uploadError(err, requestId);
         this.changeDetector.markForCheck();
       }
     });
@@ -214,21 +216,23 @@ export class CatalogComponent implements OnInit {
     });
   }
 
-  private uploadError(err: HttpErrorResponse): string {
-    const message = err.status === 504 ? 'سرور در مهلت تعیین‌شده به آپلود پاسخ نداد. وضعیت بک‌اند و اتصال دیتابیس را بررسی کنید؛ پیش از تلاش دوباره، عکس را تازه‌سازی کنید.'
+  private uploadError(err: HttpErrorResponse, sentRequestId: string): string {
+    const message = err.status === 504 ? 'سرور در مهلت تعیین‌شده به آپلود پاسخ نداد. پیش از تلاش دوباره، صفحه را به‌روزرسانی کنید.'
       : err.status === 502 ? 'ارتباط سرور سایت با بک‌اند قطع شده است.'
       : err.status === 413 ? 'حجم تصویر بیشتر از حد مجاز است.'
       : err.status === 401 || err.status === 403 ? 'دسترسی آپلود ندارید؛ دوباره وارد پنل شوید.'
       : err.status === 400 ? 'فرمت تصویر نامعتبر است. JPEG، PNG یا WebP تا ۸ مگابایت انتخاب کنید.'
       : 'ذخیره عکس ناموفق بود. اتصال و فضای ذخیره‌سازی سرور را بررسی کنید.';
-    const requestId = err.headers.get('X-Request-Id');
-    return requestId ? `${message} شناسه درخواست: ${requestId}` : message;
+    const requestId = err.headers.get('X-Request-Id') ?? sentRequestId;
+    return `${message} شناسه درخواست: ${requestId}`;
   }
 
   private saveCarImage(id: number, name: string, file: File, onSaved: (path: string) => void): void {
-    const form = new FormData(); form.append('image', file);
+    const form = new FormData();
+    form.append('image', file);
+    const requestId = crypto.randomUUID();
     this.uploadingId = id; this.imageMessage = '';
-    this.http.put<{imageName: string}>(`${environment.apiUrl}/admin/catalog/model-images/cars/${id}`, form).subscribe({
+    this.http.put<{imageName: string}>(`${environment.catalogImageUploadApiUrl}/admin/catalog/model-images/cars/${id}`, form, { headers: { 'X-Request-Id': requestId } }).subscribe({
       next: result => {
         this.uploadingId = null;
         onSaved(result.imageName);
@@ -237,7 +241,7 @@ export class CatalogComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.uploadingId = null;
-        this.imageMessage = this.uploadError(err);
+        this.imageMessage = this.uploadError(err, requestId);
         this.changeDetector.markForCheck();
       }
     });

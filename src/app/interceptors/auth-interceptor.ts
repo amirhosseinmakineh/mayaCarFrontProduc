@@ -9,8 +9,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const baseUrl = environment.apiUrl.replace(/\/$/, '');
+  const uploadBaseUrl = environment.catalogImageUploadApiUrl.replace(/\/$/, '');
+  const uploadPath = request.url.slice(uploadBaseUrl.length);
+  const isCatalogImageUpload =
+    request.method === 'PUT' &&
+    request.url.startsWith(uploadBaseUrl) &&
+    /^\/admin\/catalog\/model-images\/(?:cars\/)?\d+$/.test(uploadPath);
   const isApiRequest =
-    request.url === baseUrl || request.url.startsWith(`${baseUrl}/`);
+    request.url === baseUrl || request.url.startsWith(`${baseUrl}/`) || isCatalogImageUpload;
   const token = isApiRequest ? auth.getToken() : null;
   const authenticatedRequest = token
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
