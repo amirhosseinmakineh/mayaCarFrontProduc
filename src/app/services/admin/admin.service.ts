@@ -21,6 +21,13 @@ import { Result } from "../../models/result";
 import { CreateOrder, Order } from '../../models/order/order';
 import { OrderItem } from "../../models/orderItem/orderItem";
 
+export interface AdminUsersPage {
+  items: User[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
 export interface CatalogModelImage {
   id: number;
   name: string;
@@ -46,20 +53,22 @@ export class AdminService {
 
   constructor() { }
 
-  getUsers(): Observable<User[]> {
-    return this.client.get<User[]>(`${this.baseUrl}/User/GetUsers`);
+  getUsers(pageNumber = 0, pageSize = 15, search = ''): Observable<AdminUsersPage> {
+    let params = new HttpParams().set('pageNumber', pageNumber).set('pageSize', pageSize);
+    if (search.trim()) params = params.set('search', search.trim());
+    return this.client.get<AdminUsersPage>(`${this.baseUrl}/User/GetUsers`, { params });
   }
 
-  createUser(dto: CreateUser): Observable<void> {
-    return this.client.post<void>(`${this.baseUrl}/user/createUser`, dto);
+  createUser(dto: CreateUser): Observable<Result<unknown>> {
+    return this.client.post<Result<unknown>>(`${this.baseUrl}/user/createUser`, dto);
   }
 
-  updateUser(dto: UpdateUser): Observable<void> {
+  updateUser(dto: UpdateUser): Observable<Result<unknown>> {
     return this.client.post<void>(`${this.baseUrl}/user/UpdateUser`, dto);
   }
 
-  deleteUser(id: string): Observable<void> {
-    return this.client.get<void>(`${this.baseUrl}/user/DeleteUser/${id}`);
+  deleteUser(id: string): Observable<Result<unknown>> {
+    return this.client.get<Result<unknown>>(`${this.baseUrl}/user/DeleteUser/${id}`);
   }
 
   getAllRoles(): Observable<Role[]> {
@@ -73,12 +82,12 @@ export class AdminService {
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  createCar(dto: CreateCar | FormData): Observable<void> {
+  createCar(dto: CreateCar | FormData): Observable<Result<unknown>> {
     return this.client.post<void>(`${this.baseUrl}/car`, dto);
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  updateCar(dto: UpdateCar | FormData): Observable<void> {
+  updateCar(dto: UpdateCar | FormData): Observable<Result<unknown>> {
     return this.client.patch<void>(`${this.baseUrl}/car`, dto);
   }
 
@@ -99,7 +108,7 @@ export class AdminService {
     return this.client.put<{ imageName: string }>(`${this.baseUrl}/car/${id}/image`, data);
   }
 
-  deleteCar(id: number): Observable<void> {
+  deleteCar(id: number): Observable<Result<unknown>> {
     return this.client.delete<void>(`${this.baseUrl}/car/${id}`);
   }
 
