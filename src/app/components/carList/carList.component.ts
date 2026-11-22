@@ -10,6 +10,9 @@ import { CarFilter } from '../../models/car/carFilter';
 import { Company } from '../../models/company/companyName';
 import { CarService } from '../../services/car/car.service';
 
+const vehicleImageOrigin = 'https://api.mayakhodro.com';
+const vehicleImagePlaceholder = '/assets/images/car-placeholder.svg';
+
 @Component({
   selector: 'app-car-list',
   templateUrl: './carList.component.html',
@@ -137,9 +140,28 @@ export class CarListComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(car: Car): string {
-    const image = car.imageName || car.details?.imageUrl || '';
-    if (!image) return 'assets/images/car-placeholder.svg';
-    return image.startsWith('http') ? image : `https://api.mayakhodro.com${image.startsWith('/') ? image : `/${image}`}`;
+    const image = car.imageName?.trim() || car.details?.imageUrl?.trim();
+    if (!image) return vehicleImagePlaceholder;
+    try {
+      const url = new URL(image, vehicleImageOrigin);
+      return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : vehicleImagePlaceholder;
+    } catch {
+      return vehicleImagePlaceholder;
+    }
+  }
+
+  recoverImage(event: Event): void {
+    const image = event.currentTarget as HTMLImageElement;
+    const source = image.getAttribute('src');
+    if (!source || source === vehicleImagePlaceholder) return;
+
+    const url = new URL(source, vehicleImageOrigin);
+    if (source.startsWith(vehicleImageOrigin + '/') && url.pathname.startsWith('/images/cars/')) {
+      // Runflare's frontend also proxies stored photos under /images.
+      image.src = url.pathname + url.search;
+      return;
+    }
+    image.src = vehicleImagePlaceholder;
   }
 
   trackByCompany(index: number, item: Company): number {

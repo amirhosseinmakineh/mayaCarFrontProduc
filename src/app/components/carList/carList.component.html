@@ -65,7 +65,7 @@
   <section class="car-grid" *ngIf="!isLoading() && cars().length > 0">
     <article class="car-card" *ngFor="let car of cars(); trackBy: trackByCar">
       <a class="card-image" [routerLink]="['/carDetail', car.id]" [attr.aria-label]="'مشاهده جزئیات ' + car.name">
-        <img [src]="getImageUrl(car)" [alt]="car.name" loading="lazy">
+        <img [src]="getImageUrl(car)" [alt]="car.name" (error)="recoverImage($event)" decoding="async">
         <span class="brand-badge">{{ getCompany(car) }}</span>
         <span class="detail-icon" aria-hidden="true">↗</span>
       </a>

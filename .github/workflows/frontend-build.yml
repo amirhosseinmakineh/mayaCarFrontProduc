@@ -50,10 +50,11 @@ jobs:
           fi
       - name: Proxy tests
         run: npm run test:api-proxy
-      - name: Catalog upload authentication and multipart tests
+      - name: Catalog upload and public vehicle image tests
         run: >-
           npm test -- --watch=false --browsers=ChromeHeadless
           --include=src/app/interceptors/auth-interceptor.spec.ts
+          --include=src/app/components/carList/carList.component.spec.ts
           --ts-config=tsconfig.catalog-upload.spec.json
 
   runflare-install:
