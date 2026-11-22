@@ -1,3 +1,30 @@
+<section class="grid-wrapper" style="margin-bottom:24px">
+  <div class="grid-header"><h2>مدیریت تصاویر گروهی مدل خودرو</h2></div>
+  <p>یک تصویر برای تمام تیپ‌های یک مدل انتخاب کنید. تصویر برای خودروهای مرجع بدون تصویر اختصاصی اعمال می‌شود.</p>
+  <div class="form-group">
+    <label for="modelImageSelect">مدل خودرو</label>
+    <select id="modelImageSelect" name="modelImageSelect" [(ngModel)]="selectedModelId">
+      <option [ngValue]="0">انتخاب مدل</option>
+      <option *ngFor="let model of modelImages()" [ngValue]="model.id">{{ model.name }}</option>
+    </select>
+  </div>
+  <div *ngIf="selectedModelId" style="margin:12px 0">
+    <ng-container *ngFor="let model of modelImages()">
+      <img *ngIf="model.id === selectedModelId && model.imageName"
+        [src]="getImageUrl(model.imageName)" alt="تصویر فعلی مدل"
+        style="max-width:180px;max-height:130px;object-fit:contain">
+    </ng-container>
+  </div>
+  <div class="form-group">
+    <label for="modelImageFile">تصویر مدل (JPEG، PNG یا WebP؛ حداکثر ۸ مگابایت)</label>
+    <input id="modelImageFile" type="file" accept="image/jpeg,image/png,image/webp" (change)="onModelFileSelected($event)">
+  </div>
+  <button type="button" class="add-user-btn" (click)="saveModelImage()"
+    [disabled]="!selectedModelId || !selectedModelFile || savingModelImage">
+    {{ savingModelImage ? 'در حال ذخیره...' : 'ذخیره تصویر گروهی' }}
+  </button>
+</section>
+
 <div class="grid-wrapper">
 
   <div class="grid-header">
