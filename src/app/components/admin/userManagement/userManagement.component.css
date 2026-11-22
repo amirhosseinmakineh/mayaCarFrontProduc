@@ -812,3 +812,27 @@ textarea:focus { box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16) !important; }
     margin-inline: 0 !important;
   }
 }
+
+/* Bottom pagination for admin tables */
+.admin-bottom-pager {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-top: 20px; padding: 16px 12px 4px;
+  border-top: 1px solid rgba(143,111,29,.18);
+}
+.pager-summary { color: #765b22; font-size: .88rem; font-weight: 600; }
+.pager-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.pager-controls button { min-width: 38px; min-height: 38px; padding: 7px 12px;
+  background: #fff; color: #765b22; border: 1px solid rgba(143,111,29,.24);
+  border-radius: 10px; cursor: pointer; font-weight: 700; transition: background .15s; }
+.pager-controls button.current { background: #9c7928; color: white; border-color: #9c7928; }
+.pager-controls button:disabled { opacity: .4; cursor: not-allowed; }
+.pager-controls button:not(:disabled):hover { background: #fff3d1; }
+.pager-controls button.current:hover { background: #9c7928; }
+.user-search-row { margin: 12px 0; }
+.user-search-row input { width: min(100%, 380px); padding: 11px 14px; border: 1px solid #d7c69c; border-radius: 12px; }
+@media (max-width: 640px) {
+  .admin-bottom-pager { justify-content: center; text-align: center; }
+  .pager-summary { width: 100%; }
+  .pager-controls { width: 100%; }
+  .pager-controls button { min-width: 34px; padding: 7px 9px; }
+}
