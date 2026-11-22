@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 
-import { AdminService }
+import { AdminService, CatalogModelImage }
 from '../../../services/admin/admin.service';
 
 import { Car }
@@ -62,6 +62,10 @@ implements OnInit {
     inject(AdminService);
   private readonly toastr = inject(ToastrService);
   saving = false;
+  savingModelImage = false;
+  selectedModelId = 0;
+  selectedModelFile: File | null = null;
+  modelImages = signal<CatalogModelImage[]>([]);
   private carsRequest?: Subscription;
   totalCars = 0;
   loadingCars = false;
@@ -136,6 +140,7 @@ implements OnInit {
 
     this.loadCars();
     this.loadCarModels();
+    this.loadModelImages();
     this.loadCompanies();
     this.loadTips();
 
@@ -187,6 +192,33 @@ implements OnInit {
           })));
         },
         error: () => this.toastr.error('دریافت فهرست خودروها ناموفق بود.')
+      });
+  }
+
+  loadModelImages(): void {
+    this.adminService.getCatalogModelImages().subscribe({
+      next: models => this.modelImages.set(models),
+      error: () => this.toastr.error('دریافت تصاویر مدل‌ها ناموفق بود.')
+    });
+  }
+
+  onModelFileSelected(event: Event): void {
+    this.selectedModelFile = (event.target as HTMLInputElement).files?.[0] ?? null;
+  }
+
+  saveModelImage(): void {
+    if (!this.selectedModelId || !this.selectedModelFile || this.savingModelImage) return;
+    this.savingModelImage = true;
+    this.adminService.uploadCatalogModelImage(this.selectedModelId, this.selectedModelFile)
+      .pipe(finalize(() => this.savingModelImage = false))
+      .subscribe({
+        next: result => {
+          this.toastr.success(`تصویر مدل ذخیره شد؛ ${result.updatedCars} خودروی مرجع به‌روزرسانی شد.`);
+          this.selectedModelFile = null;
+          this.loadModelImages();
+          this.loadCars();
+        },
+        error: () => this.toastr.error('آپلود تصویر مدل ناموفق بود.')
       });
   }
 

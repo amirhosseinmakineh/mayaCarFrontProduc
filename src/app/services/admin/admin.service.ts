@@ -21,6 +21,12 @@ import { Result } from "../../models/result";
 import { CreateOrder, Order } from '../../models/order/order';
 import { OrderItem } from "../../models/orderItem/orderItem";
 
+export interface CatalogModelImage {
+  id: number;
+  name: string;
+  imageName: string | null;
+}
+
 export interface AdminCarPage {
   items: Array<{
     id: number; name: string; imageName: string; description: string;
@@ -74,6 +80,17 @@ export class AdminService {
   // ✔ باز کردن امضا برای قبول کردن FormData
   updateCar(dto: UpdateCar | FormData): Observable<void> {
     return this.client.patch<void>(`${this.baseUrl}/car`, dto);
+  }
+
+  getCatalogModelImages(): Observable<CatalogModelImage[]> {
+    return this.client.get<CatalogModelImage[]>(`${this.baseUrl}/admin/catalog/model-images`);
+  }
+
+  uploadCatalogModelImage(modelId: number, file: File): Observable<{ imageName: string; updatedCars: number }> {
+    const data = new FormData();
+    data.append('image', file);
+    return this.client.put<{ imageName: string; updatedCars: number }>(
+      `${this.baseUrl}/admin/catalog/model-images/${modelId}`, data);
   }
 
   updateVehicleImage(id: number, file: File): Observable<{ imageName: string }> {
