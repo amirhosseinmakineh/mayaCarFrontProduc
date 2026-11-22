@@ -49,7 +49,7 @@ export class CarListComponent implements OnInit, OnDestroy {
     minPrice: undefined,
     maxPrice: undefined,
     company: '',
-    pageSize: 12,
+    pageSize: 10,
     pageNumber: 0
   });
 
@@ -96,7 +96,7 @@ export class CarListComponent implements OnInit, OnDestroy {
       minPrice: undefined,
       maxPrice: undefined,
       company: '',
-      pageSize: 12,
+      pageSize: 10,
       pageNumber: 0
     });
     this.applyFilter();

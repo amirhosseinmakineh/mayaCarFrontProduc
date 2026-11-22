@@ -21,7 +21,8 @@
 
   </div>
 
-  <label>جست‌وجوی خودرو <input name="carSearch" [(ngModel)]="search" (ngModelChange)="page=0" placeholder="نام، شرکت، مدل یا تیپ"></label>
+  <label>جست‌وجوی خودرو <input name="carSearch" [(ngModel)]="search" (ngModelChange)="onSearchChanged()" placeholder="شناسه، نام، شرکت، مدل یا تیپ"></label>
+  <p>تعداد نتایج: {{ totalCars }}</p>
   <div class="table-wrapper">
 
     <table class="data-grid">
