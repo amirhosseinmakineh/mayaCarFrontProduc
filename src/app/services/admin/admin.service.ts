@@ -64,7 +64,7 @@ export class AdminService {
   }
 
   updateUser(dto: UpdateUser): Observable<Result<unknown>> {
-    return this.client.post<void>(`${this.baseUrl}/user/UpdateUser`, dto);
+    return this.client.post<Result<unknown>>(`${this.baseUrl}/user/UpdateUser`, dto);
   }
 
   deleteUser(id: string): Observable<Result<unknown>> {
@@ -82,12 +82,12 @@ export class AdminService {
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  createCar(dto: CreateCar | FormData): Observable<Result<unknown>> {
+  createCar(dto: CreateCar | FormData): Observable<void> {
     return this.client.post<void>(`${this.baseUrl}/car`, dto);
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  updateCar(dto: UpdateCar | FormData): Observable<Result<unknown>> {
+  updateCar(dto: UpdateCar | FormData): Observable<void> {
     return this.client.patch<void>(`${this.baseUrl}/car`, dto);
   }
 
@@ -108,7 +108,7 @@ export class AdminService {
     return this.client.put<{ imageName: string }>(`${this.baseUrl}/car/${id}/image`, data);
   }
 
-  deleteCar(id: number): Observable<Result<unknown>> {
+  deleteCar(id: number): Observable<void> {
     return this.client.delete<void>(`${this.baseUrl}/car/${id}`);
   }
 
