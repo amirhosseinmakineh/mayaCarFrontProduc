@@ -30,10 +30,14 @@ export class UserManagementComponent {
   search = signal('');
   page = signal(0);
   readonly pageSize = 15;
-  filtered = computed(() => this.users().filter(item => [item.name,item.family,item.email,item.mobileNumber].some(value => String(value ?? '').toLocaleLowerCase().includes(this.search().trim().toLocaleLowerCase()))));
-  visible = computed(() => this.filtered().slice(this.page() * this.pageSize, (this.page() + 1) * this.pageSize));
-  get totalPages(): number { return Math.max(1, Math.ceil(this.filtered().length / this.pageSize)); }
-  changePage(delta: number): void { this.page.set(Math.min(this.totalPages - 1, Math.max(0, this.page() + delta))); }
+  totalCount = signal(0);
+  visible = computed(() => this.users());
+  get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount() / this.pageSize)); }
+  changePage(delta: number): void {
+    this.page.set(Math.min(this.totalPages - 1, Math.max(0, this.page() + delta)));
+    this.loadUsers();
+  }
+  onSearch(value: string): void { this.search.set(value); this.page.set(0); this.loadUsers(); }
 
   users = signal<User[]>([]);
   roles = signal<Role[]>([]);
@@ -61,11 +65,16 @@ export class UserManagementComponent {
 
   loadUsers() {
 
-    this.service.getUsers().subscribe({
+    this.service.getUsers(this.page(), this.pageSize, this.search()).subscribe({
 
       next: res => {
 
-        this.users.set(res);
+        this.users.set(res.items);
+        this.totalCount.set(res.totalCount);
+        if (this.page() >= this.totalPages && this.page() > 0) {
+          this.page.set(this.totalPages - 1);
+          this.loadUsers();
+        }
 
       },
 
@@ -103,7 +112,8 @@ export class UserManagementComponent {
 
     this.service.createUser(model).subscribe({
 
-      next: () => {
+      next: res => {
+        if (!res.isSuccess) { this.toastr.error(res.message || 'عملیات ناموفق بود'); return; }
 
         this.toastr.success('کاربر با موفقیت ایجاد شد');
 
@@ -142,7 +152,8 @@ export class UserManagementComponent {
 
     this.service.updateUser(dto).subscribe({
 
-      next: () => {
+      next: res => {
+        if (!res.isSuccess) { this.toastr.error(res.message || 'عملیات ناموفق بود'); return; }
 
         this.toastr.success('ویرایش با موفقیت انجام شد');
 
@@ -172,7 +183,8 @@ export class UserManagementComponent {
 
     this.service.deleteUser(user.id).subscribe({
 
-      next: () => {
+      next: res => {
+        if (!res.isSuccess) { this.toastr.error(res.message || 'عملیات ناموفق بود'); return; }
 
         this.toastr.success('کاربر حذف شد');
 

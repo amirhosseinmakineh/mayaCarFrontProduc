@@ -5,5 +5,6 @@ export interface UpdateUser
   family : string,
   email? : string,
   mobileNumber : string,
+  roleName?: string,
   password : string
 }
