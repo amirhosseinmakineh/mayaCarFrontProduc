@@ -59,7 +59,12 @@ return (req, res, next) => {
     );
 
     let timedOut = false;
-    request.setTimeout(Math.max(1, timeoutMilliseconds), () => {
+    // Multipart uploads may need extra time for the backend to persist the image
+    // and update approved catalog records; keep normal API requests at 60 seconds.
+    const effectiveTimeout = req.method === 'PUT'
+      && /^\/api\/admin\/catalog\/model-images(?:\/|$)/.test(requestPath)
+      ? Math.max(timeoutMilliseconds, 120_000) : timeoutMilliseconds;
+    request.setTimeout(Math.max(1, effectiveTimeout), () => {
       timedOut = true;
       request.destroy(new Error('Backend proxy timeout'));
     });
