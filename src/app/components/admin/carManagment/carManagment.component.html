@@ -50,6 +50,7 @@
 
   <label>جست‌وجوی خودرو <input name="carSearch" [(ngModel)]="search" (ngModelChange)="onSearchChanged()" placeholder="شناسه، نام، شرکت، مدل یا تیپ"></label>
   <p>تعداد نتایج: {{ totalCars }}</p>
+  <p *ngIf="loadingCars" class="pager-summary" role="status">در حال بارگذاری خودروها...</p>
   <div class="table-wrapper">
 
     <table class="data-grid">
@@ -162,10 +163,16 @@
     </table>
 
   </div>
-  <nav style="display:flex;justify-content:center;gap:12px;margin:16px" *ngIf="totalPages > 1">
-    <button type="button" (click)="changePage(-1)" [disabled]="page===0">قبلی</button>
-    <span>صفحه {{ page+1 }} از {{ totalPages }}</span>
-    <button type="button" (click)="changePage(1)" [disabled]="page+1>=totalPages">بعدی</button>
+  <nav class="admin-bottom-pager" aria-label="صفحه‌بندی خودروها">
+    <div class="pager-summary">نمایش {{ firstVisible }} تا {{ lastVisible }} از {{ totalCars }} خودرو</div>
+    <div class="pager-controls" *ngIf="totalPages > 1">
+      <button type="button" (click)="goToPage(0)" [disabled]="page === 0" aria-label="صفحه اول">«</button>
+      <button type="button" (click)="changePage(-1)" [disabled]="page === 0">قبلی</button>
+      <button type="button" *ngFor="let number of pageNumbers" (click)="goToPage(number)"
+        [class.current]="number === page" [attr.aria-current]="number === page ? 'page' : null">{{ number + 1 }}</button>
+      <button type="button" (click)="changePage(1)" [disabled]="page + 1 >= totalPages">بعدی</button>
+      <button type="button" (click)="goToPage(totalPages - 1)" [disabled]="page + 1 >= totalPages" aria-label="صفحه آخر">»</button>
+    </div>
   </nav>
 </div>
 

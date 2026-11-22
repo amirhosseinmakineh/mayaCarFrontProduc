@@ -67,6 +67,8 @@ implements OnInit {
   selectedModelFile: File | null = null;
   modelImages = signal<CatalogModelImage[]>([]);
   private carsRequest?: Subscription;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  deleting = false;
   totalCars = 0;
   loadingCars = false;
 
@@ -88,7 +90,20 @@ implements OnInit {
     const next = Math.max(0, Math.min(this.totalPages - 1, this.page + delta));
     if (next !== this.page) { this.page = next; this.loadCars(); }
   }
-  onSearchChanged(): void { this.page = 0; this.loadCars(); }
+  onSearchChanged(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => { this.page = 0; this.loadCars(); }, 300);
+  }
+  goToPage(page: number): void {
+    const next = Math.max(0, Math.min(this.totalPages - 1, page));
+    if (next !== this.page) { this.page = next; this.loadCars(); }
+  }
+  get pageNumbers(): number[] {
+    const start = Math.max(0, Math.min(this.page - 2, this.totalPages - 5));
+    return Array.from({ length: Math.min(5, this.totalPages) }, (_, i) => start + i);
+  }
+  get firstVisible(): number { return this.totalCars ? this.page * this.pageSize + 1 : 0; }
+  get lastVisible(): number { return Math.min((this.page + 1) * this.pageSize, this.totalCars); }
   trackByCar(_index: number, car: Car): number { return car.id; }
   private lookupId(value: string | number | undefined, items: {id:number;name:string}[]): number {
     const match = items.find(i => i.name === String(value) || i.id === Number(value));
@@ -176,6 +191,11 @@ implements OnInit {
       .subscribe({
         next: res => {
           this.totalCars = res.filteredCount;
+          if (this.page >= this.totalPages && this.page > 0) {
+            this.page = this.totalPages - 1;
+            this.loadCars();
+            return;
+          }
           this.cars.set(res.items.map(item => ({
             id: item.id,
             name: item.name,
@@ -503,13 +523,8 @@ implements OnInit {
       dto.description
     );
 
-    if (this.selectedFile) {
-
-      formData.append(
-        'ImageName',
-        this.selectedFile
-      );
-
+    if (this.selectedFile && this.activeModal() === 'create') {
+      formData.append('ImageName', this.selectedFile);
     }
 
     return formData;
@@ -522,8 +537,9 @@ implements OnInit {
     this.adminService.createCar(formData)
       .subscribe({
 
-        next: () => {
+        next: result => {
           this.saving = false;
+          if (!result.isSuccess) { this.toastr.error(result.message || 'ثبت خودرو ناموفق بود'); return; }
           this.toastr.success('خودرو ذخیره شد');
           this.afterSave();
 
@@ -559,8 +575,23 @@ implements OnInit {
     this.adminService.updateCar(formData)
       .subscribe({
 
-        next: () => {
+        next: result => {
+          if (!result.isSuccess) {
+            this.saving = false;
+            this.toastr.error(result.message || 'ویرایش خودرو ناموفق بود');
+            return;
+          }
+          if (this.selectedFile) {
+            this.adminService.updateVehicleImage(car.id, this.selectedFile)
+              .pipe(timeout(70000), finalize(() => this.saving = false))
+              .subscribe({
+                next: () => { this.toastr.success('خودرو و تصویر ویرایش شدند'); this.afterSave(); },
+                error: () => { this.toastr.error('اطلاعات ذخیره شد اما آپلود تصویر ناموفق بود'); this.afterSave(); }
+              });
+            return;
+          }
           this.saving = false;
+          this.toastr.success('خودرو ویرایش شد');
           this.afterSave();
 
         },
@@ -588,6 +619,7 @@ implements OnInit {
   // ======================
 
   deleteCar(): void {
+    if (this.deleting) return;
 
     const car =
       this.selectedCar();
@@ -596,12 +628,14 @@ implements OnInit {
       return;
     }
 
+    this.deleting = true;
     this.adminService
       .deleteCar(car.id)
+      .pipe(finalize(() => this.deleting = false))
       .subscribe({
 
         next: () => {
-
+          this.toastr.success('خودرو حذف شد.');
           this.loadCars();
 
           this.closeModal();
