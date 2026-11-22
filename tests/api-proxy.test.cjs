@@ -86,3 +86,71 @@ test('upstream timeout is 504 with a traceable request ID and keeps the session'
   assert.equal(body.requestId, response.headers.get('x-request-id'));
   assert.ok(body.requestId);
 });
+
+test('streams multipart PUT with content length and a shared request ID', async t => {
+  const boundary = 'mayacar-test-upload';
+  const contentType = `multipart/form-data; boundary=${boundary}`;
+  const body = Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="image"; filename="car.jpg"\r\n\r\nimage bytes\r\n--${boundary}--\r\n`);
+  let upstreamId;
+  const origin = await fixture(t, async (req, res) => {
+    assert.equal(req.method, 'PUT');
+    assert.equal(req.headers['content-type'], contentType);
+    assert.equal(req.headers['content-length'], String(body.length));
+    assert.equal(req.headers['transfer-encoding'], undefined);
+    assert.equal(req.headers.authorization, 'Bearer test-session');
+    upstreamId = req.headers['x-request-id'];
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    assert.deepEqual(Buffer.concat(chunks), body);
+    res.setHeader('X-Request-Id', 'unexpected-upstream-id');
+    res.end('saved');
+  });
+
+  const response = await fetch(`${origin}/api/admin/catalog/model-images/72373`, {
+    method: 'PUT', body, headers: { authorization: 'Bearer test-session',
+      'content-type': contentType, 'x-request-id': 'untrusted-inbound-value' },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), 'saved');
+  assert.match(upstreamId, /^[0-9a-f-]{36}$/);
+  assert.equal(response.headers.get('x-request-id'), upstreamId);
+});
+
+test('upload deadline closes the upstream request after the body was sent', async t => {
+  let markClosed;
+  const closed = new Promise(resolve => { markClosed = resolve; });
+  const upstream = await server((req, res) => {
+    res.once('close', markClosed);
+    req.resume();
+  });
+  const app = express();
+  app.use(createApiProxy(upstream.origin, 1000, 100));
+  const proxy = await server(app);
+  t.after(async () => { await proxy.close(); await upstream.close(); });
+  const response = await fetch(`${proxy.origin}/api/admin/catalog/model-images/72373`,
+    { method: 'PUT', body: new FormData() });
+  assert.equal(response.status, 504);
+  assert.equal((await response.json()).requestId, response.headers.get('x-request-id'));
+  await closed;
+});
+
+test('closing the downstream client cancels upstream after a complete upload body', async t => {
+  let abortClient;
+  let markClosed;
+  const closed = new Promise(resolve => { markClosed = resolve; });
+  const upstream = await server((req, res) => {
+    res.once('close', markClosed);
+    req.once('end', () => abortClient());
+    req.resume();
+  });
+  const app = express();
+  app.use(createApiProxy(upstream.origin, 1000, 1000));
+  const proxy = await server(app);
+  t.after(async () => { await proxy.close(); await upstream.close(); });
+  const request = http.request(`${proxy.origin}/api/admin/catalog/model-images/72373`,
+    { method: 'PUT' });
+  request.on('error', () => {});
+  abortClient = () => request.destroy();
+  request.end('body');
+  await closed;
+});

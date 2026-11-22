@@ -215,12 +215,14 @@ export class CatalogComponent implements OnInit {
   }
 
   private uploadError(err: HttpErrorResponse): string {
-    return err.status === 504 ? 'سرور در مهلت تعیین‌شده به آپلود پاسخ نداد. وضعیت بک‌اند و اتصال دیتابیس را بررسی کنید؛ پیش از تلاش دوباره، عکس را تازه‌سازی کنید.'
+    const message = err.status === 504 ? 'سرور در مهلت تعیین‌شده به آپلود پاسخ نداد. وضعیت بک‌اند و اتصال دیتابیس را بررسی کنید؛ پیش از تلاش دوباره، عکس را تازه‌سازی کنید.'
       : err.status === 502 ? 'ارتباط سرور سایت با بک‌اند قطع شده است.'
       : err.status === 413 ? 'حجم تصویر بیشتر از حد مجاز است.'
       : err.status === 401 || err.status === 403 ? 'دسترسی آپلود ندارید؛ دوباره وارد پنل شوید.'
       : err.status === 400 ? 'فرمت تصویر نامعتبر است. JPEG، PNG یا WebP تا ۸ مگابایت انتخاب کنید.'
       : 'ذخیره عکس ناموفق بود. اتصال و فضای ذخیره‌سازی سرور را بررسی کنید.';
+    const requestId = err.headers.get('X-Request-Id');
+    return requestId ? `${message} شناسه درخواست: ${requestId}` : message;
   }
 
   private saveCarImage(id: number, name: string, file: File, onSaved: (path: string) => void): void {
