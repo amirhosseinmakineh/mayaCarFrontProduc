@@ -523,13 +523,8 @@ implements OnInit {
       dto.description
     );
 
-    if (this.selectedFile) {
-
-      formData.append(
-        'ImageName',
-        this.selectedFile
-      );
-
+    if (this.selectedFile && this.activeModal() === 'create') {
+      formData.append('ImageName', this.selectedFile);
     }
 
     return formData;
@@ -542,8 +537,9 @@ implements OnInit {
     this.adminService.createCar(formData)
       .subscribe({
 
-        next: () => {
+        next: result => {
           this.saving = false;
+          if (!result.isSuccess) { this.toastr.error(result.message || 'ثبت خودرو ناموفق بود'); return; }
           this.toastr.success('خودرو ذخیره شد');
           this.afterSave();
 
@@ -579,8 +575,23 @@ implements OnInit {
     this.adminService.updateCar(formData)
       .subscribe({
 
-        next: () => {
+        next: result => {
+          if (!result.isSuccess) {
+            this.saving = false;
+            this.toastr.error(result.message || 'ویرایش خودرو ناموفق بود');
+            return;
+          }
+          if (this.selectedFile) {
+            this.adminService.updateVehicleImage(car.id, this.selectedFile)
+              .pipe(timeout(70000), finalize(() => this.saving = false))
+              .subscribe({
+                next: () => { this.toastr.success('خودرو و تصویر ویرایش شدند'); this.afterSave(); },
+                error: () => { this.toastr.error('اطلاعات ذخیره شد اما آپلود تصویر ناموفق بود'); this.afterSave(); }
+              });
+            return;
+          }
           this.saving = false;
+          this.toastr.success('خودرو ویرایش شد');
           this.afterSave();
 
         },
