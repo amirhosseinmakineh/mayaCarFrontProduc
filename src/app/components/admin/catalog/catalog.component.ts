@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
+interface ModelImage { id: number; name: string; imageName: string | null; }
+interface ModelCar { id: number; name: string; imageName: string | null; isReferenceApproved: boolean; tip: string | null; }
 interface CatalogCar {
   id: number;
   imageName?: string;
@@ -40,6 +42,35 @@ interface CatalogResponse {
         </div>
         <button type="button" (click)="load()" [disabled]="loading">↻ بروزرسانی</button>
       </header>
+
+      <div class="panel" style="margin-top:18px">
+        <h2>مدیریت گروهی تصاویر خودرو</h2>
+        <p>مدل را انتخاب کنید تا تمام خودروهای آن مدل نمایش داده شوند. عکس اختصاصی هر خودرو را جداگانه یا یک عکس مشترک برای مدل ثبت کنید.</p>
+        <select name="selectedModel" [(ngModel)]="selectedModelId" (ngModelChange)="loadModelCars()" aria-label="انتخاب مدل خودرو">
+          <option [ngValue]="0">انتخاب مدل خودرو</option>
+          <option *ngFor="let model of models" [ngValue]="model.id">{{ model.name }}</option>
+        </select>
+        <div *ngIf="selectedModelId" style="margin:14px 0">
+          <p>عکس مشترک مدل:</p>
+          <img *ngIf="selectedModelImage" [src]="imageUrl(selectedModelImage)" alt="عکس مدل" style="max-width:160px;max-height:120px;object-fit:contain">
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadModelImage($event)" [disabled]="uploadingId !== null">
+        </div>
+        <div class="table-wrap" *ngIf="selectedModelId">
+          <table>
+            <thead><tr><th>نام خودرو</th><th>تیپ</th><th>وضعیت مرجع</th><th>عکس</th><th>آپلود عکس اختصاصی</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let car of modelCars">
+                <td>{{ car.name }}</td><td>{{ car.tip || '—' }}</td>
+                <td>{{ car.isReferenceApproved ? 'مرجع شده' : 'مرجع نشده' }}</td>
+                <td><img *ngIf="car.imageName" [src]="imageUrl(car.imageName)" alt="عکس خودرو" style="max-width:100px;max-height:80px;object-fit:contain"></td>
+                <td><input type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadSelectedCarImage(car,$event)" [disabled]="uploadingId !== null"></td>
+              </tr>
+              <tr *ngIf="!modelCars.length"><td colspan="5">خودرویی برای این مدل یافت نشد.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p *ngIf="imageMessage" role="status">{{ imageMessage }}</p>
+      </div>
 
       <div class="metrics">
         <article><span>کل خودروهای ثبت‌شده</span><strong>{{ data?.totalCars ?? '—' }}</strong></article>
@@ -114,6 +145,12 @@ export class CatalogComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly changeDetector = inject(ChangeDetectorRef);
   data: CatalogResponse | null = null;
+  models: ModelImage[] = [];
+  modelCars: ModelCar[] = [];
+  selectedModelId = 0;
+  get selectedModelImage(): string | null {
+    return this.models.find(x => x.id === this.selectedModelId)?.imageName ?? null;
+  }
   loading = false;
   uploadingId: number | null = null;
   imageMessage = '';
@@ -128,7 +165,79 @@ export class CatalogComponent implements OnInit {
     return Math.max(1, Math.ceil((this.data?.filteredCount ?? 0) / this.pageSize));
   }
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadModels(); }
+
+  loadModels(): void {
+    this.http.get<ModelImage[]>(`${environment.apiUrl}/admin/catalog/model-images`).subscribe({
+      next: models => { this.models = models; this.changeDetector.markForCheck(); },
+      error: () => { this.imageMessage = 'دریافت مدل‌ها ناموفق بود.'; this.changeDetector.markForCheck(); }
+    });
+  }
+
+  loadModelCars(): void {
+    this.modelCars = [];
+    if (!this.selectedModelId) return;
+    const modelId = this.selectedModelId;
+    this.http.get<ModelCar[]>(`${environment.apiUrl}/admin/catalog/model-images/${modelId}/cars`).subscribe({
+      next: cars => { if (this.selectedModelId === modelId) this.modelCars = cars; this.changeDetector.markForCheck(); },
+      error: () => { this.imageMessage = 'دریافت خودروهای مدل ناموفق بود.'; this.changeDetector.markForCheck(); }
+    });
+  }
+
+  uploadModelImage(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0]; input.value = '';
+    if (!file || !this.selectedModelId || this.uploadingId !== null) return;
+    const modelId = this.selectedModelId;
+    const form = new FormData(); form.append('image', file);
+    this.uploadingId = -modelId;
+    this.http.put<{imageName: string; updatedCars: number}>(`${environment.apiUrl}/admin/catalog/model-images/${modelId}`, form).subscribe({
+      next: result => {
+        this.uploadingId = null;
+        this.imageMessage = `عکس مدل ذخیره شد و ${result.updatedCars} خودروی مرجع به‌روزرسانی شد.`;
+        this.loadModels(); this.loadModelCars(); this.load(); this.changeDetector.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.uploadingId = null; this.imageMessage = this.uploadError(err);
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  uploadSelectedCarImage(car: ModelCar, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0]; input.value = '';
+    if (!file || this.uploadingId !== null) return;
+    this.saveCarImage(car.id, car.name, file, path => {
+      car.imageName = path;
+      this.load();
+    });
+  }
+
+  private uploadError(err: HttpErrorResponse): string {
+    return err.status === 413 ? 'حجم تصویر بیشتر از حد مجاز است.'
+      : err.status === 401 || err.status === 403 ? 'دسترسی آپلود ندارید؛ دوباره وارد پنل شوید.'
+      : err.status === 400 ? 'فرمت تصویر نامعتبر است. JPEG، PNG یا WebP تا ۸ مگابایت انتخاب کنید.'
+      : 'ذخیره عکس ناموفق بود. اتصال و فضای ذخیره‌سازی سرور را بررسی کنید.';
+  }
+
+  private saveCarImage(id: number, name: string, file: File, onSaved: (path: string) => void): void {
+    const form = new FormData(); form.append('image', file);
+    this.uploadingId = id; this.imageMessage = '';
+    this.http.put<{imageName: string}>(`${environment.apiUrl}/admin/catalog/model-images/cars/${id}`, form).subscribe({
+      next: result => {
+        this.uploadingId = null;
+        onSaved(result.imageName);
+        this.imageMessage = `عکس خودرو ${name} ذخیره شد.`;
+        this.changeDetector.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.uploadingId = null;
+        this.imageMessage = this.uploadError(err);
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
 
   searchCars(): void { this.page = 0; this.load(); }
 
@@ -149,23 +258,8 @@ export class CatalogComponent implements OnInit {
     input.value = '';
     if (!file || this.uploadingId !== null) return;
 
-    const form = new FormData();
-    form.append('image', file);
-    this.uploadingId = car.id;
-    this.imageMessage = '';
-    this.http.put<{ imageName: string }>(`${environment.apiUrl}/car/${car.id}/image`, form).subscribe({
-      next: ({ imageName }) => {
-        car.imageName = imageName;
-        this.uploadingId = null;
-        this.imageMessage = `عکس خودرو ${car.name} ذخیره شد.`;
-        this.changeDetector.markForCheck();
-      },
-      error: () => {
-        this.uploadingId = null;
-        this.imageMessage = `ذخیرهٔ عکس خودرو ${car.name} ناموفق بود.`;
-        this.changeDetector.markForCheck();
-      }
-    });
+    this.saveCarImage(car.id, car.name, file, imageName => { car.imageName = imageName; });
+
   }
 
   load(): void {
