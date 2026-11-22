@@ -180,11 +180,11 @@ export class OrderComponent implements OnInit {
 
   loadUsers(): void {
 
-    this.service.getUsers().subscribe({
+    this.service.getUsers(0, 100).subscribe({
 
       next: res => {
 
-        this.users.set(res || []);
+        this.users.set(res.items || []);
 
       },
 
