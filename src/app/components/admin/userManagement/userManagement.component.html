@@ -24,12 +24,9 @@
 
   </div>
 
-  <div class="admin-search-pager" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0">
-    <input type="search" aria-label="جست‌وجو" placeholder="جست‌وجو…" [ngModel]="search()" (ngModelChange)="onSearch($event)" style="padding:9px;min-width:200px;max-width:100%;border:1px solid #ddd;border-radius:8px">
-    <span>{{ totalCount() }} مورد</span>
-    <button type="button" (click)="changePage(-1)" [disabled]="page() === 0">قبلی</button>
-    <span>صفحه {{ page() + 1 }} از {{ totalPages }}</span>
-    <button type="button" (click)="changePage(1)" [disabled]="page() + 1 >= totalPages">بعدی</button>
+  <div class="user-search-row">
+    <input type="search" aria-label="جست‌وجوی کاربران" placeholder="جست‌وجوی نام، ایمیل یا موبایل"
+      [ngModel]="search()" (ngModelChange)="onSearch($event)">
   </div>
   <div class="table-wrapper">
 
@@ -126,7 +123,16 @@
     </table>
 
   </div>
-
+  <nav class="admin-bottom-pager" aria-label="صفحه‌بندی کاربران">
+    <div class="pager-summary">نمایش {{ totalCount() ? page() * pageSize + 1 : 0 }} تا {{ (page() + 1) * pageSize < totalCount() ? (page() + 1) * pageSize : totalCount() }} از {{ totalCount() }} کاربر</div>
+    <div class="pager-controls" *ngIf="totalPages > 1">
+      <button type="button" (click)="changePage(-page())" [disabled]="page() === 0" aria-label="صفحه اول">«</button>
+      <button type="button" (click)="changePage(-1)" [disabled]="page() === 0">قبلی</button>
+      <span>صفحه {{ page() + 1 }} از {{ totalPages }}</span>
+      <button type="button" (click)="changePage(1)" [disabled]="page() + 1 >= totalPages">بعدی</button>
+      <button type="button" (click)="changePage(totalPages - 1 - page())" [disabled]="page() + 1 >= totalPages" aria-label="صفحه آخر">»</button>
+    </div>
+  </nav>
 </div>
 
 <!-- CREATE MODAL -->
