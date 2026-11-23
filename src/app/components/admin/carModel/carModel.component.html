@@ -19,10 +19,9 @@
   <div class="admin-search-pager" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0">
     <input type="search" aria-label="جست‌وجو" placeholder="جست‌وجوی نام…" [ngModel]="search()" (ngModelChange)="search.set($event); page.set(0)" style="padding:9px;min-width:200px;max-width:100%;border:1px solid #ddd;border-radius:8px">
     <span>{{ filtered().length }} مورد</span>
-    <button type="button" (click)="changePage(-1)" [disabled]="page() === 0">قبلی</button>
-    <span>صفحه {{ page() + 1 }} از {{ totalPages }}</span>
-    <button type="button" (click)="changePage(1)" [disabled]="page() + 1 >= totalPages">بعدی</button>
+
   </div>
+  <p *ngIf="loading()" role="status">در حال دریافت مدل‌ها…</p>
   <div class="table-wrapper">
 
   <table class="custom-table">
@@ -37,6 +36,7 @@
     </thead>
 
     <tbody>
+      <tr *ngIf="!loading() && !visible().length"><td colspan="2">مدلی برای نمایش وجود ندارد.</td></tr>
 
       <tr *ngFor="let model of visible()">
 
@@ -73,7 +73,15 @@
   </table>
 
   </div>
-
+  <div class="model-pagination" aria-label="صفحه‌بندی مدل‌ها">
+    <span>نمایش {{ firstVisible }} تا {{ lastVisible }} از {{ filtered().length }} مدل</span>
+    <div class="model-page-actions">
+      <button type="button" (click)="changePage(-1)" [disabled]="page() === 0">قبلی</button>
+      <button type="button" *ngFor="let number of pageNumbers" (click)="goToPage(number)" [class.active]="number === page()" [attr.aria-current]="number === page() ? 'page' : null">{{ number + 1 }}</button>
+      <button type="button" (click)="changePage(1)" [disabled]="page() + 1 >= totalPages">بعدی</button>
+    </div>
+    <span>صفحه {{ page() + 1 }} از {{ totalPages }}</span>
+  </div>
 </div>
 
 <!-- CREATE MODAL -->
@@ -118,7 +126,7 @@
       <button
         class="save-btn"
         type="button"
-        (click)="create()">
+        (click)="create()" [disabled]="saving() || !createDto().name.trim()">
 
         ذخیره
 
@@ -172,7 +180,7 @@
       <button
         class="save-btn"
         type="button"
-        (click)="update()">
+        (click)="update()" [disabled]="saving() || !editDto().name.trim()">
 
         ذخیره تغییرات
 
@@ -220,7 +228,7 @@
         <button
           class="yes-btn"
           type="button"
-          (click)="deleteCarModel()">
+          (click)="deleteCarModel()" [disabled]="saving()">
 
           بله
 
