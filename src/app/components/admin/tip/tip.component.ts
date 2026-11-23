@@ -65,8 +65,15 @@ implements OnInit {
   get totalPages(): number { return Math.max(1, Math.ceil(this.filtered().length / this.pageSize)); }
   changePage(delta: number): void { this.page.set(Math.min(this.totalPages - 1, Math.max(0, this.page() + delta))); }
 
-  tips =
-    signal<Tip[]>([]);
+  tips = signal<Tip[]>([]);
+  loading = signal(false);
+  saving = signal(false);
+  get firstVisible(): number { return this.filtered().length ? this.page() * this.pageSize + 1 : 0; }
+  get lastVisible(): number { return Math.min((this.page() + 1) * this.pageSize, this.filtered().length); }
+  get pageNumbers(): number[] { const start = Math.max(0, Math.min(this.page() - 2, this.totalPages - 5)); return Array.from({length: Math.min(5, this.totalPages)}, (_, i) => start + i); }
+  goToPage(page: number): void { if (page >= 0 && page < this.totalPages) this.page.set(page); }
+  private validName(name: string): boolean { if (name.trim()) return true; this.toastr.warning('نام تیپ نمی‌تواند خالی باشد'); return false; }
+
 
   selectedTip =
     signal<Tip | null>(null);
@@ -114,12 +121,14 @@ implements OnInit {
 
   loadTips(): void {
 
+    this.loading.set(true);
     this.service.getTipes()
       .subscribe({
 
         next: (
           res: Result<Tip[]>
         ) => {
+          this.loading.set(false);
 
           if (!res.isSuccess) {
 
@@ -130,14 +139,13 @@ implements OnInit {
             return;
           }
 
-          this.tips.set(
-            res.data || []
-          );
+          this.tips.set(res.data || []);
+          this.page.set(Math.min(this.page(), this.totalPages - 1));
 
         },
 
         error: () => {
-
+          this.loading.set(false);
           this.toastr.error(
             'خطا در دریافت تیپ‌ها'
           );
@@ -152,16 +160,17 @@ implements OnInit {
   // =========================
 
   create(): void {
-
+    if (this.saving() || !this.validName(this.createDto().name)) return;
+    this.saving.set(true);
+    const payload = { ...this.createDto(), name: this.createDto().name.trim() };
     this.service
-      .createTip(
-        this.createDto()
-      )
+      .createTip(payload)
       .subscribe({
 
         next: (
           res: Result<void>
         ) => {
+          this.saving.set(false);
 
           if (!res.isSuccess) {
 
@@ -183,7 +192,7 @@ implements OnInit {
         },
 
         error: () => {
-
+          this.saving.set(false);
           this.toastr.error(
             'خطا در ثبت تیپ'
           );
@@ -220,16 +229,17 @@ implements OnInit {
   // =========================
 
   update(): void {
-
+    if (this.saving() || !this.validName(this.editDto().name)) return;
+    this.saving.set(true);
+    const payload = { ...this.editDto(), name: this.editDto().name.trim() };
     this.service
-      .updateTip(
-        this.editDto()
-      )
+      .updateTip(payload)
       .subscribe({
 
         next: (
           res: Result<void>
         ) => {
+          this.saving.set(false);
 
           if (!res.isSuccess) {
 
@@ -251,7 +261,7 @@ implements OnInit {
         },
 
         error: () => {
-
+          this.saving.set(false);
           this.toastr.error(
             'خطا در ویرایش تیپ'
           );
@@ -280,7 +290,7 @@ implements OnInit {
   // =========================
 
   deleteTip(): void {
-
+    if (this.saving()) return;
     const selected =
       this.selectedTip();
 
@@ -288,6 +298,7 @@ implements OnInit {
       return;
     }
 
+    this.saving.set(true);
     this.service
       .deleteTip(selected.id)
       .subscribe({
@@ -295,6 +306,7 @@ implements OnInit {
         next: (
           res: Result<void>
         ) => {
+          this.saving.set(false);
 
           if (!res.isSuccess) {
 
@@ -316,7 +328,7 @@ implements OnInit {
         },
 
         error: () => {
-
+          this.saving.set(false);
           this.toastr.error(
             'خطا در حذف تیپ'
           );
@@ -341,18 +353,21 @@ implements OnInit {
   }
 
   closeCreateModal(): void {
+    if (this.saving()) return;
 
     this.isCreateModal.set(false);
 
   }
 
   closeEditModal(): void {
+    if (this.saving()) return;
 
     this.isEditModal.set(false);
 
   }
 
   closeDeleteModal(): void {
+    if (this.saving()) return;
 
     this.isDeleteModal.set(false);
 
