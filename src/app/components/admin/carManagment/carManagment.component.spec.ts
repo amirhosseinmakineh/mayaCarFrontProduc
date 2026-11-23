@@ -48,11 +48,11 @@ describe('CarManagmentComponent car edits', () => {
     component.openEdit(component.cars()[0]);
   });
 
-  it('sends the image and stored catalog IDs together, even before the lookup lists load', () => {
+  it('sends the image and stored catalog IDs together, even before the lookup lists load', async () => {
     admin.updateCar.and.returnValue(of({ isSuccess: true, isFailure: false, message: '', data: null }));
     component.selectedFile = new File(['image contents'], 'car.jpg', { type: 'image/jpeg' });
 
-    component.saveCar();
+    await component.saveCar();
 
     expect(admin.updateCar).toHaveBeenCalledTimes(1);
     const body = admin.updateCar.calls.mostRecent().args[0] as FormData;
@@ -64,6 +64,34 @@ describe('CarManagmentComponent car edits', () => {
     expect(body.has('ImageName')).toBeFalse();
     expect(admin.updateVehicleImage).not.toHaveBeenCalled();
     expect(admin.getCars).toHaveBeenCalledTimes(2);
+  });
+
+  it('reduces large camera images before the same car update request', async () => {
+    admin.updateCar.and.returnValue(of({ isSuccess: true, isFailure: false, message: '', data: null }));
+    const canvas = document.createElement('canvas');
+    canvas.width = 1600;
+    canvas.height = 1000;
+    const context = canvas.getContext('2d')!;
+    const pixels = context.createImageData(canvas.width, canvas.height);
+    for (let index = 0; index < pixels.data.length; index += 4) {
+      pixels.data[index] = Math.random() * 255;
+      pixels.data[index + 1] = Math.random() * 255;
+      pixels.data[index + 2] = Math.random() * 255;
+      pixels.data[index + 3] = 255;
+    }
+    context.putImageData(pixels, 0, 0);
+    const png = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+    expect(png!.size).toBeGreaterThan(512 * 1024);
+    component.selectedFile = new File([png!], 'camera.png', { type: 'image/png' });
+
+    await component.saveCar();
+
+    const body = admin.updateCar.calls.mostRecent().args[0] as FormData;
+    const image = body.get('Image') as File;
+    expect(image.name).toBe('camera.jpg');
+    expect(image.type).toBe('image/jpeg');
+    expect(image.size).toBeLessThan(png!.size);
+    expect(body.get('Id')).toBe('42');
   });
 
   it('keeps the edit open and shows the proxy request ID on failure', () => {
