@@ -43,6 +43,14 @@ export class CompanyComponent implements OnInit {
   changePage(delta: number): void { this.page.set(Math.min(this.totalPages - 1, Math.max(0, this.page() + delta))); }
 
   companies = signal<Company[]>([]);
+  loading = signal(false);
+  saving = signal(false);
+  get firstVisible(): number { return this.filtered().length ? this.page() * this.pageSize + 1 : 0; }
+  get lastVisible(): number { return Math.min((this.page() + 1) * this.pageSize, this.filtered().length); }
+  get pageNumbers(): number[] { const start = Math.max(0, Math.min(this.page() - 2, this.totalPages - 5)); return Array.from({length: Math.min(5, this.totalPages)}, (_, i) => start + i); }
+  goToPage(page: number): void { if (page >= 0 && page < this.totalPages) this.page.set(page); }
+  private validName(name: string): boolean { if (name.trim()) return true; this.toastr.warning('نام شرکت نمی‌تواند خالی باشد'); return false; }
+
 
   selectedCompany = signal<Company | null>(null);
 
@@ -66,19 +74,23 @@ export class CompanyComponent implements OnInit {
 
   loadCompanies(): void {
 
+    this.loading.set(true);
     this.service.getCompanyies().subscribe({
       next: (res: Result<Company[]>) => {
+        this.loading.set(false);
 
         if (!res.isSuccess) {
           this.toastr.error(res.message);
           return;
         }
 
-        this.companies.set(res.data);
+        this.companies.set(res.data ?? []);
+        this.page.set(Math.min(this.page(), this.totalPages - 1));
 
       },
 
       error: () => {
+        this.loading.set(false);
         this.toastr.error('خطا در دریافت شرکت ها');
       }
     });
@@ -90,9 +102,12 @@ export class CompanyComponent implements OnInit {
   // =========================
 
   create(): void {
-
-    this.service.createCompaany(this.createDto()).subscribe({
+    if (this.saving() || !this.validName(this.createDto().name)) return;
+    this.saving.set(true);
+    const payload = { ...this.createDto(), name: this.createDto().name.trim() };
+    this.service.createCompaany(payload).subscribe({
       next: (res: Result<void>) => {
+        this.saving.set(false);
 
         if (!res.isSuccess) {
           this.toastr.error(res.message);
@@ -108,6 +123,7 @@ export class CompanyComponent implements OnInit {
       },
 
       error: () => {
+        this.saving.set(false);
         this.toastr.error('خطا در ثبت شرکت');
       }
     });
@@ -132,9 +148,12 @@ export class CompanyComponent implements OnInit {
   }
 
   update(): void {
-
-    this.service.updateCompany(this.editDto()).subscribe({
+    if (this.saving() || !this.validName(this.editDto().name)) return;
+    this.saving.set(true);
+    const payload = { ...this.editDto(), name: this.editDto().name.trim() };
+    this.service.updateCompany(payload).subscribe({
       next: (res: Result<void>) => {
+        this.saving.set(false);
 
         if (!res.isSuccess) {
           this.toastr.error(res.message);
@@ -150,6 +169,7 @@ export class CompanyComponent implements OnInit {
       },
 
       error: () => {
+        this.saving.set(false);
         this.toastr.error('خطا در ویرایش شرکت');
       }
     });
@@ -169,15 +189,17 @@ export class CompanyComponent implements OnInit {
   }
 
   deleteCompany(): void {
-
+    if (this.saving()) return;
     const selected = this.selectedCompany();
 
     if (!selected) {
       return;
     }
 
+    this.saving.set(true);
     this.service.deleteCompany(selected.id).subscribe({
       next: (res: Result<void>) => {
+        this.saving.set(false);
 
         if (!res.isSuccess) {
           this.toastr.error(res.message);
@@ -193,6 +215,7 @@ export class CompanyComponent implements OnInit {
       },
 
       error: () => {
+        this.saving.set(false);
         this.toastr.error('خطا در حذف شرکت');
       }
     });
@@ -212,7 +235,7 @@ export class CompanyComponent implements OnInit {
   }
 
   closeModal(): void {
-
+    if (this.saving()) return;
     this.activeModal.set(null);
 
     this.selectedCompany.set(null);
