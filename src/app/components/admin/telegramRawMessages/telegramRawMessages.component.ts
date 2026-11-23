@@ -39,7 +39,7 @@ interface MessagePage {
           <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
             {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت از تلگرام' }}
           </button>
-          <button class="refresh" (click)="reloadDatabase()">↻ نمایش اطلاعات دیتابیس</button>
+          <button class="refresh" (click)="reloadDatabase()" [disabled]="loading || channelsLoading">↻ نمایش اطلاعات دیتابیس</button>
         </div>
       </header>
       <div class="summary" aria-live="polite">
@@ -63,8 +63,8 @@ interface MessagePage {
 
         <label>از تاریخ<input type="date" [(ngModel)]="fromDate" /></label>
         <label>تا تاریخ<input type="date" [(ngModel)]="toDate" /></label>
-        <button class="apply" (click)="applyFilters()">اعمال فیلتر</button>
-        <button class="clear" (click)="reset()">پاک‌کردن</button>
+        <button class="apply" (click)="applyFilters()" [disabled]="loading">اعمال فیلتر</button>
+        <button class="clear" (click)="reset()" [disabled]="loading">پاک‌کردن</button>
       </div>
       <div class="summary"><strong>{{ totalCount | number:'1.0-0' }}</strong> پیام ثبت‌شده
         <span>صفحه {{ page }} از {{ totalPages }}</span></div>
@@ -113,7 +113,12 @@ interface MessagePage {
       </div>
       <footer class="pagination" *ngIf="totalCount > pageSize">
         <button (click)="changePage(page-1)" [disabled]="page <= 1 || loading">صفحه قبل</button>
-        <span>{{ page }} / {{ totalPages }}</span>
+        <div class="page-links">
+          <button type="button" *ngFor="let number of pageNumbers" (click)="changePage(number)"
+            [class.active]="number === page" [attr.aria-current]="number === page ? 'page' : null"
+            [disabled]="loading">{{ number }}</button>
+        </div>
+        <span>نمایش {{ firstVisible }} تا {{ lastVisible }} از {{ totalCount | number:'1.0-0' }} پیام</span>
         <button (click)="changePage(page+1)" [disabled]="page >= totalPages || loading">صفحه بعد</button>
       </footer>
     </section>`,
@@ -141,7 +146,10 @@ interface MessagePage {
     .raw-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:2;background:#f8f7f4;padding:18px;border-radius:12px;max-height:45vh;overflow:auto;unicode-bidi:plaintext}
     .metadata{overflow:auto;background:#f8f7f4;border-radius:10px;padding:14px;font-size:12px}.details a{display:inline-block;margin-top:14px;color:#946b19}
     .empty,.alert{background:white;padding:32px;text-align:center;border-radius:15px}.alert{color:#a72f2f}.alert button{margin-right:10px}
-    .pagination{display:flex;justify-content:center;align-items:center;gap:15px;margin:20px}.pagination button:disabled{opacity:.45;cursor:not-allowed}
+    .pagination{display:flex;justify-content:center;align-items:center;gap:10px;margin:20px;flex-wrap:wrap;border-top:1px solid #ede4d4;padding-top:18px}
+    .page-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .page-links button{min-width:40px}.page-links button.active{background:#a98127;color:white;border-color:#a98127}
+    .pagination>span{width:100%;text-align:center;color:#766d5c;font-size:12px}.pagination button:disabled{opacity:.45;cursor:not-allowed}
     .channel-layout{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:16px;align-items:start;direction:rtl}
     .channel-sidebar,.channel-content{min-width:0;background:#fff;border:1px solid #eae1d1;border-radius:17px;padding:14px}
     .channel-sidebar{position:sticky;top:12px}.channel-heading,.channel-content-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
@@ -180,7 +188,15 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private statusInterval?: ReturnType<typeof setInterval>;
   private messagesRequest?: Subscription;
   private channelsRequest?: Subscription;
+  private statusRequest?: Subscription;
+  private statusLoading = false;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
+  get firstVisible(): number { return this.totalCount ? (this.page - 1) * this.pageSize + 1 : 0; }
+  get lastVisible(): number { return Math.min(this.page * this.pageSize, this.totalCount); }
+  get pageNumbers(): number[] {
+    const start = Math.max(1, Math.min(this.page - 2, this.totalPages - 4));
+    return Array.from({length: Math.min(5, this.totalPages)}, (_, i) => start + i);
+  }
   ngOnInit(): void {
     if (!this.isBrowser) return;
     this.loadChannels();
@@ -192,8 +208,10 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     if (this.statusInterval) clearInterval(this.statusInterval);
     this.messagesRequest?.unsubscribe();
     this.channelsRequest?.unsubscribe();
+    this.statusRequest?.unsubscribe();
   }
   runManual(): void {
+    if (this.refreshPending || this.refreshRunning) return;
     this.refreshPending = true; this.refreshError = '';
     this.cdr.markForCheck();
     this.http.post<{status: string}>(this.url + '/refresh', {}).pipe(timeout(15000)).subscribe({
@@ -207,9 +225,12 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     });
   }
   loadStatus(): void {
-    this.http.get<{status: string; lastError?: string; successfulChannels:number; failedChannels:number; receivedMessages:number; savedMessages:number; channelErrors:Record<string,string>}>(this.url + '/status')
+    if (this.statusLoading) return;
+    this.statusLoading = true;
+    this.statusRequest = this.http.get<{status: string; lastError?: string; successfulChannels:number; failedChannels:number; receivedMessages:number; savedMessages:number; channelErrors:Record<string,string>}>(this.url + '/status')
       .pipe(timeout(10000)).subscribe({
         next: result => {
+          this.statusLoading = false;
           this.archiveDiagnostics = result;
           this.refreshRunning = result.status === 'Running' || result.status === 'Queued';
           this.refreshStatus = ({Idle:'آماده',Queued:'در صف اجرا',Running:'در حال دریافت',Completed:'تکمیل‌شده',Failed:'ناموفق'} as Record<string,string>)[result.status] ?? result.status;
@@ -218,7 +239,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
           // Reading archived messages is intentionally a separate user action.
           this.cdr.markForCheck();
         },
-        error: () => { this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; this.cdr.markForCheck(); }
+        error: () => { this.statusLoading = false; this.refreshStatus = 'عدم دسترسی به وضعیت سرور'; this.cdr.markForCheck(); }
       });
   }
   trackById(_index: number, item: RawTelegramMessage): number { return item.id; }
@@ -267,6 +288,11 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
       next: response => {
         this.messages = Array.isArray(response?.items) ? response.items : [];
         this.totalCount = Number(response?.totalCount ?? 0);
+        if (this.page > this.totalPages) {
+          this.page = this.totalPages;
+          this.load();
+          return;
+        }
         this.selected = this.messages.find(m => m.id === this.selected?.id) ?? this.messages[0] ?? null;
         this.loading = false;
         this.cdr.markForCheck();
@@ -275,15 +301,19 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
         this.messages = []; this.selected = null; this.totalCount = 0; this.loading = false;
         this.error = err.status === 401 || err.status === 403
           ? 'برای مشاهده آرشیو باید با حساب مدیر وارد شوید.'
-          : err.name === 'TimeoutError' ? 'زمان پاسخ API بیشتر از ۱۵ ثانیه شد. دوباره تلاش کنید.' : 'دریافت آرشیو پیام‌ها ممکن نشد. اتصال سرور و API آرشیو را بررسی کنید.';
+          : err.name === 'TimeoutError' ? 'زمان پاسخ API بیشتر از ۲۰ ثانیه شد. دوباره تلاش کنید.' : 'دریافت آرشیو پیام‌ها ممکن نشد. اتصال سرور و API آرشیو را بررسی کنید.';
         this.cdr.markForCheck();
       }
     });
   }
   applyFilters(): void { this.page = 1; this.load(); }
   reset(): void { this.search = ''; this.fromDate = ''; this.toDate = ''; this.applyFilters(); }
-  changePage(next: number): void { if (next < 1 || next > this.totalPages) return; this.page = next; this.load(); }
-  formatDate(value?: string | null): string { return value ? new Date(value).toLocaleString('fa-IR', {dateStyle:'medium',timeStyle:'short'}) : '—'; }
+  changePage(next: number): void { if (this.loading || next === this.page || next < 1 || next > this.totalPages) return; this.page = next; this.load(); }
+  formatDate(value?: string | null): string {
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fa-IR', {dateStyle:'medium',timeStyle:'short'});
+  }
   safeMessageUrl(value?: string | null): string | null {
     if (!value) return null;
     try { const url = new URL(value); return url.protocol === 'https:' && (url.hostname === 't.me' || url.hostname === 'telegram.me') ? url.href : null; }
