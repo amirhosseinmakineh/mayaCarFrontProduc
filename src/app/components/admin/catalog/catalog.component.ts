@@ -114,6 +114,12 @@ interface CatalogResponse {
         </div>
         <footer>
           <button type="button" (click)="changePage(-1)" [disabled]="loading || page === 0">صفحه قبل</button>
+          <span class="page-summary">نمایش {{ firstVisible }} تا {{ lastVisible }} از {{ data?.filteredCount ?? 0 }} خودرو</span>
+          <nav class="page-numbers" aria-label="صفحه‌بندی کاتالوگ">
+            <button type="button" *ngFor="let number of pageNumbers" (click)="goToPage(number)"
+              [class.current]="number === page" [attr.aria-current]="number === page ? 'page' : null"
+              [disabled]="loading">{{ number + 1 }}</button>
+          </nav>
           <span>صفحه {{ page + 1 }} از {{ totalPages }}</span>
           <button type="button" (click)="changePage(1)" [disabled]="loading || page + 1 >= totalPages">صفحه بعد</button>
         </footer>
@@ -136,7 +142,12 @@ interface CatalogResponse {
     th,td{padding:13px;border-bottom:1px solid #f0e8d6;font-size:13px}th{background:#fbf6e9}
     .pill{display:inline-block;padding:6px 11px;border-radius:999px;background:#e7f7ed;color:#167342;font-weight:800}
     .pill.warn{background:#fff1d5;color:#986200}.error{background:#fff0ef;color:#a52e2e;padding:12px;border-radius:10px}
-    .empty{text-align:center;padding:26px;color:#806d4c}footer{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:18px}
+    .empty{text-align:center;padding:26px;color:#806d4c}footer{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap;border-top:1px solid #f0e8d6;padding-top:20px}
+    .page-numbers{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center}
+    .page-numbers button{min-width:40px;padding:9px 11px;background:#fff;color:#70551b}
+    .page-numbers button.current{background:#a98127;color:#fff;border-color:#a98127}
+    .page-summary{color:#806d4c;font-size:13px;width:100%;text-align:center}
+    @media(max-width:540px){footer{gap:7px}footer>button{flex:1}.page-numbers{order:3;width:100%}}
     @media(max-width:850px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:540px){.hero,.panel{padding:15px}.hero h1{font-size:21px}.metrics{gap:8px}.metrics article{padding:12px}.metrics strong{font-size:22px}form{width:100%}}
   `]
@@ -163,6 +174,17 @@ export class CatalogComponent implements OnInit {
 
   get totalPages(): number {
     return Math.max(1, Math.ceil((this.data?.filteredCount ?? 0) / this.pageSize));
+  }
+
+  get firstVisible(): number {
+    return this.data?.filteredCount ? this.page * this.pageSize + 1 : 0;
+  }
+  get lastVisible(): number {
+    return Math.min((this.page + 1) * this.pageSize, this.data?.filteredCount ?? 0);
+  }
+  get pageNumbers(): number[] {
+    const start = Math.max(0, Math.min(this.page - 2, this.totalPages - 5));
+    return Array.from({length: Math.min(5, this.totalPages)}, (_, index) => start + index);
   }
 
   ngOnInit(): void { this.load(); this.loadModels(); }
@@ -256,6 +278,12 @@ export class CatalogComponent implements OnInit {
     this.load();
   }
 
+  goToPage(page: number): void {
+    if (this.loading || page === this.page || page < 0 || page >= this.totalPages) return;
+    this.page = page;
+    this.load();
+  }
+
   imageUrl(path: string): string {
     return /^https?:\/\//i.test(path) ? path : `https://api.mayakhodro.com/${path.replace(/^\//, '')}`;
   }
@@ -282,6 +310,11 @@ export class CatalogComponent implements OnInit {
     this.pending = this.http.get<CatalogResponse>(`${environment.apiUrl}/admin/catalog`, { params }).subscribe({
       next: result => {
         if (sequence !== this.requestSequence) return;
+        if (this.page >= Math.max(1, Math.ceil(result.filteredCount / this.pageSize))) {
+          this.page = Math.max(0, Math.ceil(result.filteredCount / this.pageSize) - 1);
+          this.load();
+          return;
+        }
         this.data = result;
         this.loading = false;
         this.changeDetector.markForCheck();
