@@ -211,7 +211,7 @@
 
     <div class="modal-body">
 
-      <form (ngSubmit)="saveCar()">
+      <form id="car-edit-form" (ngSubmit)="saveCar()">
 
         <!-- NAME -->
 
@@ -388,23 +388,14 @@
         <button *ngIf="activeModal() === 'edit' && selectedFile" type="button"
                 [disabled]="saving" (click)="saveImage()">ذخیره عکس خودرو</button>
 
-        <!-- SAVE -->
-
-        <button
-          type="submit"
-          [disabled]="saving"
-          class="save-btn">
-
-          {{
-            activeModal() === 'create'
-            ? 'ذخیره'
-            : 'ذخیره تغییرات'
-          }}
-
-        </button>
-
       </form>
 
+    </div>
+
+    <div class="car-modal-footer">
+      <button type="submit" form="car-edit-form" class="save-btn" [disabled]="saving">
+        {{ saving ? 'در حال ذخیره...' : (activeModal() === 'create' ? 'ذخیره' : 'ذخیره تغییرات') }}
+      </button>
     </div>
 
   </div>
