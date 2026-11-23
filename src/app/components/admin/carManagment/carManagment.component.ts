@@ -444,27 +444,6 @@ implements OnInit {
     return `آپلود عکس ناموفق بود (HTTP ${err?.status ?? 'نامشخص'}).`;
   }
 
-  saveImage(): void {
-    const car = this.selectedCar();
-    if (!car || !this.selectedFile || this.saving) return;
-    this.saving = true;
-    this.adminService.updateVehicleImage(car.id, this.selectedFile)
-      .pipe(finalize(() => this.saving = false))
-      .subscribe({
-        next: result => {
-          if (!result?.imageName) {
-            this.toastr.error('پاسخ سرور فاقد آدرس عکس است.');
-            return;
-          }
-          this.toastr.success('عکس خودرو ذخیره شد.');
-          this.afterSave();
-        },
-        error: err => {
-          this.toastr.error(this.imageUploadError(err));
-        }
-      });
-  }
-
   private hasCarDetailsChanged(): boolean {
     const car = this.selectedCar();
     if (!car) return true;
@@ -481,11 +460,6 @@ implements OnInit {
   saveCar(): void {
 
     if (this.saving) return;
-    // Image-only edits must not require updating unrelated car fields.
-    if (this.activeModal() === 'edit' && this.selectedFile && !this.hasCarDetailsChanged()) {
-      this.saveImage();
-      return;
-    }
     const dto = this.dto();
     if (!dto.name?.trim() || !dto.carModelName || !dto.tipName || !dto.companyName) {
       this.toastr.error('نام، مدل، تیپ و شرکت الزامی هستند.');
@@ -557,8 +531,8 @@ implements OnInit {
       dto.description
     );
 
-    if (this.selectedFile && this.activeModal() === 'create') {
-      formData.append('ImageName', this.selectedFile);
+    if (this.selectedFile) {
+      formData.append(this.activeModal() === 'create' ? 'ImageName' : 'Image', this.selectedFile);
     }
 
     return formData;
@@ -613,15 +587,6 @@ implements OnInit {
           if (!result.isSuccess) {
             this.saving = false;
             this.toastr.error(result.message || 'ویرایش خودرو ناموفق بود');
-            return;
-          }
-          if (this.selectedFile) {
-            this.adminService.updateVehicleImage(car.id, this.selectedFile)
-              .pipe(finalize(() => this.saving = false))
-              .subscribe({
-                next: () => { this.toastr.success('خودرو و تصویر ویرایش شدند'); this.afterSave(); },
-                error: err => { this.toastr.error('اطلاعات ذخیره شد اما عکس آپلود نشد: ' + this.imageUploadError(err)); this.afterSave(); }
-              });
             return;
           }
           this.saving = false;
