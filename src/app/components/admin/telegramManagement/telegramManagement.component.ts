@@ -45,7 +45,8 @@ interface ScanStatus {
     </header>
 
     <div class="notice" *ngIf="error" role="alert">{{ error }}</div>
-    <div class="notice info" *ngIf="!error && !scan">هنوز گزارشی دریافت نشده است. برای مشاهده وضعیت، بروزرسانی گزارش را بزنید.</div>
+    <div class="notice info" *ngIf="detailsError" role="alert">{{ detailsError }}</div>
+    <div class="notice info" *ngIf="!error && !scan && !loading">هنوز گزارشی دریافت نشده است. برای مشاهده وضعیت، بروزرسانی گزارش را بزنید.</div>
     <div class="summary" *ngIf="scan">
       <div class="summary-head">
         <span class="status" [class.running]="isRunning" [class.warn]="scan.status === 'PartialSuccess'">
@@ -95,7 +96,7 @@ interface ScanStatus {
       <p *ngIf="!results">جزئیات مراجع در پاسخ API موجود نیست.</p>
       <p *ngIf="results && !references.length">مرجع قیمتی در این گزارش ثبت نشده است.</p>
       <div class="table-wrap" *ngIf="references.length"><table><thead><tr><th>شرکت</th><th>نام خودرو</th><th>مدل</th><th>تیپ</th><th>سال</th><th>تعداد آگهی</th><th>قیمت مرجع (میلیارد تومان)</th><th>قیمت‌های مقایسه‌شده</th></tr></thead>
-        <tbody><tr *ngFor="let item of references"><td>{{ item.CompanyName || '—' }}</td><td>{{ item.CarName || item.Name }}</td><td>{{ item.ModelName || '—' }}</td><td>{{ item.TipName || '—' }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ item.ComparedPricesBillion.join('، ') }}</td></tr></tbody></table></div>
+        <tbody><tr *ngFor="let item of references"><td>{{ item.CompanyName || '—' }}</td><td>{{ item.CarName || item.Name }}</td><td>{{ item.ModelName || '—' }}</td><td>{{ item.TipName || '—' }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ (item.ComparedPricesBillion ?? []).join('، ') || '—' }}</td></tr></tbody></table></div>
     </div>
 
     <div class="panel" *ngIf="tab === 'rejected'">
@@ -103,9 +104,9 @@ interface ScanStatus {
       <p *ngIf="!results">جزئیات رد قیمت در پاسخ API موجود نیست.</p>
       <p *ngIf="results && !rejected.length">گروه ردشده‌ای در این گزارش ثبت نشده است.</p>
       <div class="rejection" *ngFor="let item of rejected">
-        <div><strong>خودرو {{ item.CarId }} · سال {{ item.Year }}</strong><span class="pill">نیازمند بررسی</span></div>
-        <p>قیمت‌های بررسی‌شده: {{ item.CandidatePricesBillion.join('، ') }} میلیارد تومان</p>
-        <small>علت: پراکندگی زیاد قیمت‌ها یا نبود توافق کافی بین آگهی‌ها</small>
+        <div><strong>خودرو {{ item.CarId }} · سال {{ item.Year }} · وضعیت {{ item.Status || 'نامشخص' }}</strong><span class="pill">نیازمند بررسی</span></div>
+        <p>قیمت‌های بررسی‌شده: {{ (item.CandidatePricesBillion ?? []).join('، ') || '—' }} میلیارد تومان</p>
+        <small>علت: {{ item.Reason || 'علت رد توسط API مشخص نشده است' }}</small>
       </div>
     </div>
 
@@ -149,6 +150,7 @@ export class TelegramManagementComponent implements OnInit {
   loading = false;
   starting = false;
   error = '';
+  detailsError = '';
   scan: ScanStatus | null = null;
   results: ScanResults | null = null;
   tab: 'overview' | 'approved' | 'rejected' | 'channels' = 'overview';
@@ -169,21 +171,31 @@ export class TelegramManagementComponent implements OnInit {
   }
 
   refresh(): void {
-    this.loading = true; this.error = '';
+    if (this.loading) return;
+    this.loading = true; this.error = ''; this.detailsError = '';
     this.http.get<ScanStatus>(this.baseUrl + '/status').subscribe({
       next: status => {
         this.scan = status;
+        this.results = null;
         this.http.get<ScanStatus | ScanResults>(this.baseUrl + '/results').subscribe({
           next: payload => {
             const wrapped = payload as ScanStatus;
             this.results = wrapped.results ?? (payload as ScanResults);
             this.loading = false;
           },
-          error: () => { this.results = null; this.loading = false; }
+          error: (err: HttpErrorResponse) => {
+            this.results = null;
+            this.loading = false;
+            this.detailsError = err.status === 401 || err.status === 403
+              ? 'دسترسی به جزئیات گزارش اسکن مجاز نیست.'
+              : 'وضعیت اسکن دریافت شد، اما جزئیات گزارش در دسترس نیست.';
+          }
         });
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;
+        this.scan = null;
+        this.results = null;
         this.error = err.status === 401 || err.status === 403
           ? 'برای مشاهده گزارش باید با حساب مدیر وارد شوید.'
           : 'دریافت وضعیت اسکن ممکن نشد. مسیر API یا اتصال سرور را بررسی کنید.';
@@ -192,7 +204,7 @@ export class TelegramManagementComponent implements OnInit {
   }
 
   startScan(): void {
-    if (this.isRunning || this.starting || !confirm('اسکن دستی تلگرام شروع شود؟')) return;
+    if (this.loading || this.isRunning || this.starting || !confirm('اسکن دستی تلگرام شروع شود؟')) return;
     this.starting = true; this.error = '';
     this.http.post(this.baseUrl + '/scan', {}).subscribe({
       next: () => { this.starting = false; this.refresh(); },
@@ -208,6 +220,8 @@ export class TelegramManagementComponent implements OnInit {
       PartialSuccess: 'تکمیل با هشدار', Failed: 'ناموفق', Pending: 'هنوز اجرا نشده' } as Record<string, string>)[status ?? ''] ?? 'نامشخص';
   }
   formatDate(value?: string): string {
-    return value ? new Date(value).toLocaleString('fa-IR') : '—';
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fa-IR');
   }
 }
