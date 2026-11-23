@@ -1806,3 +1806,35 @@ textarea:focus { box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16) !important; }
     padding: 12px 12px max(14px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+
+/* Mobile: place the save action directly below the modal title, above the
+   scrollable fields. This avoids overlap with the site's fixed bottom bar. */
+@media (max-width: 768px) {
+  .modal-backdrop:has(.car-modal-footer) > .modal-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: min(100%, 100dvh) !important;
+    max-height: 100% !important;
+  }
+  .modal-container:has(.car-modal-footer) > .modal-header {
+    order: 0 !important;
+  }
+  .modal-container:has(.car-modal-footer) > .car-modal-footer {
+    order: 1 !important;
+    position: relative !important;
+    flex: 0 0 auto !important;
+    z-index: 5 !important;
+    border-top: 0 !important;
+    border-bottom: 1px solid var(--gold-border) !important;
+    padding: 10px 14px !important;
+    background: #fffdf7 !important;
+  }
+  .modal-container:has(.car-modal-footer) > .modal-body {
+    order: 2 !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+  }
+}
