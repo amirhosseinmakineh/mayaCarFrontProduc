@@ -908,3 +908,54 @@ textarea:focus { box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16) !important; }
 .tip-page-actions button.active{background:#a98127;color:#fff}
 .tip-page-actions button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:576px){.tip-page-actions{width:100%}.tip-page-actions button{flex:1 0 auto}}
+
+/* Keep modal actions reachable on short mobile viewports and with the keyboard open. */
+@media (max-width: 768px) {
+  .modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .modal-backdrop > .modal-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-height: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+  }
+  .modal-backdrop .modal-header { flex: 0 0 auto !important; }
+  .modal-backdrop .modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+  .modal-backdrop .save-btn,
+  .modal-backdrop .delete-action-modal {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 2 !important;
+    margin-top: 12px !important;
+  }
+  .modal-backdrop .save-btn {
+    min-height: 46px !important;
+    flex-shrink: 0 !important;
+  }
+  .modal-backdrop .delete-action-modal {
+    background: #fff !important;
+    padding: 8px 0 !important;
+  }
+}
