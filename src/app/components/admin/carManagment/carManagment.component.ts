@@ -82,8 +82,19 @@ implements OnInit {
   imageBaseUrl = 'https://api.mayakhodro.com/';
   getImageUrl(path?: string): string {
     if (!path) return '/assets/images/car-placeholder.svg';
-    if (environment.production && path.startsWith('/images/cars/')) return path;
     return /^https?:\/\//i.test(path) ? path : `${this.imageBaseUrl}${path.replace(/^\//, '')}`;
+  }
+
+  recoverImage(event: Event): void {
+    const image = event.currentTarget as HTMLImageElement;
+    const source = image.getAttribute('src') ?? '';
+    const placeholder = '/assets/images/car-placeholder.svg';
+    if (source === placeholder) return;
+
+    const storedImagePrefix = `${this.imageBaseUrl}images/cars/`;
+    image.src = environment.production && source.startsWith(storedImagePrefix)
+      ? source.slice(this.imageBaseUrl.length - 1)
+      : placeholder;
   }
   search = '';
   page = 0;

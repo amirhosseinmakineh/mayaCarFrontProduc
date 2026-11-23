@@ -11,7 +11,7 @@
   <div *ngIf="selectedModelId" style="margin:12px 0">
     <ng-container *ngFor="let model of modelImages()">
       <img *ngIf="model.id === selectedModelId && model.imageName"
-        [src]="getImageUrl(model.imageName)" alt="تصویر فعلی مدل"
+        [src]="getImageUrl(model.imageName)" (error)="recoverImage($event)" alt="تصویر فعلی مدل"
         style="max-width:180px;max-height:130px;object-fit:contain">
     </ng-container>
   </div>
@@ -97,6 +97,7 @@
             <img
               class="car-image"
               [src]="getImageUrl(item.imageName)"
+              (error)="recoverImage($event)"
               width="130px"
               height="130px"
               alt="car"
@@ -243,6 +244,7 @@
 
           <img
             [src]="getImageUrl(dto().imageName)"
+            (error)="recoverImage($event)"
             width="140"
             height="100"
             style="object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
