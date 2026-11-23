@@ -1742,3 +1742,15 @@ textarea:focus { box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16) !important; }
     padding: 8px 0 !important;
   }
 }
+
+/* Car edit: footer is a sibling of the scrollable body, never inside the form scroll. */
+.modal-container:has(.car-modal-footer) { display:flex; flex-direction:column; min-height:0; }
+.modal-container:has(.car-modal-footer) > .modal-body { min-height:0; flex:1 1 auto; overflow-y:auto; }
+.car-modal-footer { flex:0 0 auto; padding:12px 20px max(12px, env(safe-area-inset-bottom)); background:#fff; border-top:1px solid #e9dfc4; z-index:3; }
+.car-modal-footer .save-btn { width:100%; min-height:48px; margin:0; position:static !important; }
+@media(max-width:768px) {
+ .modal-backdrop:has(.car-modal-footer) { height:100dvh !important; }
+ .modal-backdrop .modal-container:has(.car-modal-footer) { max-height:100% !important; }
+ .modal-backdrop .modal-container:has(.car-modal-footer) > .modal-body { overflow-y:auto !important; min-height:0 !important; padding-bottom:12px !important; }
+ .car-modal-footer { padding:10px 14px max(12px, env(safe-area-inset-bottom)); }
+}
