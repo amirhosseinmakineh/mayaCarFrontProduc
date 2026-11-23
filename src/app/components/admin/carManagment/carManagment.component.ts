@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminService, CatalogModelImage }
 from '../../../services/admin/admin.service';
 import { apiErrorMessage } from '../../../services/api-error-message';
+import { environment } from '../../../../environments/environment';
 
 import { Car }
 from '../../../models/car/car';
@@ -81,6 +82,7 @@ implements OnInit {
   imageBaseUrl = 'https://api.mayakhodro.com/';
   getImageUrl(path?: string): string {
     if (!path) return '/assets/images/car-placeholder.svg';
+    if (environment.production && path.startsWith('/images/cars/')) return path;
     return /^https?:\/\//i.test(path) ? path : `${this.imageBaseUrl}${path.replace(/^\//, '')}`;
   }
   search = '';
@@ -435,7 +437,7 @@ implements OnInit {
   // SAVE
   // ======================
 
-  saveCar(): void {
+  async saveCar(): Promise<void> {
 
     if (this.saving) return;
     const dto = this.dto();
@@ -443,29 +445,60 @@ implements OnInit {
       this.toastr.error('نام، مدل، تیپ و شرکت الزامی هستند.');
       return;
     }
-    const formData = this.buildFormData();
+    const mode = this.activeModal();
+    if (mode !== 'create' && mode !== 'edit') return;
     this.saving = true;
 
-    if (
-      this.activeModal() === 'create'
-    ) {
-
-      this.createCar(formData);
-
+    let file = this.selectedFile;
+    try {
+      if (mode === 'edit' && file) file = await this.prepareImageForUpload(file);
+    } catch {
+      this.saving = false;
+      this.toastr.error('خواندن فایل عکس ممکن نشد. عکس را دوباره انتخاب کنید.');
       return;
     }
 
-    if (
-      this.activeModal() === 'edit'
-    ) {
+    if (this.activeModal() !== mode || this.dto() !== dto) {
+      this.saving = false;
+      return;
+    }
+    const formData = this.buildFormData(file);
+    if (mode === 'create') this.createCar(formData);
+    else this.updateCar(formData);
+  }
 
-      this.updateCar(formData);
+  private async prepareImageForUpload(file: File): Promise<File> {
+    const bytes = await file.arrayBuffer();
+    const readableFile = new File([bytes], file.name, { type: file.type });
+    if (readableFile.size <= 512 * 1024) return readableFile;
 
+    const url = URL.createObjectURL(readableFile);
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+
+      const scale = Math.min(1, 1440 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d');
+      if (!context) return readableFile;
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const optimized = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+      if (!optimized || optimized.type !== 'image/jpeg' || optimized.size >= readableFile.size) return readableFile;
+      return new File([optimized], `${file.name.replace(/\.[^.]+$/, '')}.jpg`, { type: optimized.type });
+    } catch {
+      return readableFile;
+    } finally {
+      URL.revokeObjectURL(url);
     }
   }
 
-  private buildFormData():
-  FormData {
+  private buildFormData(file: File | null): FormData {
 
     const dto =
       this.dto();
@@ -509,8 +542,8 @@ implements OnInit {
       dto.description
     );
 
-    if (this.selectedFile) {
-      formData.append(this.activeModal() === 'create' ? 'ImageName' : 'Image', this.selectedFile);
+    if (file) {
+      formData.append(this.activeModal() === 'create' ? 'ImageName' : 'Image', file);
     }
 
     return formData;
