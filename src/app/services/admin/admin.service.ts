@@ -37,6 +37,7 @@ export interface CatalogModelImage {
 export interface AdminCarPage {
   items: Array<{
     id: number; name: string; imageName: string; description: string;
+    carModelId: number | null; tipId: number | null; companyId: number | null;
     company: string; model: string; tip: string; startDate: string;
     marketPrice: number; factoryPrice: number;
   }>;
