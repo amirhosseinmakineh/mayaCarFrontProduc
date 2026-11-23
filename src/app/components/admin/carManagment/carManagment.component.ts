@@ -405,6 +405,16 @@ implements OnInit {
       return;
     }
 
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.toastr.error('فرمت عکس باید JPEG، PNG یا WebP باشد.');
+      input.value = '';
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024 || file.size < 12) {
+      this.toastr.error('حجم عکس باید کمتر از ۸ مگابایت باشد.');
+      input.value = '';
+      return;
+    }
     this.selectedFile = file;
 
     const reader =
@@ -424,6 +434,16 @@ implements OnInit {
   // SAVE
   // ======================
 
+  private imageUploadError(err: any): string {
+    if (err?.status === 413) return 'حجم فایل بیش از محدودیت سرور است (حداکثر ۸ مگابایت).';
+    if (err?.status === 401 || err?.status === 403) return 'دسترسی مدیر برای آپلود عکس معتبر نیست.';
+    if (err?.status === 404) return 'خودرو یا مسیر API آپلود تصویر پیدا نشد (404).';
+    if (err?.status === 400 || err?.status === 415) return 'فرمت یا اطلاعات عکس توسط سرور رد شد (400/415).';
+    if (err?.name === 'TimeoutError') return 'زمان آپلود عکس تمام شد؛ وضعیت عکس را بررسی کنید.';
+    if (err?.status === 0) return 'اتصال به سرور آپلود برقرار نشد؛ شبکه یا تنظیمات سرور را بررسی کنید.';
+    return `آپلود عکس ناموفق بود (HTTP ${err?.status ?? 'نامشخص'}).`;
+  }
+
   saveImage(): void {
     const car = this.selectedCar();
     if (!car || !this.selectedFile || this.saving) return;
@@ -440,18 +460,32 @@ implements OnInit {
           this.afterSave();
         },
         error: err => {
-          const message = err?.status === 413 ? 'حجم فایل بیش از حد مجاز است.'
-            : err?.status === 401 || err?.status === 403 ? 'دسترسی شما منقضی شده یا مجاز نیست.'
-            : err?.name === 'TimeoutError' ? 'زمان پاسخ سرور تمام شد؛ دوباره تلاش کنید.'
-            : 'آپلود عکس ناموفق بود. دوباره تلاش کنید.';
-          this.toastr.error(message);
+          this.toastr.error(this.imageUploadError(err));
         }
       });
+  }
+
+  private hasCarDetailsChanged(): boolean {
+    const car = this.selectedCar();
+    if (!car) return true;
+    const dto = this.dto();
+    return dto.name.trim() !== (car.name || '').trim()
+      || String(dto.startDate || '') !== String(car.startDate || '')
+      || Number(dto.price || 0) !== Number(car.price || 0)
+      || (dto.description || '') !== (car.description || '')
+      || Number(dto.carModelName) !== this.lookupId(car.carModeName, this.carModels())
+      || Number(dto.tipName) !== this.lookupId(car.tipName, this.tips())
+      || Number(dto.companyName) !== this.lookupId(car.companyName || car.company, this.companies());
   }
 
   saveCar(): void {
 
     if (this.saving) return;
+    // Image-only edits must not require updating unrelated car fields.
+    if (this.activeModal() === 'edit' && this.selectedFile && !this.hasCarDetailsChanged()) {
+      this.saveImage();
+      return;
+    }
     const dto = this.dto();
     if (!dto.name?.trim() || !dto.carModelName || !dto.tipName || !dto.companyName) {
       this.toastr.error('نام، مدل، تیپ و شرکت الزامی هستند.');
@@ -586,7 +620,7 @@ implements OnInit {
               .pipe(timeout(70000), finalize(() => this.saving = false))
               .subscribe({
                 next: () => { this.toastr.success('خودرو و تصویر ویرایش شدند'); this.afterSave(); },
-                error: () => { this.toastr.error('اطلاعات ذخیره شد اما آپلود تصویر ناموفق بود'); this.afterSave(); }
+                error: err => { this.toastr.error('اطلاعات ذخیره شد اما عکس آپلود نشد: ' + this.imageUploadError(err)); this.afterSave(); }
               });
             return;
           }
