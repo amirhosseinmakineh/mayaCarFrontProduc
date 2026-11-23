@@ -30,7 +30,7 @@ export function createApiProxy(
 
     const requestId = randomUUID();
     const method = req.method;
-    const upload = method === 'PUT' && (/^\/api\/admin\/catalog\/model-images(?:\/|$)/.test(path) || /^\/api\/car\/\d+\/image\/?$/i.test(path));
+    const upload = (method === 'PUT' && /^\/api\/admin\/catalog\/model-images(?:\/|$)/.test(path)) || (method === 'PATCH' && /^\/api\/car\/?$/i.test(path) && (req.headers['content-type'] ?? '').includes('multipart/form-data'));
     const started = performance.now();
     let stage = 'UpstreamConnection';
     let failureCode: string | undefined;
