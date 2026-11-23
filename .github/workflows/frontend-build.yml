@@ -54,6 +54,7 @@ jobs:
         run: >-
           npm test -- --watch=false --browsers=ChromeHeadless
           --include=src/app/interceptors/auth-interceptor.spec.ts
+          --include=src/app/components/admin/carManagment/carManagment.component.spec.ts
           --include=src/app/components/carList/carList.component.spec.ts
           --include=src/app/services/car/car.service.spec.ts
           --ts-config=tsconfig.catalog-upload.spec.json

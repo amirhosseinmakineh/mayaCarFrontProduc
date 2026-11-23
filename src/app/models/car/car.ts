@@ -1,5 +1,8 @@
 export interface Car {
   id: number;
+  carModelId?: number | null;
+  tipId?: number | null;
+  companyId?: number | null;
   tipName?: string;
   carModeName?: string;
   company?: string;

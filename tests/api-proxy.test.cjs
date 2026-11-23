@@ -134,6 +134,38 @@ test('upload deadline closes the upstream request after the body was sent', asyn
   await closed;
 });
 
+test('forwards the unified car PATCH as multipart with its upload deadline', async t => {
+  const body = new FormData();
+  body.append('Id', '42');
+  body.append('Image', new Blob(['image bytes'], { type: 'image/jpeg' }), 'car.jpg');
+
+  const upstream = await server(async (req, res) => {
+    assert.equal(req.method, 'PATCH');
+    assert.equal(req.url, '/api/car');
+    assert.equal(req.headers.authorization, 'Bearer test-session');
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const form = await new Response(Buffer.concat(chunks), {
+      headers: { 'content-type': req.headers['content-type'] },
+    }).formData();
+    assert.equal(form.get('Id'), '42');
+    assert.equal(form.get('Image').name, 'car.jpg');
+    assert.equal(await form.get('Image').text(), 'image bytes');
+    await new Promise(resolve => setTimeout(resolve, 250));
+    res.end('saved');
+  });
+  const app = express();
+  app.use(createApiProxy(upstream.origin, 100, 5000));
+  const proxy = await server(app);
+  t.after(async () => { await proxy.close(); await upstream.close(); });
+
+  const response = await fetch(`${proxy.origin}/api/car`, {
+    method: 'PATCH', body, headers: { authorization: 'Bearer test-session' },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), 'saved');
+});
+
 test('closing the downstream client cancels upstream after a complete upload body', async t => {
   let abortClient;
   let markClosed;

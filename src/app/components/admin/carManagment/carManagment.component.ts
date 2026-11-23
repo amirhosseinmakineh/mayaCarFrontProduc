@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import {
@@ -13,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 
 import { AdminService, CatalogModelImage }
 from '../../../services/admin/admin.service';
+import { apiErrorMessage } from '../../../services/api-error-message';
 
 import { Car }
 from '../../../models/car/car';
@@ -105,10 +107,6 @@ implements OnInit {
   get firstVisible(): number { return this.totalCars ? this.page * this.pageSize + 1 : 0; }
   get lastVisible(): number { return Math.min((this.page + 1) * this.pageSize, this.totalCars); }
   trackByCar(_index: number, car: Car): number { return car.id; }
-  private lookupId(value: string | number | undefined, items: {id:number;name:string}[]): number {
-    const match = items.find(i => i.name === String(value) || i.id === Number(value));
-    return match?.id ?? 0;
-  }
 
   // ======================
   // SIGNALS
@@ -198,6 +196,9 @@ implements OnInit {
           }
           this.cars.set(res.items.map(item => ({
             id: item.id,
+            carModelId: item.carModelId,
+            tipId: item.tipId,
+            companyId: item.companyId,
             name: item.name,
             imageName: item.imageName,
             description: item.description,
@@ -336,14 +337,14 @@ implements OnInit {
     this.dto.set({
 
       carModelName:
-        this.lookupId(car.carModeName, this.carModels()),
+        car.carModelId ?? 0,
 
 
       tipName:
-        this.lookupId(car.tipName, this.tips()),
+        car.tipId ?? 0,
 
       companyName:
-        this.lookupId(car.companyName || car.company, this.companies()),
+        car.companyId ?? 0,
 
       name:
         car.name || '',
@@ -433,29 +434,6 @@ implements OnInit {
   // ======================
   // SAVE
   // ======================
-
-  private imageUploadError(err: any): string {
-    if (err?.status === 413) return 'حجم فایل بیش از محدودیت سرور است (حداکثر ۸ مگابایت).';
-    if (err?.status === 401 || err?.status === 403) return 'دسترسی مدیر برای آپلود عکس معتبر نیست.';
-    if (err?.status === 404) return 'خودرو یا مسیر API آپلود تصویر پیدا نشد (404).';
-    if (err?.status === 400 || err?.status === 415) return 'فرمت یا اطلاعات عکس توسط سرور رد شد (400/415).';
-    if (err?.name === 'TimeoutError') return 'زمان آپلود عکس تمام شد؛ وضعیت عکس را بررسی کنید.';
-    if (err?.status === 0) return 'اتصال به سرور آپلود برقرار نشد؛ شبکه یا تنظیمات سرور را بررسی کنید.';
-    return `آپلود عکس ناموفق بود (HTTP ${err?.status ?? 'نامشخص'}).`;
-  }
-
-  private hasCarDetailsChanged(): boolean {
-    const car = this.selectedCar();
-    if (!car) return true;
-    const dto = this.dto();
-    return dto.name.trim() !== (car.name || '').trim()
-      || String(dto.startDate || '') !== String(car.startDate || '')
-      || Number(dto.price || 0) !== Number(car.price || 0)
-      || (dto.description || '') !== (car.description || '')
-      || Number(dto.carModelName) !== this.lookupId(car.carModeName, this.carModels())
-      || Number(dto.tipName) !== this.lookupId(car.tipName, this.tips())
-      || Number(dto.companyName) !== this.lookupId(car.companyName || car.company, this.companies());
-  }
 
   saveCar(): void {
 
@@ -595,11 +573,13 @@ implements OnInit {
 
         },
 
-        error: err => {
-
+        error: (error: HttpErrorResponse) => {
           this.saving = false;
-          this.toastr.error('خطا در ویرایش خودرو');
-
+          const message = error.status === 413
+            ? 'حجم فایل بیش از محدودیت سرور است (حداکثر ۸ مگابایت).'
+            : apiErrorMessage(error);
+          const requestId = error.headers.get('X-Request-Id');
+          this.toastr.error(requestId ? `${message} شناسه پیگیری: ${requestId}` : message);
         }
 
       });
