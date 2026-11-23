@@ -15,8 +15,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     request.method === 'PUT' &&
     request.url.startsWith(uploadBaseUrl) &&
     /^\/admin\/catalog\/model-images\/(?:cars\/)?\d+$/.test(uploadPath);
+  const isCarImageUpdate =
+    request.method === 'PATCH' && request.url === `${uploadBaseUrl}/car`;
   const isApiRequest =
-    request.url === baseUrl || request.url.startsWith(`${baseUrl}/`) || isCatalogImageUpload;
+    request.url === baseUrl || request.url.startsWith(`${baseUrl}/`) || isCatalogImageUpload || isCarImageUpdate;
   const token = isApiRequest ? auth.getToken() : null;
   const authenticatedRequest = token
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })

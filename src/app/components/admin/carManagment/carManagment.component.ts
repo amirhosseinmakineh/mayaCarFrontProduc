@@ -558,7 +558,8 @@ implements OnInit {
       car.id.toString()
     );
 
-    this.adminService.updateCar(formData)
+    const uploadRequestId = formData.has('Image') ? crypto.randomUUID() : undefined;
+    this.adminService.updateCar(formData, uploadRequestId)
       .subscribe({
 
         next: result => {
@@ -578,7 +579,7 @@ implements OnInit {
           const message = error.status === 413
             ? 'حجم فایل بیش از محدودیت سرور است (حداکثر ۸ مگابایت).'
             : apiErrorMessage(error);
-          const requestId = error.headers.get('X-Request-Id');
+          const requestId = error.headers.get('X-Request-Id') ?? uploadRequestId;
           this.toastr.error(requestId ? `${message} شناسه پیگیری: ${requestId}` : message);
         }
 

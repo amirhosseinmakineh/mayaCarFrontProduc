@@ -11,6 +11,7 @@ import {
 } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { AuthService } from '../services/auth/auth-service';
+import { AdminService } from '../services/admin/admin.service';
 import { environment } from '../../environments/environment';
 import { authInterceptor } from './auth-interceptor';
 
@@ -72,6 +73,33 @@ describe('authInterceptor HTTP behavior', () => {
 
     const external = 'https://external.example/api/admin/catalog/model-images/cars/78639';
     http.put(external, new FormData()).subscribe();
+    const request = requests.expectOne(external);
+    expect(request.request.headers.has('Authorization')).toBeFalse();
+    request.flush({});
+  });
+
+  it('sends image edits to the direct car API and keeps detail-only edits on the proxy', () => {
+    const admin = TestBed.inject(AdminService);
+    const body = new FormData();
+    body.append('Id', '78639');
+    body.append('Image', new Blob(['image'], { type: 'image/png' }), 'car.png');
+    admin.updateCar(body, 'test-request').subscribe();
+
+    const direct = requests.expectOne(`${environment.catalogImageUploadApiUrl}/car`);
+    expect(direct.request.method).toBe('PATCH');
+    expect(direct.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+    expect(direct.request.headers.get('X-Request-Id')).toBe('test-request');
+    expect(direct.request.headers.has('Content-Type')).toBeFalse();
+    expect(direct.request.body).toBe(body);
+    direct.flush({});
+
+    const details = new FormData();
+    details.append('Id', '78639');
+    admin.updateCar(details).subscribe();
+    requests.expectOne(`${environment.apiUrl}/car`).flush({});
+
+    const external = 'https://external.example/api/car';
+    http.patch(external, body).subscribe();
     const request = requests.expectOne(external);
     expect(request.request.headers.has('Authorization')).toBeFalse();
     request.flush({});
