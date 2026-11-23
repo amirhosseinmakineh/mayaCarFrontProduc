@@ -88,8 +88,11 @@ export class AdminService {
   }
 
   // ✔ باز کردن امضا برای قبول کردن FormData
-  updateCar(dto: UpdateCar | FormData): Observable<Result<unknown>> {
-    return this.client.patch<Result<unknown>>(`${this.baseUrl}/car`, dto);
+  updateCar(dto: UpdateCar | FormData, requestId?: string): Observable<Result<unknown>> {
+    const includesImage = dto instanceof FormData && dto.get('Image') instanceof Blob;
+    const baseUrl = includesImage ? environment.catalogImageUploadApiUrl : this.baseUrl;
+    const headers = requestId ? { 'X-Request-Id': requestId } : undefined;
+    return this.client.patch<Result<unknown>>(`${baseUrl}/car`, dto, { headers });
   }
 
   getCatalogModelImages(): Observable<CatalogModelImage[]> {
