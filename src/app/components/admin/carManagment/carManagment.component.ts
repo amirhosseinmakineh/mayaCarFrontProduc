@@ -1,4 +1,4 @@
-import { finalize, timeout } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import {
   Component,
@@ -449,7 +449,7 @@ implements OnInit {
     if (!car || !this.selectedFile || this.saving) return;
     this.saving = true;
     this.adminService.updateVehicleImage(car.id, this.selectedFile)
-      .pipe(timeout(70000), finalize(() => this.saving = false))
+      .pipe(finalize(() => this.saving = false))
       .subscribe({
         next: result => {
           if (!result?.imageName) {
@@ -617,7 +617,7 @@ implements OnInit {
           }
           if (this.selectedFile) {
             this.adminService.updateVehicleImage(car.id, this.selectedFile)
-              .pipe(timeout(70000), finalize(() => this.saving = false))
+              .pipe(finalize(() => this.saving = false))
               .subscribe({
                 next: () => { this.toastr.success('خودرو و تصویر ویرایش شدند'); this.afterSave(); },
                 error: err => { this.toastr.error('اطلاعات ذخیره شد اما عکس آپلود نشد: ' + this.imageUploadError(err)); this.afterSave(); }
