@@ -4,8 +4,6 @@ import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angul
 import { environment } from '../../../../environments/environment';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subscription, catchError, expand, of, switchMap, throwError, timeout, timer } from 'rxjs';
-import { Car } from '../../../models/car/car';
-import { CarService } from '../../../services/car/car.service';
 
 interface ScanReference {
   Name: string; CarName?: string; CompanyName?: string; ModelName?: string; TipName?: string; Year: string; AdvertisementCount?: number;
@@ -156,11 +154,10 @@ interface ScanStatus {
 })
 export class TelegramManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly cars = inject(CarService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly changeDetector = inject(ChangeDetectorRef);
-  private readonly reportUrl = environment.telegramReportApiUrl.replace(/\/$/, '') + '/admin/telegram/results';
   private readonly baseUrl = (environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl) + '/admin/telegram';
+  private readonly reportUrl = this.baseUrl + '/results';
   loading = false;
   starting = false;
   error = '';
@@ -198,64 +195,31 @@ export class TelegramManagementComponent implements OnInit {
   }
 
   loadReferences(): void {
-    const pageSize = 5;
-    const fetchPage = (pageNumber: number) =>
-      this.cars.getAllCarsWithFilter({ pageNumber, pageSize }).pipe(timeout({ first: 15_000 }));
-
     this.referenceRequest?.unsubscribe();
     this.referencesLoading = true;
     this.referencesError = '';
-    this.changeDetector.markForCheck();
-    const loaded: ScanReference[] = [];
-    this.referenceRequest = fetchPage(0).pipe(
-      expand(page => page.pageNumber + 1 < page.totalPages ? fetchPage(page.pageNumber + 1) : EMPTY),
+    this.referenceRequest = this.http.get<ScanStatus | ScanResults>(this.reportUrl).pipe(
+      timeout({ first: 15_000 }),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
-      next: page => {
-        loaded.push(...page.items.map(row => this.toReference(row)));
-        this.references = [...loaded];
-        this.changeDetector.markForCheck();
-      },
-      complete: () => {
-        if (this.destroyRef.destroyed) return;
+      next: payload => {
+        const raw = ('results' in payload ? payload.results : payload) as ScanResults | null;
+        const data = raw as (ScanResults & { references?: ScanReference[]; rejectedReferences?: RejectedReference[] }) | null;
+        this.references = data?.References ?? data?.references ?? [];
+        this.results = data ? { ...data, References: this.references, RejectedReferences: data.RejectedReferences ?? data.rejectedReferences ?? [] } : null;
         this.referencesLoading = false;
         this.changeDetector.markForCheck();
       },
       error: () => {
-        this.referencesError = loaded.length
-          ? 'دریافت ادامهٔ فهرست ناموفق بود. ردیف‌های دریافت‌شده در جدول هستند.'
-          : 'دریافت فهرست تازهٔ مراجع ناموفق بود.';
+        this.referencesError = 'دریافت گزارش مراجع اسکن ناموفق بود.';
         this.referencesLoading = false;
         this.changeDetector.markForCheck();
       },
     });
   }
 
-  private toReference(car: Car): ScanReference {
-    const year = car.startDate ?? '';
-    let details: Partial<ScanReference> | undefined;
-    try {
-      const metadata = JSON.parse(car.description ?? '{}');
-      details = metadata.CurrentYears?.[year] ?? (String(metadata.Year) === year ? metadata : undefined);
-    } catch {
-      // The row already contains the approved year and price.
-    }
-
-    return {
-      Name: car.name,
-      CompanyName: car.companyName,
-      ModelName: car.carModeName,
-      TipName: car.tipName,
-      Year: year,
-      ReferencePriceBillion: (car.marketPrice ?? car.price ?? 0) / 1_000_000_000,
-      AdvertisementCount: details?.AdvertisementCount,
-      ComparedPricesBillion: Array.isArray(details?.ComparedPricesBillion) ? details.ComparedPricesBillion : undefined,
-    };
-  }
-
   refresh(): void {
     if (this.loading || this.referencesLoading) return;
-    this.loadReferences();
     this.loading = true; this.error = ''; this.detailsError = '';
     this.http.get<ScanStatus>(this.baseUrl + '/status').pipe(
       timeout({ first: 12_000 }),
@@ -264,31 +228,8 @@ export class TelegramManagementComponent implements OnInit {
       next: status => {
         this.scan = status;
         if (this.isActiveScan(status)) this.trackScan(status.startedAt, true);
-        this.results = null;
-        this.changeDetector.markForCheck();
-        this.http.get<ScanStatus | ScanResults>(this.reportUrl).pipe(
-          timeout({ first: 12_000 }),
-          takeUntilDestroyed(this.destroyRef),
-        ).subscribe({
-          next: payload => {
-            const wrapped = payload as ScanStatus;
-            const raw = ('results' in payload ? wrapped.results : payload) as ScanResults | null;
-            if (raw) {
-              const data = raw as ScanResults & { references?: ScanReference[]; rejectedReferences?: RejectedReference[] };
-              this.results = { ...data, References: data.References ?? data.references ?? [], RejectedReferences: data.RejectedReferences ?? data.rejectedReferences ?? [] };
-            } else {
-              this.results = null;
-            }
-            this.finishRefresh();
-          },
-          error: (err: HttpErrorResponse) => {
-            this.results = null;
-            this.detailsError = err.status === 401 || err.status === 403
-              ? 'دسترسی به جزئیات گزارش اسکن مجاز نیست.'
-              : 'وضعیت اسکن دریافت شد، اما جزئیات گزارش در دسترس نیست.';
-            this.finishRefresh();
-          }
-        });
+        this.loadReferences();
+        this.finishRefresh();
       },
       error: (err: HttpErrorResponse) => {
         this.scan = null;
