@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subscription, catchError, expand, map, of, reduce, switchMap, throwError, timeout, timer } from 'rxjs';
+import { EMPTY, Subscription, catchError, expand, of, switchMap, throwError, timeout, timer } from 'rxjs';
 import { Car } from '../../../models/car/car';
 import { CarService } from '../../../services/car/car.service';
 
@@ -97,8 +97,13 @@ interface ScanStatus {
 
     <div class="panel" *ngIf="tab === 'approved'">
       <h2>قیمت‌های مرجع تولیدشده <span *ngIf="references !== null">({{ references.length }})</span></h2>
-      <p *ngIf="referencesLoading" role="status">در حال دریافت مراجع تأییدشده…</p>
-      <p *ngIf="referencesError" role="alert">{{ referencesError }}</p>
+      <p *ngIf="referencesLoading" role="status">
+        {{ references?.length ? 'در حال دریافت ادامهٔ فهرست…' : 'در حال دریافت مراجع تأییدشده…' }}
+      </p>
+      <div *ngIf="referencesError" role="alert">
+        <p>{{ referencesError }}</p>
+        <button type="button" class="secondary" (click)="loadReferences()">تلاش دوباره</button>
+      </div>
       <p *ngIf="references?.length === 0 && !referencesLoading && !referencesError">مرجع قیمتی تأییدشده‌ای ثبت نشده است.</p>
       <div class="table-wrap" *ngIf="references?.length"><table><thead><tr><th>شرکت</th><th>نام خودرو</th><th>مدل</th><th>تیپ</th><th>سال</th><th>تعداد آگهی</th><th>قیمت مرجع (میلیارد تومان)</th><th>قیمت‌های مقایسه‌شده</th></tr></thead>
         <tbody><tr *ngFor="let item of references"><td>{{ item.CompanyName || '—' }}</td><td>{{ item.CarName || item.Name }}</td><td>{{ item.ModelName || '—' }}</td><td>{{ item.TipName || '—' }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount ?? '—' }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ (item.ComparedPricesBillion ?? []).join('، ') || '—' }}</td></tr></tbody></table></div>
@@ -192,7 +197,7 @@ export class TelegramManagementComponent implements OnInit {
     return Object.entries(errors).map(([name, reason]) => ({ name, reason }));
   }
 
-  private loadReferences(): void {
+  loadReferences(): void {
     const pageSize = 5;
     const fetchPage = (pageNumber: number) =>
       this.cars.getAllCarsWithFilter({ pageNumber, pageSize }).pipe(timeout({ first: 15_000 }));
@@ -200,21 +205,26 @@ export class TelegramManagementComponent implements OnInit {
     this.referenceRequest?.unsubscribe();
     this.referencesLoading = true;
     this.referencesError = '';
+    this.changeDetector.markForCheck();
+    const loaded: ScanReference[] = [];
     this.referenceRequest = fetchPage(0).pipe(
       expand(page => page.pageNumber + 1 < page.totalPages ? fetchPage(page.pageNumber + 1) : EMPTY),
-      reduce((rows, page) => rows.concat(page.items), [] as Car[]),
-      map(rows => rows.map(row => this.toReference(row))),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
-      next: references => {
-        this.references = references;
+      next: page => {
+        loaded.push(...page.items.map(row => this.toReference(row)));
+        this.references = [...loaded];
+        this.changeDetector.markForCheck();
+      },
+      complete: () => {
+        if (this.destroyRef.destroyed) return;
         this.referencesLoading = false;
         this.changeDetector.markForCheck();
       },
       error: () => {
-        this.referencesError = this.references
-          ? 'دریافت فهرست تازه ناموفق بود. آخرین فهرست دریافت‌شده نمایش داده می‌شود.'
-          : 'دریافت مراجع تأییدشده ناموفق بود. بروزرسانی گزارش را بزنید.';
+        this.referencesError = loaded.length
+          ? 'دریافت ادامهٔ فهرست ناموفق بود. ردیف‌های دریافت‌شده در جدول هستند.'
+          : 'دریافت فهرست تازهٔ مراجع ناموفق بود.';
         this.referencesLoading = false;
         this.changeDetector.markForCheck();
       },
