@@ -17,8 +17,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     /^\/admin\/catalog\/model-images\/(?:cars\/)?\d+$/.test(uploadPath);
   const isCarImageUpdate =
     request.method === 'PATCH' && request.url === `${uploadBaseUrl}/car`;
+  const reportUrl = environment.telegramReportApiUrl.replace(/\/$/, '') + '/admin/telegram/results';
+  const isTelegramReport = request.method === 'GET' && request.url === reportUrl;
   const isApiRequest =
-    request.url === baseUrl || request.url.startsWith(`${baseUrl}/`) || isCatalogImageUpload || isCarImageUpdate;
+    request.url === baseUrl || request.url.startsWith(`${baseUrl}/`) || isCatalogImageUpload || isCarImageUpdate || isTelegramReport;
   const token = isApiRequest ? auth.getToken() : null;
   const authenticatedRequest = token
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })

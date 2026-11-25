@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 
 interface ScanReference {
@@ -146,6 +146,8 @@ interface ScanStatus {
 })
 export class TelegramManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly reportUrl = environment.telegramReportApiUrl.replace(/\/$/, '') + '/admin/telegram/results';
   private readonly baseUrl = (environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl) + '/admin/telegram';
   loading = false;
   starting = false;
@@ -163,6 +165,11 @@ export class TelegramManagementComponent implements OnInit {
 
   ngOnInit(): void { this.refresh(); }
   get isRunning(): boolean { return this.scan?.status === 'Running' || this.scan?.status === 'Queued'; }
+  private finishRefresh(): void {
+    this.loading = false;
+    this.changeDetector.markForCheck();
+  }
+
   get references(): ScanReference[] { return this.results?.References ?? []; }
   get rejected(): RejectedReference[] { return this.results?.RejectedReferences ?? []; }
   get channelErrors(): { name: string; reason: string }[] {
@@ -177,7 +184,7 @@ export class TelegramManagementComponent implements OnInit {
       next: status => {
         this.scan = status;
         this.results = null;
-        this.http.get<ScanStatus | ScanResults>(this.baseUrl + '/results').subscribe({
+        this.http.get<ScanStatus | ScanResults>(this.reportUrl).subscribe({
           next: payload => {
             const wrapped = payload as ScanStatus;
             const raw = ('results' in payload ? wrapped.results : payload) as ScanResults | null;
@@ -187,24 +194,24 @@ export class TelegramManagementComponent implements OnInit {
             } else {
               this.results = null;
             }
-            this.loading = false;
+            this.finishRefresh();
           },
           error: (err: HttpErrorResponse) => {
             this.results = null;
-            this.loading = false;
             this.detailsError = err.status === 401 || err.status === 403
               ? 'دسترسی به جزئیات گزارش اسکن مجاز نیست.'
               : 'وضعیت اسکن دریافت شد، اما جزئیات گزارش در دسترس نیست.';
+            this.finishRefresh();
           }
         });
       },
       error: (err: HttpErrorResponse) => {
-        this.loading = false;
         this.scan = null;
         this.results = null;
         this.error = err.status === 401 || err.status === 403
           ? 'برای مشاهده گزارش باید با حساب مدیر وارد شوید.'
           : 'دریافت وضعیت اسکن ممکن نشد. مسیر API یا اتصال سرور را بررسی کنید.';
+        this.finishRefresh();
       }
     });
   }
@@ -218,6 +225,7 @@ export class TelegramManagementComponent implements OnInit {
         this.starting = false;
         this.error = err.status === 409 ? 'یک اسکن دیگر در حال اجراست.' :
           'درخواست اجرای اسکن پذیرفته نشد. مسیر API اجرای دستی را بررسی کنید.';
+        this.changeDetector.markForCheck();
       }
     });
   }
