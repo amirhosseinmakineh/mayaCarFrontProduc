@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription, retry, timer, timeout, finalize } from 'rxjs';
+import { Subscription, retry, timer, timeout, finalize, expand, reduce, EMPTY } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface RawTelegramMessage {
@@ -39,7 +39,7 @@ interface MessagePage {
           <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
             {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت از تلگرام' }}
           </button>
-          <button class="refresh" type="button" (click)="downloadArchive()" [disabled]="exporting || refreshPending || refreshRunning">{{ exporting ? 'در حال آماده‌سازی…' : 'دانلود کل پیام‌ها (JSON)' }}</button>
+          <button class="refresh" type="button" (click)="downloadArchive()" [disabled]="exporting || refreshPending || refreshRunning">{{ exporting ? 'دریافت شده: ' + exportedCount : 'دانلود کل پیام‌ها (JSON)' }}</button>
           <button class="refresh" (click)="reloadDatabase()" [disabled]="loading || channelsLoading">↻ نمایش اطلاعات دیتابیس</button>
         </div>
       </header>
@@ -193,6 +193,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private statusRequest?: Subscription;
   private statusLoading = false;
   exporting = false;
+  exportedCount = 0;
   exportError = '';
   private exportRequest?: Subscription;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
@@ -219,15 +220,32 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   downloadArchive(): void {
     if (!this.isBrowser || this.exporting || this.refreshPending || this.refreshRunning) return;
     this.exporting = true;
+    this.exportedCount = 0;
     this.exportError = '';
     this.cdr.markForCheck();
-    this.exportRequest = this.http.get(this.url + '/export', {responseType: 'json'})
-      .pipe(timeout(25000), finalize(() => {
+    type ExportPage = {items: unknown[]; snapshotId: number; nextAfterId: number; hasMore: boolean};
+    const fetchPage = (afterId: number, snapshotId?: number) => {
+      let params = new HttpParams().set('afterId', afterId).set('pageSize', 50);
+      if (snapshotId !== undefined) params = params.set('snapshotId', snapshotId);
+      return this.http.get<ExportPage>(this.url + '/export', {params}).pipe(timeout(25000));
+    };
+    this.exportRequest = fetchPage(0).pipe(
+      expand(page => {
+        if (!Array.isArray(page.items) || typeof page.hasMore !== 'boolean' || !Number.isSafeInteger(page.snapshotId) || !Number.isSafeInteger(page.nextAfterId))
+          throw new Error('Invalid paged export response');
+        this.exportedCount += page.items.length;
+        this.cdr.markForCheck();
+        if (page.hasMore && !page.items.length) throw new Error('Empty export page');
+        return page.hasMore ? fetchPage(page.nextAfterId, page.snapshotId) : EMPTY;
+      }),
+      reduce((items: unknown[], page) => { items.push(...page.items); return items; }, []),
+      finalize(() => {
         this.exporting = false;
         this.cdr.markForCheck();
       })).subscribe({
-        next: data => {
+        next: items => {
           try {
+            const data = {exportedAt: new Date().toISOString(), totalCount: items.length, items};
             if (!data || typeof data !== 'object' || !Array.isArray((data as {items?: unknown}).items))
               throw new Error('Invalid archive response');
             const blob = new Blob([JSON.stringify(data)], {type: 'application/json;charset=utf-8'});
