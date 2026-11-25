@@ -1,11 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { environment } from '../../../../environments/environment';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Subscription, catchError, expand, map, of, reduce, switchMap, throwError, timeout, timer } from 'rxjs';
+import { Car } from '../../../models/car/car';
+import { CarService } from '../../../services/car/car.service';
 
 interface ScanReference {
-  Name: string; CarName?: string; CompanyName?: string; ModelName?: string; TipName?: string; Year: string; AdvertisementCount: number;
-  ReferencePriceBillion: number; ComparedPricesBillion: number[];
+  Name: string; CarName?: string; CompanyName?: string; ModelName?: string; TipName?: string; Year: string; AdvertisementCount?: number;
+  ReferencePriceBillion: number; ComparedPricesBillion?: number[];
 }
 interface RejectedReference {
   CarId?: number; Name?: string; Year: string; Status: string; Reason: string;
@@ -37,7 +41,7 @@ interface ScanStatus {
         <p>اجرای اسکن فقط با دستور مدیر است. تأیید مرجع قیمت توسط الگوریتم انجام می‌شود و نیازی به تأیید دستی قیمت نیست.</p>
       </div>
       <div class="actions">
-        <button class="secondary" type="button" (click)="refresh()" [disabled]="loading">↻ بروزرسانی گزارش</button>
+        <button class="secondary" type="button" (click)="refresh()" [disabled]="loading || referencesLoading">↻ بروزرسانی گزارش</button>
         <button class="primary" type="button" (click)="startScan()" [disabled]="loading || starting || isRunning">
           {{ starting ? 'در حال ارسال درخواست…' : isRunning ? 'اسکن در حال اجراست' : '▶ شروع اسکن دستی' }}
         </button>
@@ -92,11 +96,12 @@ interface ScanStatus {
     </div>
 
     <div class="panel" *ngIf="tab === 'approved'">
-      <h2>قیمت‌های مرجع تولیدشده <span>({{ references.length }})</span></h2>
-      <p *ngIf="!results">جزئیات مراجع در پاسخ API موجود نیست.</p>
-      <p *ngIf="results && !references.length">مرجع قیمتی در این گزارش ثبت نشده است.</p>
-      <div class="table-wrap" *ngIf="references.length"><table><thead><tr><th>شرکت</th><th>نام خودرو</th><th>مدل</th><th>تیپ</th><th>سال</th><th>تعداد آگهی</th><th>قیمت مرجع (میلیارد تومان)</th><th>قیمت‌های مقایسه‌شده</th></tr></thead>
-        <tbody><tr *ngFor="let item of references"><td>{{ item.CompanyName || '—' }}</td><td>{{ item.CarName || item.Name }}</td><td>{{ item.ModelName || '—' }}</td><td>{{ item.TipName || '—' }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ (item.ComparedPricesBillion ?? []).join('، ') || '—' }}</td></tr></tbody></table></div>
+      <h2>قیمت‌های مرجع تولیدشده <span *ngIf="references !== null">({{ references.length }})</span></h2>
+      <p *ngIf="referencesLoading" role="status">در حال دریافت مراجع تأییدشده…</p>
+      <p *ngIf="referencesError" role="alert">{{ referencesError }}</p>
+      <p *ngIf="references?.length === 0 && !referencesLoading && !referencesError">مرجع قیمتی تأییدشده‌ای ثبت نشده است.</p>
+      <div class="table-wrap" *ngIf="references?.length"><table><thead><tr><th>شرکت</th><th>نام خودرو</th><th>مدل</th><th>تیپ</th><th>سال</th><th>تعداد آگهی</th><th>قیمت مرجع (میلیارد تومان)</th><th>قیمت‌های مقایسه‌شده</th></tr></thead>
+        <tbody><tr *ngFor="let item of references"><td>{{ item.CompanyName || '—' }}</td><td>{{ item.CarName || item.Name }}</td><td>{{ item.ModelName || '—' }}</td><td>{{ item.TipName || '—' }}</td><td>{{ item.Year }}</td><td>{{ item.AdvertisementCount ?? '—' }}</td><td><strong>{{ item.ReferencePriceBillion }}</strong></td><td>{{ (item.ComparedPricesBillion ?? []).join('، ') || '—' }}</td></tr></tbody></table></div>
     </div>
 
     <div class="panel" *ngIf="tab === 'rejected'">
@@ -118,7 +123,7 @@ interface ScanStatus {
       </div>
       <p class="hint">این گزارش خطای دریافت را نشان می‌دهد؛ خصوصی‌بودن کانال بدون بررسی مستقل قطعی نیست.</p>
     </div>
-    <footer>منبع گزارش: آخرین Job ثبت‌شده در Backend. برای مشاهده داده‌های جدید از بروزرسانی استفاده کنید.</footer>
+
   </section>`,
   styles: [`
     :host{display:block;font-family:inherit;color:#483a21}.telegram-admin{max-width:1450px;margin:auto}
@@ -146,6 +151,8 @@ interface ScanStatus {
 })
 export class TelegramManagementComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly cars = inject(CarService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly reportUrl = environment.telegramReportApiUrl.replace(/\/$/, '') + '/admin/telegram/results';
   private readonly baseUrl = (environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl) + '/admin/telegram';
@@ -153,6 +160,11 @@ export class TelegramManagementComponent implements OnInit {
   starting = false;
   error = '';
   detailsError = '';
+  referencesLoading = false;
+  referencesError = '';
+  references: ScanReference[] | null = null;
+  private trackingScan = false;
+  private referenceRequest?: Subscription;
   scan: ScanStatus | null = null;
   results: ScanResults | null = null;
   tab: 'overview' | 'approved' | 'rejected' | 'channels' = 'overview';
@@ -164,27 +176,90 @@ export class TelegramManagementComponent implements OnInit {
   ];
 
   ngOnInit(): void { this.refresh(); }
-  get isRunning(): boolean { return this.scan?.status === 'Running' || this.scan?.status === 'Queued'; }
+  get isRunning(): boolean { return this.trackingScan || this.isActiveScan(this.scan); }
+
+  private isActiveScan(scan: ScanStatus | null): boolean {
+    return scan?.status === 'Running' || scan?.status === 'Queued';
+  }
   private finishRefresh(): void {
     this.loading = false;
     this.changeDetector.markForCheck();
   }
 
-  get references(): ScanReference[] { return this.results?.References ?? []; }
   get rejected(): RejectedReference[] { return this.results?.RejectedReferences ?? []; }
   get channelErrors(): { name: string; reason: string }[] {
     const errors = this.results?.ChannelErrors ?? this.scan?.channelErrors ?? {};
     return Object.entries(errors).map(([name, reason]) => ({ name, reason }));
   }
 
+  private loadReferences(): void {
+    const pageSize = 5;
+    const fetchPage = (pageNumber: number) =>
+      this.cars.getAllCarsWithFilter({ pageNumber, pageSize }).pipe(timeout({ first: 15_000 }));
+
+    this.referenceRequest?.unsubscribe();
+    this.referencesLoading = true;
+    this.referencesError = '';
+    this.referenceRequest = fetchPage(0).pipe(
+      expand(page => page.pageNumber + 1 < page.totalPages ? fetchPage(page.pageNumber + 1) : EMPTY),
+      reduce((rows, page) => rows.concat(page.items), [] as Car[]),
+      map(rows => rows.map(row => this.toReference(row))),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: references => {
+        this.references = references;
+        this.referencesLoading = false;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.referencesError = this.references
+          ? 'دریافت فهرست تازه ناموفق بود. آخرین فهرست دریافت‌شده نمایش داده می‌شود.'
+          : 'دریافت مراجع تأییدشده ناموفق بود. بروزرسانی گزارش را بزنید.';
+        this.referencesLoading = false;
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  private toReference(car: Car): ScanReference {
+    const year = car.startDate ?? '';
+    let details: Partial<ScanReference> | undefined;
+    try {
+      const metadata = JSON.parse(car.description ?? '{}');
+      details = metadata.CurrentYears?.[year] ?? (String(metadata.Year) === year ? metadata : undefined);
+    } catch {
+      // The row already contains the approved year and price.
+    }
+
+    return {
+      Name: car.name,
+      CompanyName: car.companyName,
+      ModelName: car.carModeName,
+      TipName: car.tipName,
+      Year: year,
+      ReferencePriceBillion: (car.marketPrice ?? car.price ?? 0) / 1_000_000_000,
+      AdvertisementCount: details?.AdvertisementCount,
+      ComparedPricesBillion: Array.isArray(details?.ComparedPricesBillion) ? details.ComparedPricesBillion : undefined,
+    };
+  }
+
   refresh(): void {
-    if (this.loading) return;
+    if (this.loading || this.referencesLoading) return;
+    this.loadReferences();
     this.loading = true; this.error = ''; this.detailsError = '';
-    this.http.get<ScanStatus>(this.baseUrl + '/status').subscribe({
+    this.http.get<ScanStatus>(this.baseUrl + '/status').pipe(
+      timeout({ first: 12_000 }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
       next: status => {
         this.scan = status;
+        if (this.isActiveScan(status)) this.trackScan(status.startedAt, true);
         this.results = null;
-        this.http.get<ScanStatus | ScanResults>(this.reportUrl).subscribe({
+        this.changeDetector.markForCheck();
+        this.http.get<ScanStatus | ScanResults>(this.reportUrl).pipe(
+          timeout({ first: 12_000 }),
+          takeUntilDestroyed(this.destroyRef),
+        ).subscribe({
           next: payload => {
             const wrapped = payload as ScanStatus;
             const raw = ('results' in payload ? wrapped.results : payload) as ScanResults | null;
@@ -216,11 +291,57 @@ export class TelegramManagementComponent implements OnInit {
     });
   }
 
+  private trackScan(previousStart?: string, observedActive = false): void {
+    if (this.trackingScan) return;
+    this.trackingScan = true;
+    const startedWatching = Date.now();
+    const readStatus = () => timer(3_000).pipe(
+      switchMap(() => this.http.get<ScanStatus>(this.baseUrl + '/status').pipe(
+        timeout({ first: 10_000 }),
+        catchError((error: unknown) => {
+          if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+            return throwError(() => error);
+          }
+          return of(null);
+        }),
+      )),
+    );
+
+    readStatus().pipe(
+      expand(status => {
+        if (status) {
+          this.scan = status;
+          if (this.isActiveScan(status)) observedActive = true;
+          else if (observedActive || (status.startedAt && status.startedAt !== previousStart)) return EMPTY;
+          this.changeDetector.markForCheck();
+        }
+        return Date.now() - startedWatching < 10 * 60_000 ? readStatus() : EMPTY;
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      complete: () => {
+        if (this.destroyRef.destroyed) return;
+        this.trackingScan = false;
+        this.loadReferences();
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.trackingScan = false;
+        this.error = 'دریافت وضعیت اسکن ناموفق بود.';
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
   startScan(): void {
     if (this.loading || this.isRunning || this.starting || !confirm('اسکن دستی تلگرام شروع شود؟')) return;
     this.starting = true; this.error = '';
-    this.http.post(this.baseUrl + '/scan', {}).subscribe({
-      next: () => { this.starting = false; this.refresh(); },
+    this.http.post(this.baseUrl + '/scan', {}).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.starting = false;
+        this.trackScan(this.scan?.startedAt);
+        this.changeDetector.markForCheck();
+      },
       error: (err: HttpErrorResponse) => {
         this.starting = false;
         this.error = err.status === 409 ? 'یک اسکن دیگر در حال اجراست.' :
