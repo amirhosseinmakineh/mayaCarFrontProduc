@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription, retry, timer, timeout } from 'rxjs';
+import { Subscription, retry, timer, timeout, finalize } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface RawTelegramMessage {
@@ -221,24 +221,36 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     this.exporting = true;
     this.exportError = '';
     this.cdr.markForCheck();
-    this.exportRequest = this.http.get(this.url + '/export', {responseType: 'blob'})
-      .pipe(timeout(60000)).subscribe({
-        next: blob => {
-          const url = URL.createObjectURL(blob);
-          const anchor = document.createElement('a');
-          anchor.href = url;
-          anchor.download = 'telegram-archive-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
-          document.body.appendChild(anchor);
-          anchor.click();
-          anchor.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-          this.exporting = false;
-          this.cdr.markForCheck();
+    this.exportRequest = this.http.get(this.url + '/export', {responseType: 'json'})
+      .pipe(timeout(25000), finalize(() => {
+        this.exporting = false;
+        this.cdr.markForCheck();
+      })).subscribe({
+        next: data => {
+          try {
+            if (!data || typeof data !== 'object' || !Array.isArray((data as {items?: unknown}).items))
+              throw new Error('Invalid archive response');
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = 'telegram-archive-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+            document.body.appendChild(anchor);
+            try { anchor.click(); }
+            finally {
+              anchor.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 60000);
+            }
+          } catch {
+            this.exportError = 'ساخت فایل خروجی ناموفق بود.';
+            this.cdr.markForCheck();
+          }
         },
         error: err => {
-          this.exporting = false;
           this.exportError = err.status === 401 || err.status === 403
-            ? 'دسترسی مدیر برای دانلود لازم است.' : 'دانلود آرشیو ناموفق بود؛ دوباره تلاش کنید.';
+            ? 'دسترسی مدیر برای دانلود لازم است.'
+            : err.name === 'TimeoutError' ? 'مهلت دریافت خروجی پایان یافت.'
+            : 'دانلود آرشیو ناموفق بود (HTTP ' + (err.status || 0) + ').';
           this.cdr.markForCheck();
         }
       });
