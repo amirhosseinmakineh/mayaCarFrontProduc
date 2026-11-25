@@ -39,9 +39,11 @@ interface MessagePage {
           <button class="apply" (click)="runManual()" [disabled]="refreshPending || refreshRunning">
             {{ refreshPending || refreshRunning ? 'در حال اجرای دریافت…' : '▶ دریافت از تلگرام' }}
           </button>
+          <button class="refresh" type="button" (click)="downloadArchive()" [disabled]="exporting || refreshPending || refreshRunning">{{ exporting ? 'در حال آماده‌سازی…' : 'دانلود کل پیام‌ها (JSON)' }}</button>
           <button class="refresh" (click)="reloadDatabase()" [disabled]="loading || channelsLoading">↻ نمایش اطلاعات دیتابیس</button>
         </div>
       </header>
+      <div *ngIf="exportError" class="alert" role="alert">{{ exportError }}</div>
       <div class="summary" aria-live="polite">
         وضعیت جمع‌آوری: <strong>{{ refreshStatus }}</strong>
         <span *ngIf="refreshError" class="alert">{{ refreshError }}</span>
@@ -190,6 +192,9 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private channelsRequest?: Subscription;
   private statusRequest?: Subscription;
   private statusLoading = false;
+  exporting = false;
+  exportError = '';
+  private exportRequest?: Subscription;
   get totalPages(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
   get firstVisible(): number { return this.totalCount ? (this.page - 1) * this.pageSize + 1 : 0; }
   get lastVisible(): number { return Math.min(this.page * this.pageSize, this.totalCount); }
@@ -209,6 +214,34 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     this.messagesRequest?.unsubscribe();
     this.channelsRequest?.unsubscribe();
     this.statusRequest?.unsubscribe();
+    this.exportRequest?.unsubscribe();
+  }
+  downloadArchive(): void {
+    if (!this.isBrowser || this.exporting || this.refreshPending || this.refreshRunning) return;
+    this.exporting = true;
+    this.exportError = '';
+    this.cdr.markForCheck();
+    this.exportRequest = this.http.get(this.url + '/export', {responseType: 'blob'})
+      .pipe(timeout(60000)).subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download = 'telegram-archive-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          this.exporting = false;
+          this.cdr.markForCheck();
+        },
+        error: err => {
+          this.exporting = false;
+          this.exportError = err.status === 401 || err.status === 403
+            ? 'دسترسی مدیر برای دانلود لازم است.' : 'دانلود آرشیو ناموفق بود؛ دوباره تلاش کنید.';
+          this.cdr.markForCheck();
+        }
+      });
   }
   runManual(): void {
     if (this.refreshPending || this.refreshRunning) return;
