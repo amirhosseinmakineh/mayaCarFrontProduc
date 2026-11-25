@@ -8,7 +8,7 @@ interface ScanReference {
   ReferencePriceBillion: number; ComparedPricesBillion: number[];
 }
 interface RejectedReference {
-  CarId: number; Year: string; Status: string; Reason: string;
+  CarId?: number; Name?: string; Year: string; Status: string; Reason: string;
   CandidatePricesBillion: number[]; AdvertisementCount: number;
 }
 interface ScanResults {
@@ -67,7 +67,7 @@ interface ScanStatus {
     <div class="explain">
       <h2>اسکن چه مراحلی دارد؟</h2>
       <div class="steps">
-        <div><b>۱</b><span>خواندن کانال‌های قابل دسترس</span></div>
+        <div><b>۱</b><span>خواندن آرشیو ذخیره‌شده</span></div>
         <div><b>۲</b><span>شناسایی آگهی خودروی صفر</span></div>
         <div><b>۳</b><span>تطبیق مدل، تیپ و سال</span></div>
         <div><b>۴</b><span>مقایسه و تأیید سیستمی قیمت</span></div>
@@ -104,7 +104,7 @@ interface ScanStatus {
       <p *ngIf="!results">جزئیات رد قیمت در پاسخ API موجود نیست.</p>
       <p *ngIf="results && !rejected.length">گروه ردشده‌ای در این گزارش ثبت نشده است.</p>
       <div class="rejection" *ngFor="let item of rejected">
-        <div><strong>خودرو {{ item.CarId }} · سال {{ item.Year }} · وضعیت {{ item.Status || 'نامشخص' }}</strong><span class="pill">نیازمند بررسی</span></div>
+        <div><strong>خودرو {{ item.Name || item.CarId }} · سال {{ item.Year }} · وضعیت {{ item.Status || 'نامشخص' }}</strong><span class="pill">نیازمند بررسی</span></div>
         <p>قیمت‌های بررسی‌شده: {{ (item.CandidatePricesBillion ?? []).join('، ') || '—' }} میلیارد تومان</p>
         <small>علت: {{ item.Reason || 'علت رد توسط API مشخص نشده است' }}</small>
       </div>
@@ -180,7 +180,13 @@ export class TelegramManagementComponent implements OnInit {
         this.http.get<ScanStatus | ScanResults>(this.baseUrl + '/results').subscribe({
           next: payload => {
             const wrapped = payload as ScanStatus;
-            this.results = wrapped.results ?? (payload as ScanResults);
+            const raw = ('results' in payload ? wrapped.results : payload) as ScanResults | null;
+            if (raw) {
+              const data = raw as ScanResults & { references?: ScanReference[]; rejectedReferences?: RejectedReference[] };
+              this.results = { ...data, References: data.References ?? data.references ?? [], RejectedReferences: data.RejectedReferences ?? data.rejectedReferences ?? [] };
+            } else {
+              this.results = null;
+            }
             this.loading = false;
           },
           error: (err: HttpErrorResponse) => {
