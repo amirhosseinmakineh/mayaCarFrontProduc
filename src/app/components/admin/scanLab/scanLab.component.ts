@@ -11,7 +11,8 @@ import { environment } from '../../../../environments/environment';
   template: `
     <section dir="rtl">
       <h1>آزمایشگاه اسکن خودرو</h1>
-      <p>محیط اجرای کوئری‌های فقط خواندنی</p>
+      <p>کنسول SQL مدیریت دیتابیس</p>
+      <p class="warning">دستورات SQL می‌توانند داده‌ها را تغییر دهند یا حذف کنند.</p>
       <div class="toolbar">
         <button class="primary" (click)="execute()" [disabled]="loading || !editorSql.trim()">▶ اجرا</button>
         <button (click)="copy()" [disabled]="!editorSql">کپی</button>
@@ -19,18 +20,35 @@ import { environment } from '../../../../environments/environment';
         <button (click)="editorSql=''; editorResult=null; error=''; notice='کوئری پاک شد'" [disabled]="loading">پاک کردن کل</button>
         <button (click)="editorSql=initialSql" [disabled]="loading">بازنشانی</button>
       </div>
-      <textarea dir="ltr" [(ngModel)]="editorSql" rows="12" spellcheck="false" [disabled]="loading" aria-label="SQL query"></textarea>
+      <textarea class="sql-input" dir="ltr" [(ngModel)]="editorSql" rows="12" spellcheck="false" [disabled]="loading" aria-label="SQL query" (keydown.control.enter)="execute()" (keydown.meta.enter)="execute()"></textarea>
       <p *ngIf="notice" role="status">{{ notice }}</p>
       <p *ngIf="loading">در حال اجرا…</p>
       <p *ngIf="error" class="error" role="alert">{{ error }}</p>
-      <div *ngIf="editorResult as output" style="overflow:auto">
+      <div *ngIf="editorResult as output" class="results">
         <p>تعداد خروجی: {{ output.rowCount }} — زمان: {{ output.elapsedMs }} ms</p>
-        <p *ngIf="output.truncated">خروجی به ۵۰۰ ردیف محدود شده است.</p>
-        <table><thead><tr><th *ngFor="let column of output.columns">{{ column }}</th></tr></thead>
-        <tbody><tr *ngFor="let row of output.rows"><td *ngFor="let cell of row">{{ cell === null ? 'NULL' : cell }}</td></tr></tbody></table>
+        <p *ngIf="output.truncated">خروجی به ۱۰٬۰۰۰ ردیف محدود شده است.</p>
+        <p *ngIf="!output.rows.length">هیچ ردیفی برنگشت.</p><div class="table-scroll"><table><thead><tr><th *ngFor="let column of output.columns">{{ column }}</th></tr></thead>
+        <tbody><tr *ngFor="let row of output.rows"><td *ngFor="let cell of row">{{ cell === null ? 'NULL' : cell }}</td></tr></tbody></table></div>
       </div>
     </section>`,
-  styles: [`section{padding:16px;min-width:0;background:#fff;border:1px solid #e6d9bf;border-radius:16px}.toolbar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.toolbar button{margin:0}.primary{background:#80601e;color:#fff}.error{color:#a32929;background:#fff1f1;padding:12px;border-radius:8px}textarea{width:100%;box-sizing:border-box;font:14px/1.7 monospace;background:#18212d;color:#e5edf5;border:1px solid #354457;border-radius:10px;padding:14px;resize:vertical;text-align:left;direction:ltr;min-height:220px}pre{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;background:#f5f5f5;color:#222;padding:14px;border-radius:8px;font-size:13px}table{width:max-content;min-width:100%;border-collapse:collapse;margin:12px 0}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:right;white-space:nowrap;overflow-wrap:normal}button{padding:10px 16px;margin:4px;border:1px solid #b79a60;border-radius:8px;background:white;color:#60491e}button:disabled{opacity:.5}`]
+  styles: [`
+:host{display:block;min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+section{box-sizing:border-box;width:100%;max-width:100%;min-width:0;padding:clamp(12px,3vw,24px);background:#fff;border:1px solid #e6d9bf;border-radius:16px}
+h1{font-size:clamp(19px,4vw,26px);margin:0 0 8px}
+.warning{font-size:13px;color:#805315;background:#fff7e6;padding:10px;border-radius:8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.toolbar button{flex:0 1 auto;margin:0;min-height:44px;padding:8px 14px;border:1px solid #d6c6a6;border-radius:9px;background:#fff;color:#60491e;font-size:14px;cursor:pointer}
+.toolbar button.primary{background:#80601e;color:#fff;border-color:#80601e}
+.toolbar button:disabled{opacity:.45;cursor:default}
+section textarea.sql-input{display:block;width:100%;max-width:100%;box-sizing:border-box;font:14px/1.7 monospace!important;background:#18212d!important;color:#e5edf5!important;border:1px solid #354457!important;border-radius:10px;padding:14px;resize:vertical;text-align:left!important;direction:ltr;min-height:240px;white-space:pre;overflow:auto}
+.error{color:#a32929;background:#fff1f1;padding:12px;border-radius:8px;overflow-wrap:anywhere}
+.results{min-width:0;max-width:100%;margin-top:16px}
+.table-scroll{width:100%;max-width:100%;overflow:auto;max-height:60vh;border:1px solid #e6d9bf;border-radius:8px}
+table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0}
+td,th{padding:10px 14px;border-bottom:1px solid #eee;text-align:start;white-space:nowrap;overflow-wrap:normal;min-width:80px}
+th{position:sticky;top:0;background:#f6f1e8;z-index:1}tbody tr:nth-child(even){background:#faf9f6}
+@media(max-width:600px){.toolbar button{flex:1 1 28%}.toolbar button.primary{flex-basis:100%}section textarea.sql-input{font-size:16px!important}td,th{padding:8px 10px}}
+`]
 })
 export class ScanLabComponent implements OnDestroy {
   private http = inject(HttpClient);
@@ -48,7 +66,7 @@ FROM dbo.TelegramRawArchiveSnapshots`;
     const url=environment.apiUrl.replace(/\/$/, '')+'/admin/telegram/scan-lab/query';
     this.request=this.http.post<NonNullable<ScanLabComponent['editorResult']>>(url,{sql:this.editorSql})
       .pipe(timeout(20000),finalize(()=>{this.loading=false;this.cdr.markForCheck();}))
-      .subscribe({next:data=>{this.editorResult=data;},error:err=>{this.error=err.error?.message || (err.status === 503 ? 'سرویس اجرای SQL در دسترس نیست؛ اتصال اختصاصی ScanLabReadOnly و تنظیمات سرور را بررسی کنید.' : 'خطا در اجرای SQL (HTTP '+(err.status || 0)+')');}});
+      .subscribe({next:data=>{this.editorResult=data;},error:err=>{this.error=err.error?.message || (err.status === 503 ? 'سرویس اجرای SQL در دسترس نیست؛ اتصال دیتابیس و تنظیمات سرور را بررسی کنید.' : 'خطا در اجرای SQL (HTTP '+(err.status || 0)+')');}});
   }
   async copy():Promise<void> {
     try { await navigator.clipboard.writeText(this.editorSql); this.notice='کوئری کپی شد'; }
