@@ -189,6 +189,10 @@
         <span *ngIf="isSidebarOpen">آرشیو پیام‌های تلگرام</span>
       </div>
 
+      <div class="nav-item" [class.active]="activeSection==='scanLab'" (click)="goToSection('scanLab')">
+        <svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24"><path d="M9 3h6M10 3v7l-6 9a1 1 0 0 0 1 2h14a1 1 0 0 0 1-2l-6-9V3M8 15h8"></path></svg>
+        <span *ngIf="isSidebarOpen">آزمایشگاه اسکن</span>
+      </div>
       <!-- ORDER -->
       <div class="nav-item"
            [class.active]="activeSection==='order'"
