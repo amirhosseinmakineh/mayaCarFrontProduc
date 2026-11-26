@@ -29,6 +29,7 @@ import { CardetailComponent } from "./components/cardetail/cardetail.component";
 import { AboutUsComponent } from "./pages/about-us/about-us.component";
 import { ContactUsComponent } from "./pages/contact-us/contact-us.component";
 
+import { ScanLabComponent } from "./components/admin/scanLab/scanLab.component";
 export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: '', component: HomeComponent },
@@ -51,6 +52,7 @@ export const routes: Routes = [
       {path : 'order',component:OrderComponent},
       {path: 'telegram', component: TelegramManagementComponent},
       {path: 'telegram-messages', component: TelegramRawMessagesComponent},
+      {path: 'scan-lab', component: ScanLabComponent},
       {path : 'orderItem',component:OrderItemComponent}
     ],
   },
