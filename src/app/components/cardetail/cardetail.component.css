@@ -85,13 +85,6 @@
   word-break: break-word;
 }
 
-/* توضیحات */
-.desc-section {
-  margin: 30px 0;
-  line-height: 1.8;
-  color: #555;
-}
-
 /* فوتر */
 .action-footer {
   display: flex;
@@ -191,12 +184,6 @@
     grid-template-columns: 1fr;
     gap: 14px;
     padding: 16px;
-  }
-
-  .desc-section {
-    margin: 24px 0;
-    line-height: 1.7;
-    font-size: 0.95rem;
   }
 
   .action-footer {
