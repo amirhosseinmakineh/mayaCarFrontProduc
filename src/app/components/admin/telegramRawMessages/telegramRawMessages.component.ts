@@ -43,6 +43,19 @@ interface MessagePage {
           <button class="refresh" (click)="reloadDatabase()" [disabled]="loading || channelsLoading">↻ نمایش اطلاعات دیتابیس</button>
         </div>
       </header>
+      <section class="archive-diagnostics" aria-label="آزمایشگاه اسکن خودرو">
+        <div style="width:100%"><h2>آزمایشگاه اسکن خودرو</h2><p>مرحله ۱: استخراج خط اول تمام پیام‌های آرشیو (فقط خواندنی)</p>
+        <button class="apply" (click)="loadScanLab(1)" [disabled]="labLoading">اجرای مرحله اول</button></div>
+        <div *ngIf="labError" class="alert">{{ labError }}</div>
+        <div *ngIf="labLoading">در حال دریافت…</div>
+        <div *ngIf="labLoaded && !labLoading" style="width:100%;overflow:auto">
+          <p>تعداد کل: {{ labTotal }} — صفحه {{ labPage }}</p>
+          <table style="width:100%;text-align:right"><thead><tr><th>شناسه</th><th>نام استخراج‌شده</th></tr></thead>
+          <tbody><tr *ngFor="let row of labRows"><td>{{ row.id }}</td><td style="overflow-wrap:anywhere">{{ row.carName || '—' }}</td></tr></tbody></table>
+          <button class="refresh" (click)="loadScanLab(labPage-1)" [disabled]="labPage <= 1">قبلی</button>
+          <button class="refresh" (click)="loadScanLab(labPage+1)" [disabled]="labPage*10 >= labTotal">بعدی</button>
+        </div>
+      </section>
       <div *ngIf="exportError" class="alert" role="alert">{{ exportError }}</div>
       <div class="summary" aria-live="polite">
         وضعیت جمع‌آوری: <strong>{{ refreshStatus }}</strong>
@@ -175,6 +188,18 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly url = environment.apiUrl.replace(/\/$/, '') + '/admin/telegram/messages';
+  labRows: {id:number; carName:string|null}[] = [];
+  labPage = 1; labTotal = 0; labLoading = false; labLoaded = false; labError = '';
+  private labRequest?: Subscription;
+  loadScanLab(page: number): void {
+    if (!this.isBrowser || this.labLoading || page < 1) return;
+    this.labLoading = true; this.labError = ''; this.cdr.markForCheck();
+    const url = environment.apiUrl.replace(/\/$/, '') + '/admin/telegram/scan-lab/step1';
+    this.labRequest = this.http.get<{items:{id:number;carName:string|null}[];totalCount:number;page:number}>(url, {params: new HttpParams().set('page', page).set('pageSize', 10)})
+      .pipe(timeout(20000), finalize(() => { this.labLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({next: result => { this.labRows = result.items; this.labTotal = result.totalCount; this.labPage = result.page; this.labLoaded = true; },
+        error: () => { this.labError = 'دریافت خروجی آزمایشگاه ناموفق بود.'; }});
+  }
   messages: RawTelegramMessage[] = [];
   channels: ArchiveChannel[] = [];
   selectedChannelUsername: string | null = null;
@@ -216,6 +241,7 @@ export class TelegramRawMessagesComponent implements OnInit, OnDestroy {
     this.channelsRequest?.unsubscribe();
     this.statusRequest?.unsubscribe();
     this.exportRequest?.unsubscribe();
+    this.labRequest?.unsubscribe();
   }
   downloadArchive(): void {
     if (!this.isBrowser || this.exporting || this.refreshPending || this.refreshRunning) return;
