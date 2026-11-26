@@ -40,6 +40,11 @@ export class CarService {
     if (filter.company)
       params = params.set('company', filter.company);
 
+    if (filter.companyId != null)
+      params = params.set('companyId', filter.companyId.toString());
+    if (filter.modelId != null)
+      params = params.set('modelId', filter.modelId.toString());
+
     if (filter.pageSize != null)
       params = params.set('pageSize', filter.pageSize.toString());
 
@@ -61,6 +66,9 @@ export class CarService {
       }),
     );
   }
+getReferenceFilters(): Observable<{ companies: Company[]; models: Company[] }> {
+  return this.http.get<{ companies: Company[]; models: Company[] }>(this.baseUrl + '/car/filters');
+}
 getAllCompanies(): Observable<any> {
   return this.http.get(this.baseUrl + '/Company');
 }

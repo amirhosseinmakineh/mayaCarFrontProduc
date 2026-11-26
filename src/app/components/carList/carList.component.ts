@@ -25,6 +25,7 @@ export class CarListComponent implements OnInit, OnDestroy {
 
   cars = signal<Car[]>([]);
   companyList = signal<Company[]>([]);
+  modelList = signal<Company[]>([]);
   isLoading = signal(false);
   isFilterOpen = false;
   error = signal('');
@@ -62,9 +63,9 @@ export class CarListComponent implements OnInit, OnDestroy {
   }
 
   loadCompanies(): void {
-    this.carService.getAllCompanies().subscribe({
-      next: (res) => this.companyList.set(res?.data || res || []),
-      error: () => this.companyList.set([])
+    this.carService.getReferenceFilters().subscribe({
+      next: (res) => { this.companyList.set(res.companies ?? []); this.modelList.set(res.models ?? []); },
+      error: () => { this.companyList.set([]); this.modelList.set([]); }
     });
   }
 
@@ -105,8 +106,12 @@ export class CarListComponent implements OnInit, OnDestroy {
     this.applyFilter();
   }
 
-  updateCompany(value: string): void {
-    this.carFilter.update(filter => ({ ...filter, company: value }));
+  updateCompany(value: number | undefined): void {
+    this.carFilter.update(filter => ({ ...filter, companyId: value }));
+  }
+
+  updateModel(value: number | undefined): void {
+    this.carFilter.update(filter => ({ ...filter, modelId: value }));
   }
 
   updateMinPrice(value: string | number): void {
@@ -174,6 +179,6 @@ export class CarListComponent implements OnInit, OnDestroy {
 
   hasActiveFilter(): boolean {
     const filter = this.carFilter();
-    return Boolean(filter.company || filter.minPrice != null || filter.maxPrice != null);
+    return Boolean(filter.companyId || filter.modelId || filter.company || filter.minPrice != null || filter.maxPrice != null);
   }
 }
