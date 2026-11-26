@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
@@ -7,13 +8,23 @@ import { environment } from '../../../../environments/environment';
 interface ScanResult { items: {id:number;carName:string|null}[]; totalCount:number; page:number; sql:string; executedSql:string; }
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <section dir="rtl">
       <h1>آزمایشگاه اسکن خودرو</h1>
       <h2>مرحله ۱: استخراج خط اول پیام</h2>
       <p>فقط خواندنی؛ بدون تغییر آرشیو یا خودروها</p>
-      <h3>کوئری SQL</h3>
+      <h3>ادیتور SQL (فقط خواندنی)</h3>
+      <textarea dir="ltr" [(ngModel)]="editorSql" rows="12" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:monospace"></textarea>
+      <button (click)="execute()" [disabled]="loading || !editorSql.trim()">Execute</button>
+      <button (click)="editorSql=initialSql" [disabled]="loading">بازنشانی</button>
+      <div *ngIf="editorResult as output" style="overflow:auto">
+        <p>تعداد خروجی: {{ output.rowCount }} — زمان: {{ output.elapsedMs }} ms</p>
+        <p *ngIf="output.truncated">خروجی به ۵۰۰ ردیف محدود شده است.</p>
+        <table><thead><tr><th *ngFor="let column of output.columns">{{ column }}</th></tr></thead>
+        <tbody><tr *ngFor="let row of output.rows"><td *ngFor="let cell of row">{{ cell === null ? 'NULL' : cell }}</td></tr></tbody></table>
+      </div>
+      <h3>کوئری ثابت مرحله اول</h3>
       <pre dir="ltr">{{ result?.sql || initialSql }}</pre>
       <button (click)="run(1)" [disabled]="loading">اجرای مرحله اول</button>
       <p *ngIf="loading">در حال دریافت…</p>
@@ -39,6 +50,16 @@ export class ScanLabComponent implements OnDestroy {
   initialSql = `SELECT CAST(Id AS bigint) AS Id,
     TRIM(REPLACE(LEFT(MessageText, CHARINDEX(CHAR(10), MessageText + CHAR(10)) - 1), CHAR(13), '')) AS CarName
 FROM dbo.TelegramRawMessages`;
+  editorSql = this.initialSql;
+  editorResult: {columns:string[];rows:(string|null)[][];rowCount:number;elapsedMs:number;truncated:boolean} | null = null;
+  execute():void {
+    if(this.loading || !this.editorSql.trim()) return;
+    this.loading=true; this.error=''; this.editorResult=null;
+    const url=environment.apiUrl.replace(/\/$/, '')+'/admin/telegram/scan-lab/query';
+    this.request=this.http.post<NonNullable<ScanLabComponent['editorResult']>>(url,{sql:this.editorSql})
+      .pipe(timeout(20000),finalize(()=>{this.loading=false;this.cdr.markForCheck();}))
+      .subscribe({next:data=>{this.editorResult=data;},error:err=>{this.error=err.error?.message || 'خطا در اجرای SQL (HTTP '+(err.status || 0)+')';}});
+  }
   run(page:number):void {
     if(this.loading || page<1) return;
     this.loading=true; this.error='';
