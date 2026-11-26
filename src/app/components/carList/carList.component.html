@@ -21,12 +21,20 @@
 
     <div class="filter-grid">
       <label class="filter-field">
-        <span>برند خودرو</span>
-        <select [ngModel]="carFilter().company" (ngModelChange)="updateCompany($event)">
-          <option value="">همه برندها</option>
-          <option *ngFor="let company of companyList(); trackBy: trackByCompany" [value]="company.name">
+        <span>شرکت خودرو</span>
+        <select [ngModel]="carFilter().companyId" (ngModelChange)="updateCompany($event)">
+          <option [ngValue]="undefined">همه شرکت‌ها</option>
+          <option *ngFor="let company of companyList(); trackBy: trackByCompany" [ngValue]="company.id">
             {{ company.name }}
           </option>
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>مدل خودرو</span>
+        <select [ngModel]="carFilter().modelId" (ngModelChange)="updateModel($event)">
+          <option [ngValue]="undefined">همه مدل‌ها</option>
+          <option *ngFor="let model of modelList(); trackBy: trackByCompany" [ngValue]="model.id">{{ model.name }}</option>
         </select>
       </label>
 
